@@ -93,6 +93,7 @@ export default async function DashboardPage() {
         kind: n.approach ? `Note · ${n.approach}` : "Your note",
         title: n.content.length > 60 ? `${n.content.slice(0, 60)}…` : n.content,
         date: n.due_date,
+        verifiedAt: null,
         href: "/app/journal",
       });
     }

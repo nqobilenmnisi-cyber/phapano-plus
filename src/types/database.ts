@@ -55,14 +55,14 @@ export type FundingType =
 
 export type MoodLabel = "hopeful" | "calm" | "tired" | "anxious" | "low";
 
-export interface NotificationPrefs {
+export type NotificationPrefs = {
   deadlines: boolean;
   funding: boolean;
   community: boolean;
   product: boolean;
-}
+};
 
-export interface Profile {
+export type Profile = {
   id: string;
   full_name: string | null;
   surname: string | null;
@@ -91,9 +91,9 @@ export interface Profile {
   notification_prefs: NotificationPrefs;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface University {
+export type University = {
   id: string;
   name: string;
   short_name: string | null;
@@ -110,9 +110,9 @@ export interface University {
   is_published: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Programme {
+export type Programme = {
   id: string;
   university_id: string;
   stream: PsychologyStream;
@@ -138,9 +138,9 @@ export interface Programme {
   is_published: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface FundingOpportunity {
+export type FundingOpportunity = {
   id: string;
   title: string;
   provider: string | null;
@@ -166,9 +166,9 @@ export interface FundingOpportunity {
   is_published: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Article {
+export type Article = {
   id: string;
   title: string;
   slug: string | null;
@@ -187,14 +187,14 @@ export interface Article {
   published_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface ChecklistItem {
+export type ChecklistItem = {
   label: string;
   done: boolean;
-}
+};
 
-export interface Application {
+export type Application = {
   id: string;
   user_id: string;
   programme_id: string | null;
@@ -206,23 +206,23 @@ export interface Application {
   notes: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface SavedUniversity {
+export type SavedUniversity = {
   id: string;
   user_id: string;
   university_id: string;
   created_at: string;
-}
+};
 
-export interface SavedFunding {
+export type SavedFunding = {
   id: string;
   user_id: string;
   funding_id: string;
   created_at: string;
-}
+};
 
-export interface JournalEntry {
+export type JournalEntry = {
   id: string;
   user_id: string;
   content: string;
@@ -233,9 +233,9 @@ export interface JournalEntry {
   mood: MoodLabel | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface Notification {
+export type Notification = {
   id: string;
   user_id: string;
   type: string;
@@ -244,7 +244,7 @@ export interface Notification {
   link: string | null;
   read: boolean;
   created_at: string;
-}
+};
 
 /**
  * Minimal Database generic shape so the Supabase client is typed.
@@ -257,26 +257,31 @@ export interface Database {
         Row: Profile;
         Insert: Partial<Profile> & { id: string };
         Update: Partial<Profile>;
+        Relationships: [];
       };
       universities: {
         Row: University;
         Insert: Partial<University> & { name: string };
         Update: Partial<University>;
+        Relationships: [];
       };
       programmes: {
         Row: ApplyProgramme;
         Insert: Partial<ApplyProgramme>;
         Update: Partial<ApplyProgramme>;
+        Relationships: [];
       };
       funding_opportunities: {
         Row: FundingOpportunity;
         Insert: Partial<FundingOpportunity> & { title: string };
         Update: Partial<FundingOpportunity>;
+        Relationships: [];
       };
       articles: {
         Row: Article;
         Insert: Partial<Article> & { title: string };
         Update: Partial<Article>;
+        Relationships: [];
       };
       saved_programmes: {
         Row: Omit<SavedProgrammeWithPlan, "programme"> &
@@ -293,26 +298,31 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<ApplicationPlan> & { updated_at?: string };
+        Relationships: [];
       };
       programme_sources: {
         Row: ProgrammeSource;
         Insert: Partial<ProgrammeSource> & { programme_id: string; url: string };
         Update: Partial<ProgrammeSource>;
+        Relationships: [];
       };
       saved_funding: {
         Row: SavedFunding;
         Insert: { user_id: string; funding_id: string };
         Update: Partial<SavedFunding>;
+        Relationships: [];
       };
       journal_entries: {
         Row: JournalEntry;
         Insert: Partial<JournalEntry> & { user_id: string; content: string };
         Update: Partial<JournalEntry>;
+        Relationships: [];
       };
       notifications: {
         Row: Notification;
         Insert: Partial<Notification> & { user_id: string; type: string; title: string };
         Update: Partial<Notification>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
@@ -337,7 +347,7 @@ export type ProgrammeStatus =
   | "opening_soon"
   | "dates_not_confirmed";
 
-export interface ApplyProgramme {
+export type ApplyProgramme = {
   id: string;
   slug: string | null;
   institution: string;
@@ -371,10 +381,10 @@ export interface ApplyProgramme {
   primary_source_url: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
 /** A saved programme plus the user's personal application tracker. */
-export interface SavedProgrammeWithPlan {
+export type SavedProgrammeWithPlan = {
   id: string;
   user_id: string;
   programme_id: string;
@@ -391,16 +401,16 @@ export interface SavedProgrammeWithPlan {
   created_at: string;
   updated_at: string;
   programme: ApplyProgramme;
-}
+};
 
-export interface CustomStep {
+export type CustomStep = {
   id: string;
   title: string;
   done: boolean;
-}
+};
 
 /** The personal tracker fields on their own (no joined programme). */
-export interface ApplicationPlan {
+export type ApplicationPlan = {
   status: string | null;
   next_action: string | null;
   my_deadline: string | null;
@@ -417,9 +427,9 @@ export interface ApplicationPlan {
   outcome_received: boolean;
   custom_steps: CustomStep[];
   notes: string | null;
-}
+};
 
-export interface ProgrammeSource {
+export type ProgrammeSource = {
   id: string;
   programme_id: string;
   source_type: string; // institution | department | postgraduate | application | other
@@ -433,9 +443,9 @@ export interface ProgrammeSource {
   notes: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface ProgrammeUpdate {
+export type ProgrammeUpdate = {
   id: string;
   programme_id: string;
   source_id: string | null;
@@ -453,4 +463,4 @@ export interface ProgrammeUpdate {
   reviewed_at: string | null;
   applied: boolean;
   created_at: string;
-}
+};

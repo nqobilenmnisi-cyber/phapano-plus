@@ -25,10 +25,12 @@ export async function updateNotificationPrefs(formData: FormData) {
     product: formData.get("product") === "on",
   };
 
-  await supabase
+  const { error } = await supabase
     .from("profiles")
     .update({ notification_prefs: prefs })
     .eq("id", user.id);
+
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/app/settings");
   return { ok: true };

@@ -156,7 +156,12 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
 
       {/* STEP 3 — university + intended stream (both optional) */}
       {step === 2 && (
-        <form action={completeOnboarding} className="animate-fade">
+        <form
+          action={async (formData) => {
+            await completeOnboarding(formData);
+          }}
+          className="animate-fade"
+        >
           <Star className="mb-3 h-6 w-6" />
           <h2 className="font-sora text-xl font-bold tracking-tight">
             A little more (optional)

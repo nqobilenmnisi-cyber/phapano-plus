@@ -155,7 +155,7 @@ export async function deleteArticle(id: string) {
  * verified, stamps last_verified_at to today, and pushes next review out.
  */
 export async function markVerifiedToday(
-  table: "universities" | "funding_opportunities" | "programmes" | "articles",
+  table: "universities" | "funding_opportunities" | "articles",
   id: string,
   reviewInDays = 7
 ) {

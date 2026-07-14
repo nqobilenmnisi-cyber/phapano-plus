@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import type { JournalEntry } from "@/types/database";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -52,7 +53,7 @@ export async function updateEntry(formData: FormData) {
   if (!id || !content) return { ok: false };
 
   // Only set fields that were provided, so a simple content edit still works.
-  const patch: Record<string, unknown> = { content };
+  const patch: Partial<JournalEntry> = { content };
   if (formData.has("approach"))
     patch.approach = String(formData.get("approach") ?? "").trim() || null;
   if (formData.has("priority"))
