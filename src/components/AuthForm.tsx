@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { AuthResult } from "@/app/(auth)/actions";
 import { Compass } from "@/components/illustrations";
+import { ResendVerification } from "@/components/ResendVerification";
 
 type Mode = "login" | "signup";
 
@@ -41,19 +42,22 @@ export function AuthForm({
         <h1 className="font-sora text-2xl font-bold tracking-tight">
           Check your email
         </h1>
-        <p className="mx-auto mt-3 max-w-sm text-charcoal-soft">
+        <p className="mx-auto mt-3 max-w-sm text-charcoal-soft" role="status">
           We&apos;ve sent a verification link to{" "}
-          <span className="font-semibold text-charcoal">{sentTo}</span>. Click it
-          to confirm your account, then come back and log in.
+          <span className="font-semibold text-charcoal">{sentTo}</span>. Click
+          the link to confirm your account.
         </p>
         <div className="mt-6 rounded-card border border-line bg-soft px-5 py-4 text-left text-sm text-charcoal-soft">
-          <p className="font-semibold text-charcoal">Didn&apos;t get it?</p>
+          <p className="font-semibold text-charcoal">Didn&apos;t receive it?</p>
           <p className="mt-1">
-            Give it a minute, and check your spam or promotions folder. The
-            sender is Supabase on behalf of Phapano.
+            Give it a minute, then check your spam, junk or promotions folder.
+            Look for an email from Phapano+.
           </p>
         </div>
-        <Link href="/login" className="btn-primary mt-6 w-full">
+        <div className="mt-4 text-left">
+          <ResendVerification email={sentTo} />
+        </div>
+        <Link href="/login" className="btn-primary mt-4 w-full">
           Go to log in
         </Link>
       </div>

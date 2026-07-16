@@ -3,7 +3,9 @@ import { AppTopBar, SupportLine } from "@/components/AppChrome";
 import { BottomNav } from "@/components/BottomNav";
 import { OpportunityRadar, type RadarItem } from "@/components/OpportunityRadar";
 import { Compass, Star, IconApplication, IconNotes } from "@/components/illustrations";
+import { redirect } from "next/navigation";
 import {
+  getAuthState,
   getProfile,
   getSavedFunding,
   getNotifications,
@@ -35,6 +37,15 @@ function affirmationForToday(): string {
 }
 
 export default async function DashboardPage() {
+  // A signed-in user who hasn't finished onboarding belongs in onboarding,
+  // not here. (Middleware already guarantees only authed users reach this
+  // page; the onboarding page redirects completed users back to /dashboard,
+  // so these two guards are mutually exclusive — no loop is possible.)
+  if (isSupabaseConfigured) {
+    const { authed, onboarded } = await getAuthState();
+    if (authed && !onboarded) redirect("/onboarding");
+  }
+
   const [profile, savedFunding, notifications, datedNotes, savedProgrammes] =
     await Promise.all([
       getProfile(),
