@@ -58,6 +58,18 @@ const items = [
     ),
   },
   {
+    href: "/app/community",
+    label: "Community",
+    icon: (
+      <>
+        <circle cx="9" cy="8.5" r="2.8" stroke="currentColor" strokeWidth="1.7" />
+        <path d="M3.5 19a5.5 5.5 0 0 1 11 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <circle cx="16.6" cy="9.6" r="2.2" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M15.2 14.7a4.6 4.6 0 0 1 5.8 4.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
     href: "/app/profile",
     label: "You",
     icon: (
@@ -87,7 +99,7 @@ export function BottomNav() {
               key={it.href}
               href={it.href}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 rounded-chip px-3.5 py-1.5 text-[0.68rem] font-bold transition ${
+              className={`flex flex-col items-center gap-0.5 rounded-chip px-2 py-1.5 text-[0.66rem] font-bold transition ${
                 active ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
               }`}
             >

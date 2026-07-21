@@ -82,8 +82,14 @@ export function SiteFooter({ authed = false }: { authed?: boolean }) {
               {authed ? (
                 <li><Link href="/dashboard" className="hover:text-charcoal">Open Phapano+</Link></li>
               ) : (
-                <li><Link href="/signup" className="hover:text-charcoal">Create your free account</Link></li>
+                <li><Link href="/signup" className="hover:text-charcoal">Create an account</Link></li>
               )}
+            </ul>
+            <h4 className="mt-6 font-sora text-sm font-bold">Legal</h4>
+            <ul className="mt-3 space-y-2 text-sm text-charcoal-soft">
+              <li><Link href="/terms" className="hover:text-charcoal">Terms of Use</Link></li>
+              <li><Link href="/privacy" className="hover:text-charcoal">Privacy Policy</Link></li>
+              <li><Link href="/community-guidelines" className="hover:text-charcoal">Community Guidelines</Link></li>
             </ul>
           </div>
         </div>

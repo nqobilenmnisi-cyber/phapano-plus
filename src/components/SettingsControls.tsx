@@ -130,8 +130,15 @@ export function DangerZone({ disabled }: { disabled: boolean }) {
         Delete your account
       </h3>
       <p className="mt-1 text-sm text-charcoal-soft">
-        This permanently removes your account and all of your data, including
-        your private notes. This cannot be undone.
+        This permanently deletes your account and cannot be undone. Removed:
+        your profile, saved institutions, applications, funding records,
+        notes, reminders, and your community posts, comments, reactions and
+        follows. For community safety, any reports and moderation records may
+        be kept in anonymised form with your identity removed — see our{" "}
+        <a href="/privacy" className="font-semibold text-blue-action hover:underline">
+          Privacy Policy
+        </a>
+        . You may be asked to have signed in recently to confirm.
       </p>
 
       {!open ? (

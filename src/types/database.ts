@@ -324,6 +324,93 @@ export interface Database {
         Update: Partial<Notification>;
         Relationships: [];
       };
+      community_profiles: {
+        Row: CommunityProfile;
+        Insert: Partial<CommunityProfile> & { user_id: string; display_name: string };
+        Update: Partial<CommunityProfile>;
+        Relationships: [];
+      };
+      community_moderation_state: {
+        Row: CommunityModerationState;
+        Insert: Partial<CommunityModerationState> & { user_id: string };
+        Update: Partial<CommunityModerationState>;
+        Relationships: [];
+      };
+      community_follows: {
+        Row: CommunityFollow;
+        Insert: { follower_id: string; followee_id: string };
+        Update: Partial<CommunityFollow>;
+        Relationships: [];
+      };
+      community_posts: {
+        Row: CommunityPost;
+        Insert: Partial<CommunityPost> & { author_id: string; body: string };
+        Update: Partial<CommunityPost>;
+        Relationships: [];
+      };
+      community_comments: {
+        Row: CommunityComment;
+        Insert: Partial<CommunityComment> & {
+          post_id: string;
+          author_id: string;
+          body: string;
+        };
+        Update: Partial<CommunityComment>;
+        Relationships: [];
+      };
+      community_reactions: {
+        Row: CommunityReaction;
+        Insert: { post_id: string; user_id: string };
+        Update: Partial<CommunityReaction>;
+        Relationships: [];
+      };
+      community_blocks: {
+        Row: CommunityBlock;
+        Insert: { blocker_id: string; blocked_id: string };
+        Update: Partial<CommunityBlock>;
+        Relationships: [];
+      };
+      community_reports: {
+        Row: CommunityReport;
+        Insert: Partial<CommunityReport> & {
+          reporter_id: string;
+          target_type: CommunityReportTargetType;
+          target_user_id: string;
+          category: CommunityReportCategory;
+        };
+        Update: Partial<CommunityReport>;
+        Relationships: [];
+      };
+      community_moderation_actions: {
+        Row: CommunityModerationAction;
+        Insert: Partial<CommunityModerationAction> & {
+          admin_id: string;
+          action: CommunityModerationActionType;
+        };
+        Update: Partial<CommunityModerationAction>;
+        Relationships: [];
+      };
+      community_terms_acceptances: {
+        Row: CommunityTermsAcceptance;
+        Insert: Partial<CommunityTermsAcceptance> & {
+          user_id: string;
+          document_type: string;
+          document_version: string;
+        };
+        Update: Partial<CommunityTermsAcceptance>;
+        Relationships: [];
+      };
+      contact_messages: {
+        Row: ContactMessage;
+        Insert: Partial<ContactMessage> & {
+          name: string;
+          email: string;
+          category: string;
+          message: string;
+        };
+        Update: Partial<ContactMessage>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -462,5 +549,179 @@ export type ProgrammeUpdate = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   applied: boolean;
+  created_at: string;
+};
+
+/* ─── Community Lite ─────────────────────────────────────────────────── */
+
+export type CommunityVisibility = "visible" | "limited" | "hidden";
+export type CommunityContentStatus = "published" | "removed";
+export type CommunityReportTargetType = "post" | "comment" | "profile";
+export type CommunityReportStatus = "open" | "resolved" | "dismissed";
+
+export type CommunityReportCategory =
+  | "harassment"
+  | "misinformation"
+  | "scam"
+  | "hate"
+  | "sexual_content"
+  | "privacy"
+  | "impersonation"
+  | "spam"
+  | "professional_misconduct"
+  | "other";
+
+export type CommunityModerationActionType =
+  | "dismiss"
+  | "remove_content"
+  | "restore_content"
+  | "warn"
+  | "restrict_posting"
+  | "unrestrict_posting"
+  | "suspend_community"
+  | "unsuspend_community"
+  | "note"
+  | "resolve";
+
+export type CommunityProfile = {
+  user_id: string;
+  display_name: string;
+  stage: CareerStage | null;
+  stream: PsychologyStream | null;
+  institution: string | null;
+  bio: string | null;
+  interests: string[];
+  visibility: CommunityVisibility;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommunityModerationState = {
+  user_id: string;
+  posting_restricted: boolean;
+  community_suspended: boolean;
+  updated_at: string;
+};
+
+export type CommunityFollow = {
+  follower_id: string;
+  followee_id: string;
+  created_at: string;
+};
+
+export type CommunityPost = {
+  id: string;
+  author_id: string;
+  body: string;
+  is_official: boolean;
+  status: CommunityContentStatus;
+  created_at: string;
+  updated_at: string;
+  edited_at: string | null;
+};
+
+export type CommunityComment = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  body: string;
+  status: CommunityContentStatus;
+  created_at: string;
+  updated_at: string;
+  edited_at: string | null;
+};
+
+export type CommunityReaction = {
+  post_id: string;
+  user_id: string;
+  created_at: string;
+};
+
+export type CommunityBlock = {
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+};
+
+export type CommunityReport = {
+  id: string;
+  /** Null when the reporter's account has been deleted (report retained anonymised). */
+  reporter_id: string | null;
+  target_type: CommunityReportTargetType;
+  target_post_id: string | null;
+  target_comment_id: string | null;
+  /** Null when the reported account has been deleted (report retained anonymised). */
+  target_user_id: string | null;
+  category: CommunityReportCategory;
+  details: string | null;
+  content_excerpt: string | null;
+  status: CommunityReportStatus;
+  moderator_notes: string | null;
+  action_taken: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
+};
+
+export type CommunityModerationAction = {
+  id: string;
+  report_id: string | null;
+  /** Null if the acting admin account was later deleted; the log survives. */
+  admin_id: string | null;
+  target_user_id: string | null;
+  action: CommunityModerationActionType;
+  notes: string | null;
+  created_at: string;
+};
+
+export type CommunityTermsAcceptance = {
+  id: string;
+  user_id: string;
+  document_type: string;
+  document_version: string;
+  accepted_at: string;
+};
+
+/** A post joined with its author card and viewer-relative state, for feeds. */
+export type CommunityPostView = CommunityPost & {
+  author: Pick<
+    CommunityProfile,
+    "user_id" | "display_name" | "stage" | "avatar_url"
+  > | null;
+  like_count: number;
+  comment_count: number;
+  liked_by_me: boolean;
+};
+
+export type CommunityCommentView = CommunityComment & {
+  author: Pick<
+    CommunityProfile,
+    "user_id" | "display_name" | "stage" | "avatar_url"
+  > | null;
+};
+
+export type CommunityMemberCard = Pick<
+  CommunityProfile,
+  | "user_id"
+  | "display_name"
+  | "stage"
+  | "stream"
+  | "institution"
+  | "bio"
+  | "avatar_url"
+> & { followed_by_me: boolean };
+
+
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  category: string;
+  message: string;
+  user_id: string | null;
+  status: "new" | "handled";
+  handled_by: string | null;
+  handled_at: string | null;
   created_at: string;
 };

@@ -5,6 +5,8 @@ import {
   DangerZone,
 } from "@/components/SettingsControls";
 import { getProfile, getCurrentUser } from "@/lib/queries";
+import { getBlockedAccounts } from "@/lib/community";
+import { CommunityBlockedList } from "@/components/CommunityBlockedList";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { NotificationPrefs } from "@/types/database";
 
@@ -18,7 +20,11 @@ const DEFAULT_PREFS: NotificationPrefs = {
 };
 
 export default async function SettingsPage() {
-  const [user, profile] = await Promise.all([getCurrentUser(), getProfile()]);
+  const [user, profile, blockedAccounts] = await Promise.all([
+    getCurrentUser(),
+    getProfile(),
+    getBlockedAccounts(),
+  ]);
   const prefs = profile?.notification_prefs ?? DEFAULT_PREFS;
   // Real Supabase Auth email for the signed-in user. Never a demo value.
   const email = user?.email ?? profile?.email ?? "—";
@@ -73,12 +79,52 @@ export default async function SettingsPage() {
             operate the platform and personalise your psychology pathway
             experience. Phapano+ does not sell your personal information.
           </p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link
+              href="/privacy"
+              className="inline-flex font-semibold text-blue-action hover:underline"
+            >
+              Read Privacy Policy →
+            </Link>
+            <Link
+              href="/terms"
+              className="inline-flex font-semibold text-blue-action hover:underline"
+            >
+              Read Terms of Use →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* community */}
+      <section className="mt-9">
+        <h2 className="mb-3 font-sora text-lg font-bold tracking-tight">
+          Community
+        </h2>
+        <div className="card space-y-4 p-5">
+          <p className="text-sm text-charcoal-soft">
+            Manage what other members can see, and the accounts you&apos;ve
+            blocked. The community follows our{" "}
+            <Link
+              href="/community-guidelines"
+              className="font-semibold text-blue-action hover:underline"
+            >
+              Community Guidelines
+            </Link>
+            .
+          </p>
           <Link
-            href="/privacy"
+            href="/app/community/profile"
             className="inline-flex font-semibold text-blue-action hover:underline"
           >
-            Read Privacy Policy →
+            Edit community profile &amp; visibility →
           </Link>
+          <div>
+            <h3 className="mb-2 text-sm font-bold text-charcoal">
+              Blocked accounts
+            </h3>
+            <CommunityBlockedList blocked={blockedAccounts} />
+          </div>
         </div>
       </section>
 
