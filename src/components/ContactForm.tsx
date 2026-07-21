@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { submitContactMessage } from "@/app/(site)/contact/actions";
 
 const CATEGORIES: { value: string; placeholder: string }[] = [
   { value: "Ask a question", placeholder: "What would you like to ask us?" },
@@ -35,22 +36,41 @@ export function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [company, setCompany] = useState(""); // honeypot
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   const placeholder =
     CATEGORIES.find((c) => c.value === category)?.placeholder ?? "How can we help?";
 
   function submit() {
-    const subject = `[Phapano+] ${category}`;
-    const body =
-      `Enquiry type: ${category}\n` +
-      `Name: ${name}\n` +
-      `Email: ${email}\n\n` +
-      `${message}\n`;
-    const url = `mailto:info@phapano.com?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    // Opens the user's email client with everything pre-filled.
-    window.location.href = url;
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("category", category);
+      fd.set("name", name);
+      fd.set("email", email);
+      fd.set("message", message);
+      fd.set("company", company);
+      const result = await submitContactMessage(fd);
+      if ("error" in result) setError(result.error);
+      else setSent(true);
+    });
+  }
+
+  if (sent) {
+    return (
+      <div className="card p-8 text-center">
+        <h2 className="font-sora text-xl font-bold tracking-tight">
+          Message sent
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
+          Thank you — we&apos;ve received your message and will reply to{" "}
+          <b>{email}</b> as soon as we can.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -64,6 +84,7 @@ export function ContactForm() {
               key={c.value}
               type="button"
               onClick={() => setCategory(c.value)}
+              disabled={pending}
               aria-pressed={on}
               className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                 on
@@ -87,6 +108,7 @@ export function ContactForm() {
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={pending}
             />
           </div>
           <div>
@@ -98,6 +120,7 @@ export function ContactForm() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={pending}
             />
           </div>
           <div>
@@ -111,19 +134,39 @@ export function ContactForm() {
               placeholder={placeholder}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              disabled={pending}
             />
           </div>
+          <div className="hidden" aria-hidden="true">
+            <label htmlFor="company">Company (leave blank)</label>
+            <input
+              id="company"
+              tabIndex={-1}
+              autoComplete="off"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+            />
+          </div>
+          {error && (
+            <p
+              aria-live="polite"
+              className="rounded-chip border border-bronze-soft bg-bronze-soft/40 px-4 py-3 text-sm text-bronze-deep"
+            >
+              {error}
+            </p>
+          )}
           <button
             type="button"
             onClick={submit}
-            disabled={!message.trim()}
+            disabled={pending || !message.trim() || !name.trim() || !email.trim()}
+            aria-busy={pending}
             className="btn-primary w-full disabled:opacity-50"
           >
-            Send message
+            {pending ? "Sending…" : "Send message"}
           </button>
         </div>
         <p className="mt-5 text-center text-sm text-charcoal-soft">
-          This opens your email app with the message ready to send to{" "}
+          We&apos;ll reply by email. You can also reach us at{" "}
           <a href="mailto:info@phapano.com" className="font-semibold text-blue-action hover:underline">
             info@phapano.com
           </a>
