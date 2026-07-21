@@ -83,7 +83,8 @@ export async function hasAcceptedGuidelines(): Promise<boolean> {
     .from("community_terms_acceptances")
     .select("id", { count: "exact", head: true })
     .eq("user_id", uid)
-    .eq("document_type", COMMUNITY_TERMS_TYPE);
+    .eq("document_type", COMMUNITY_TERMS_TYPE)
+    .eq("document_version", COMMUNITY_TERMS_VERSION);
   return (count ?? 0) > 0;
 }
 

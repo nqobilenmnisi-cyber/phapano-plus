@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import {
+  acceptGuidelines,
   addComment,
   deleteComment,
   editComment,
@@ -15,20 +17,41 @@ export function CommunityComments({
   postId,
   comments,
   viewerId,
-  canComment,
+  canParticipate,
+  acceptedGuidelines,
 }: {
   postId: string;
   comments: CommunityCommentView[];
   viewerId: string;
-  canComment: boolean;
+  /** False when the viewer is posting-restricted or community-suspended. */
+  canParticipate: boolean;
+  /** Whether the viewer has accepted the CURRENT Community Guidelines version. */
+  acceptedGuidelines: boolean;
 }) {
   const [draft, setDraft] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [accepted, setAccepted] = useState(acceptedGuidelines);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function send() {
     setError(null);
     startTransition(async () => {
+      // First comment: accept the guidelines in the SAME action, then comment.
+      if (!accepted) {
+        if (!agree) {
+          setError(
+            "Please review and accept the Community Guidelines before commenting."
+          );
+          return;
+        }
+        const acceptance = await acceptGuidelines();
+        if ("error" in acceptance) {
+          setError(acceptance.error);
+          return;
+        }
+        setAccepted(true);
+      }
       const result = await addComment(postId, draft);
       if ("error" in result) setError(result.error);
       else setDraft("");
@@ -53,7 +76,7 @@ export function CommunityComments({
         ))}
       </ul>
 
-      {canComment && (
+      {canParticipate ? (
         <div className="mt-5">
           <label className="sr-only" htmlFor="comment-box">
             Write a comment
@@ -67,6 +90,30 @@ export function CommunityComments({
             onChange={(e) => setDraft(e.target.value)}
             disabled={pending}
           />
+
+          {!accepted && (
+            <label className="mt-2 flex items-start gap-2.5 rounded-card border border-line bg-soft px-4 py-3 text-sm text-charcoal-soft">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={agree}
+                onChange={(e) => setAgree(e.target.checked)}
+                disabled={pending}
+              />
+              <span>
+                Please review and accept the{" "}
+                <Link
+                  href="/community-guidelines"
+                  target="_blank"
+                  className="font-semibold text-blue-action hover:underline"
+                >
+                  Community Guidelines
+                </Link>{" "}
+                before commenting.
+              </span>
+            </label>
+          )}
+
           {error && (
             <p
               aria-live="polite"
@@ -84,6 +131,11 @@ export function CommunityComments({
             {pending ? "Sending…" : "Comment"}
           </button>
         </div>
+      ) : (
+        <p className="mt-5 text-sm text-charcoal-soft">
+          You can read the conversation, but commenting isn&apos;t available on
+          your account right now.
+        </p>
       )}
     </section>
   );

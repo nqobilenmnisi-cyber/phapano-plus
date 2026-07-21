@@ -31,10 +31,8 @@ export default async function CommunityPostPage({
     hasAcceptedGuidelines(),
     getMyModerationState(),
   ]);
-  const canComment =
-    accepted &&
-    !moderation.posting_restricted &&
-    !moderation.community_suspended;
+  const canParticipate =
+    !moderation.posting_restricted && !moderation.community_suspended;
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-12">
@@ -53,27 +51,9 @@ export default async function CommunityPostPage({
         postId={post.id}
         comments={comments}
         viewerId={uid}
-        canComment={canComment}
+        canParticipate={canParticipate}
+        acceptedGuidelines={accepted}
       />
-      {!accepted && (
-        <p className="mt-4 text-sm text-charcoal-soft">
-          To join the conversation, accept the{" "}
-          <Link
-            href="/community-guidelines"
-            className="font-semibold text-blue-action hover:underline"
-          >
-            Community Guidelines
-          </Link>{" "}
-          when writing your first post on the{" "}
-          <Link
-            href="/app/community"
-            className="font-semibold text-blue-action hover:underline"
-          >
-            community page
-          </Link>
-          .
-        </p>
-      )}
     </main>
   );
 }
