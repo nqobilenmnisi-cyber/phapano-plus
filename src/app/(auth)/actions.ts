@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { passwordError, passwordsMatch } from "@/lib/password-policy";
+import { safeInternalPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getAuthCallbackUrl } from "@/lib/site-url";
@@ -45,10 +47,14 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirm_password") ?? "");
 
-  if (!email || !password) return { error: "Email and password are required." };
-  if (password.length < 8)
-    return { error: "Please use a password of at least 8 characters." };
+  if (!email || !password || !confirmPassword)
+    return { error: "Email and both password fields are required." };
+  const policyError = passwordError(password);
+  if (policyError) return { error: policyError };
+  if (!passwordsMatch(password, confirmPassword))
+    return { error: "The two passwords don't match. Please re-enter them." };
   if (formData.get("accept_terms") !== "on")
     return {
       error: "Please accept the Terms of Use and Privacy Policy to create an account.",
@@ -95,7 +101,9 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const requestedRedirect = String(formData.get("redirect") ?? "/dashboard");
+  const requestedRedirect = safeInternalPath(
+    String(formData.get("redirect") ?? "/dashboard")
+  );
 
   if (!email || !password) return { error: "Email and password are required." };
 
@@ -185,8 +193,8 @@ export async function updatePassword(
   if (!isSupabaseConfigured)
     return { error: "Supabase isn't connected yet." };
   const password = String(formData.get("password") ?? "");
-  if (password.length < 8)
-    return { error: "Please use a password of at least 8 characters." };
+  const policyError = passwordError(password);
+  if (policyError) return { error: policyError };
 
   const supabase = await createClient();
   const {

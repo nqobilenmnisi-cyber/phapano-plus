@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getAuthState } from "@/lib/queries";
 import { Star } from "@/components/illustrations";
 
 export const metadata = { title: "Email verified — Phapano+" };
@@ -8,13 +7,11 @@ export const metadata = { title: "Email verified — Phapano+" };
  * Shown only after /auth/callback confirms the outcome with Supabase.
  *
  * Two states:
- *   default            → "Email verified successfully"
- *   ?status=already    → "Email already verified"
+ *   default            → "Your email has been confirmed."
+ *   ?status=already    → "This email has already been confirmed."
  *
- * The continue button is auth-aware:
- *   - signed in, onboarding complete   → dashboard
- *   - signed in, onboarding incomplete → onboarding (their correct next step)
- *   - signed out                       → log in
+ * The login page remains auth-aware. If the verification callback established
+ * a session, it will send the member to onboarding or the dashboard.
  */
 export default async function VerifiedPage({
   searchParams,
@@ -22,30 +19,22 @@ export default async function VerifiedPage({
   searchParams: { status?: string };
 }) {
   const already = searchParams.status === "already";
-  const { authed, onboarded } = await getAuthState();
-
-  const href = authed ? (onboarded ? "/dashboard" : "/onboarding") : "/login";
-  const label = authed
-    ? onboarded
-      ? "Go to dashboard"
-      : "Continue setting up"
-    : "Continue to log in";
 
   return (
     <div className="animate-fade text-center" role="status">
       <Star className="pointer-events-none mx-auto mb-2 w-24 opacity-90" />
       <h1 className="font-sora text-2xl font-bold tracking-tight">
-        {already ? "Email already verified" : "Email verified successfully"}
+        {already
+          ? "This email has already been confirmed."
+          : "Your email has been confirmed."}
       </h1>
       <p className="mx-auto mt-3 max-w-sm text-charcoal-soft">
         {already
-          ? "Your email address has already been confirmed. You can continue to Phapano+."
-          : authed
-            ? "Your Phapano+ account is ready."
-            : "Your Phapano+ account is ready. You can now log in."}
+          ? "The verification link has already been used. You can continue to log in."
+          : "Your Phapano+ account is ready. You can now log in."}
       </p>
-      <Link href={href} className="btn-primary mt-6 w-full">
-        {label}
+      <Link href="/login" className="btn-primary mt-6 w-full">
+        Continue to Log In
       </Link>
     </div>
   );

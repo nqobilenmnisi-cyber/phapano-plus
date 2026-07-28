@@ -3,6 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveCommunityProfile } from "@/app/(app)/app/community/actions";
+import {
+  COMMUNITY_BIO_MAX_LENGTH,
+  COMMUNITY_HEADLINE_MAX_LENGTH,
+  COMMUNITY_INSTITUTION_MAX_LENGTH,
+  COMMUNITY_OTHER_MAX_LENGTH,
+  otherFieldRequired,
+} from "@/lib/community-profile-fields";
 import { careerStageLabels, streamLabels } from "@/lib/utils";
 import type { CommunityProfile } from "@/types/database";
 
@@ -29,12 +36,25 @@ export function CommunityProfileForm({
   defaults,
 }: {
   existing: CommunityProfile | null;
-  defaults: { name: string; stage: string; institution: string };
+  defaults: {
+    name: string;
+    stage: string;
+    stageOther: string;
+    institution: string;
+  };
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [stage, setStage] = useState(existing?.stage ?? defaults.stage ?? "");
+  const [stageOther, setStageOther] = useState(
+    existing?.stage_other ?? defaults.stageOther
+  );
+  const [stream, setStream] = useState(existing?.stream ?? "");
+  const [streamOther, setStreamOther] = useState(
+    existing?.stream_other ?? ""
+  );
 
   function submit(formData: FormData) {
     setError(null);
@@ -44,6 +64,7 @@ export function CommunityProfileForm({
       if (result && "error" in result) setError(result.error);
       else {
         setSaved(true);
+        router.push("/app/community/profile");
         router.refresh();
       }
     });
@@ -51,9 +72,14 @@ export function CommunityProfileForm({
 
   return (
     <form action={submit} className="space-y-4">
+      <p className="text-xs text-charcoal-soft">
+        Fields marked with <span aria-hidden="true">*</span>
+        <span className="sr-only">an asterisk</span> are required.
+      </p>
+
       <div>
         <label className="label" htmlFor="display_name">
-          Display name
+          Display name <RequiredMark />
         </label>
         <input
           id="display_name"
@@ -71,6 +97,25 @@ export function CommunityProfileForm({
         </p>
       </div>
 
+      <div>
+        <label className="label" htmlFor="headline">
+          Headline
+        </label>
+        <input
+          id="headline"
+          name="headline"
+          maxLength={COMMUNITY_HEADLINE_MAX_LENGTH}
+          className="input"
+          placeholder="e.g. Honours student · aspiring clinical psychologist"
+          defaultValue={existing?.headline ?? ""}
+          disabled={pending}
+        />
+        <p className="mt-1 text-xs text-charcoal-soft">
+          A short line displayed under your name. It is separate from your
+          pathway stage.
+        </p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="stage">
@@ -80,7 +125,8 @@ export function CommunityProfileForm({
             id="stage"
             name="stage"
             className="input"
-            defaultValue={existing?.stage ?? defaults.stage}
+            value={stage}
+            onChange={(event) => setStage(event.target.value)}
             disabled={pending}
           >
             <option value="">Prefer not to say</option>
@@ -90,6 +136,24 @@ export function CommunityProfileForm({
               </option>
             ))}
           </select>
+          {otherFieldRequired(stage) && (
+            <div className="mt-2">
+              <label className="label" htmlFor="stage_other">
+                Your pathway stage <RequiredMark />
+              </label>
+              <input
+                id="stage_other"
+                name="stage_other"
+                maxLength={COMMUNITY_OTHER_MAX_LENGTH}
+                required
+                className="input"
+                placeholder="Describe your pathway stage"
+                value={stageOther}
+                onChange={(event) => setStageOther(event.target.value)}
+                disabled={pending}
+              />
+            </div>
+          )}
         </div>
         <div>
           <label className="label" htmlFor="stream">
@@ -99,7 +163,8 @@ export function CommunityProfileForm({
             id="stream"
             name="stream"
             className="input"
-            defaultValue={existing?.stream ?? ""}
+            value={stream}
+            onChange={(event) => setStream(event.target.value)}
             disabled={pending}
           >
             <option value="">Prefer not to say</option>
@@ -109,17 +174,35 @@ export function CommunityProfileForm({
               </option>
             ))}
           </select>
+          {otherFieldRequired(stream) && (
+            <div className="mt-2">
+              <label className="label" htmlFor="stream_other">
+                Your stream or interest area <RequiredMark />
+              </label>
+              <input
+                id="stream_other"
+                name="stream_other"
+                maxLength={COMMUNITY_OTHER_MAX_LENGTH}
+                required
+                className="input"
+                placeholder="Describe your stream or interest area"
+                value={streamOther}
+                onChange={(event) => setStreamOther(event.target.value)}
+                disabled={pending}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       <div>
         <label className="label" htmlFor="institution">
-          Institution (optional)
+          Institution
         </label>
         <input
           id="institution"
           name="institution"
-          maxLength={120}
+          maxLength={COMMUNITY_INSTITUTION_MAX_LENGTH}
           className="input"
           defaultValue={existing?.institution ?? defaults.institution}
           disabled={pending}
@@ -128,21 +211,24 @@ export function CommunityProfileForm({
 
       <div>
         <label className="label" htmlFor="bio">
-          Short bio (optional)
+          Short bio
         </label>
         <textarea
           id="bio"
           name="bio"
-          maxLength={280}
+          maxLength={COMMUNITY_BIO_MAX_LENGTH}
           className="input min-h-20"
           defaultValue={existing?.bio ?? ""}
           disabled={pending}
         />
+        <p className="mt-1 text-xs text-charcoal-soft">
+          Share a concise introduction to your psychology journey.
+        </p>
       </div>
 
       <div>
         <label className="label" htmlFor="interests">
-          Interests (optional, comma-separated)
+          Interests
         </label>
         <input
           id="interests"
@@ -152,10 +238,15 @@ export function CommunityProfileForm({
           defaultValue={(existing?.interests ?? []).join(", ")}
           disabled={pending}
         />
+        <p className="mt-1 text-xs text-charcoal-soft">
+          Separate interests with commas.
+        </p>
       </div>
 
       <fieldset>
-        <legend className="label">Who can find you</legend>
+        <legend className="label">
+          Who can find you <RequiredMark />
+        </legend>
         <div className="space-y-2">
           {VISIBILITY_OPTIONS.map((o) => (
             <label
@@ -166,6 +257,7 @@ export function CommunityProfileForm({
                 type="radio"
                 name="visibility"
                 value={o.value}
+                required
                 defaultChecked={
                   (existing?.visibility ?? "visible") === o.value
                 }
@@ -211,5 +303,14 @@ export function CommunityProfileForm({
         {pending ? "Saving…" : existing ? "Save changes" : "Join the community"}
       </button>
     </form>
+  );
+}
+
+function RequiredMark() {
+  return (
+    <>
+      <span aria-hidden="true">*</span>
+      <span className="sr-only">(required)</span>
+    </>
   );
 }

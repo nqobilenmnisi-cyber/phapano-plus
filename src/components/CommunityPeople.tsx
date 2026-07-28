@@ -6,7 +6,7 @@ import {
   searchMembersAction,
   toggleFollow,
 } from "@/app/(app)/app/community/actions";
-import { MemberAvatar, StageLine } from "@/components/CommunityShared";
+import { MemberAvatar } from "@/components/CommunityShared";
 import { careerStageLabels, streamLabels } from "@/lib/utils";
 import type { CommunityMemberCard } from "@/types/database";
 
@@ -198,11 +198,11 @@ export function MemberRow({ member }: { member: CommunityMemberCard }) {
         >
           {member.display_name}
         </Link>
-        <p className="truncate text-xs text-charcoal-soft">
-          <StageLine stage={member.stage} />
-          {member.stage && member.institution ? " · " : ""}
-          {member.institution ?? ""}
-        </p>
+        {(member.headline || member.institution) && (
+          <p className="truncate text-xs text-charcoal-soft">
+            {member.headline || member.institution}
+          </p>
+        )}
       </div>
       <FollowButton
         userId={member.user_id}

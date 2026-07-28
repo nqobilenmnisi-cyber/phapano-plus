@@ -101,7 +101,7 @@ async function getMyBlockedIds(uid: string): Promise<string[]> {
 /* ─── Feeds ──────────────────────────────────────────────────────────── */
 
 const POST_SELECT =
-  "*, author:community_profiles(user_id, display_name, stage, avatar_url), community_reactions(count), community_comments(count)";
+  "*, author:community_profiles(user_id, display_name, headline, stage, avatar_url), community_reactions(count), community_comments(count)";
 
 type RawPost = Record<string, unknown> & {
   author: CommunityPostView["author"];
@@ -232,7 +232,7 @@ export async function searchMembers(
 
   let query = supabase
     .from("community_profiles")
-    .select("user_id, display_name, stage, stream, institution, bio, avatar_url")
+    .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
     .eq("visibility", "visible")
     .neq("user_id", uid)
     .order("display_name")
@@ -290,7 +290,7 @@ export async function getFollowLists(): Promise<{
     const sb = await createClient();
     const { data } = await sb
       .from("community_profiles")
-      .select("user_id, display_name, stage, stream, institution, bio, avatar_url")
+      .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
       .in("user_id", ids)
       .order("display_name");
     return withFollowState((data ?? []) as CommunityMemberCard[], uid!);
@@ -374,7 +374,7 @@ export async function getBlockedAccounts(): Promise<CommunityMemberCard[]> {
   if (!blocked.length) return [];
   const { data } = await supabase
     .from("community_profiles")
-    .select("user_id, display_name, stage, stream, institution, bio, avatar_url")
+    .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
     .in("user_id", blocked)
     .order("display_name");
   const found = (data ?? []) as CommunityMemberCard[];
@@ -384,6 +384,7 @@ export async function getBlockedAccounts(): Promise<CommunityMemberCard[]> {
     .map((id) => ({
       user_id: id,
       display_name: "Phapano+ member",
+      headline: null,
       stage: null,
       stream: null,
       institution: null,

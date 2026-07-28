@@ -2,10 +2,8 @@
 
 /* Shared presentational pieces for Community Lite. */
 
-import { careerStageLabels } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
 export { timeAgo };
-import type { CareerStage } from "@/types/database";
 
 
 export function MemberAvatar({
@@ -44,15 +42,6 @@ export function MemberAvatar({
       style={{ width: size, height: size }}
     >
       {initials || "•"}
-    </span>
-  );
-}
-
-export function StageLine({ stage }: { stage: CareerStage | null }) {
-  if (!stage) return null;
-  return (
-    <span className="text-xs text-charcoal-soft">
-      {careerStageLabels[stage]}
     </span>
   );
 }
