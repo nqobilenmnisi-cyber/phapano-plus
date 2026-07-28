@@ -127,7 +127,8 @@ Unauthenticated users are redirected to `/login?redirect=…`.
 - **M4 — Funding (directory, detail, saving, deadline tracking)** ✅
 - **M5 — Journal (create, edit, delete, search, prompts, mood)** ✅
 - **M6 — Profile, settings and privacy (incl. POPIA account deletion)** ✅
-- **Notification delivery and user controls** planned before public beta
+- **Community relationship notifications and controls** ✅
+- **Deadline and funding notification delivery** planned before public beta
 - **M7 — Admin portal (universities, funding, articles, verification)** ✅
 - **Guarded local sample-data process** planned before public beta
 ```

@@ -8,6 +8,7 @@ import {
   shouldShowBio,
 } from "@/lib/community-profile-fields";
 import type {
+  CommunityConnectionState,
   CommunityPostView,
   CommunityProfile,
 } from "@/types/database";
@@ -17,8 +18,13 @@ type CommunityProfileViewProps = {
   profile: CommunityProfile;
   followers: number;
   following: number;
+  connections: number;
   followedByMe: boolean;
   blockedByMe: boolean;
+  connectionId: string | null;
+  connectionState: CommunityConnectionState;
+  connectionNote: string | null;
+  canConnect: boolean;
   posts: CommunityPostView[];
   viewerId: string;
   isOwnProfile?: boolean;
@@ -28,8 +34,13 @@ export function CommunityProfileView({
   profile,
   followers,
   following,
+  connections,
   followedByMe,
   blockedByMe,
+  connectionId,
+  connectionState,
+  connectionNote,
+  canConnect,
   posts,
   viewerId,
   isOwnProfile = false,
@@ -70,10 +81,25 @@ export function CommunityProfileView({
                 {pathwayStage}
               </p>
             )}
-            <p className="mt-2 text-xs text-charcoal-soft">
-              {followers} follower{followers === 1 ? "" : "s"} · {following}{" "}
-              following
-            </p>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              <ProfileStat
+                value={followers}
+                label={followers === 1 ? "follower" : "followers"}
+                href={isOwnProfile ? "/app/community/people" : undefined}
+              />
+              <ProfileStat
+                value={following}
+                label="following"
+                href={isOwnProfile ? "/app/community/people" : undefined}
+              />
+              <ProfileStat
+                value={connections}
+                label={connections === 1 ? "connection" : "connections"}
+                href={
+                  isOwnProfile ? "/app/community/connections" : undefined
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -91,6 +117,10 @@ export function CommunityProfileView({
               followedByMe={followedByMe}
               blockedByMe={blockedByMe}
               displayName={profile.display_name}
+              connectionId={connectionId}
+              connectionState={connectionState}
+              connectionNote={connectionNote}
+              canConnect={canConnect}
             />
           )}
         </div>
@@ -168,5 +198,30 @@ export function CommunityProfileView({
         </section>
       )}
     </>
+  );
+}
+
+function ProfileStat({
+  value,
+  label,
+  href,
+}: {
+  value: number;
+  label: string;
+  href?: string;
+}) {
+  const content = (
+    <>
+      <span className="font-bold text-charcoal">{value}</span>{" "}
+      <span className="text-charcoal-soft">{label}</span>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className="hover:underline">
+      {content}
+    </Link>
+  ) : (
+    <span>{content}</span>
   );
 }

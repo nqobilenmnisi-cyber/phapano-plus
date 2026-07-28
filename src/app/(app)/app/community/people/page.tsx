@@ -19,9 +19,17 @@ export default async function CommunityPeoplePage() {
         >
           ← Back to community
         </Link>
-        <h1 className="mt-3 font-sora text-3xl font-bold tracking-tight">
-          People
-        </h1>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <h1 className="font-sora text-3xl font-bold tracking-tight">
+            People
+          </h1>
+          <Link
+            href="/app/community/connections"
+            className="btn-secondary shrink-0 !px-3.5 !py-2 text-sm"
+          >
+            Connections
+          </Link>
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
           Find fellow psychology students and professionals across South
           Africa. Only members who chose to be visible appear here.

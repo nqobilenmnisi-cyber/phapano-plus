@@ -31,6 +31,24 @@ const VISIBILITY_OPTIONS = [
   },
 ] as const;
 
+const CONNECTION_OPTIONS = [
+  {
+    value: "everyone",
+    label: "Everyone",
+    hint: "Any visible Phapano+ member can send you a request.",
+  },
+  {
+    value: "following",
+    label: "People you follow",
+    hint: "Only members you already follow can send you a request.",
+  },
+  {
+    value: "nobody",
+    label: "No one",
+    hint: "Your current connections remain, but new requests are paused.",
+  },
+] as const;
+
 export function CommunityProfileForm({
   existing,
   defaults,
@@ -270,6 +288,41 @@ export function CommunityProfileForm({
                 </span>
                 <span className="block text-xs text-charcoal-soft">
                   {o.hint}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="label">
+          Who can connect with you <RequiredMark />
+        </legend>
+        <div className="space-y-2">
+          {CONNECTION_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-start gap-2.5 rounded-card border border-line bg-paper px-4 py-3"
+            >
+              <input
+                type="radio"
+                name="connection_permission"
+                value={option.value}
+                required
+                defaultChecked={
+                  (existing?.connection_permission ?? "everyone") ===
+                  option.value
+                }
+                className="mt-1"
+                disabled={pending}
+              />
+              <span>
+                <span className="block text-sm font-semibold text-charcoal">
+                  {option.label}
+                </span>
+                <span className="block text-xs text-charcoal-soft">
+                  {option.hint}
                 </span>
               </span>
             </label>

@@ -36,6 +36,49 @@ export async function updateNotificationPrefs(formData: FormData) {
   return { ok: true };
 }
 
+export async function updateCommunityNotificationPreference(enabled: boolean) {
+  if (!isSupabaseConfigured) return { ok: false, demo: true };
+  const { supabase, user } = await requireUser();
+  const nextEnabled = enabled === true;
+
+  const { data: profile, error: readError } = await supabase
+    .from("profiles")
+    .select("notification_prefs")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (readError) {
+    return {
+      ok: false,
+      error: "We couldn't load your notification preference.",
+    };
+  }
+
+  const current = profile?.notification_prefs ?? {
+    deadlines: true,
+    funding: true,
+    community: true,
+    product: true,
+  };
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      notification_prefs: {
+        ...current,
+        community: nextEnabled,
+      },
+    })
+    .eq("id", user.id);
+
+  if (error)
+    return {
+      ok: false,
+      error: "We couldn't save your notification preference.",
+    };
+
+  revalidatePath("/app/settings");
+  return { ok: true };
+}
+
 /**
  * Mark all of a user's notifications as read.
  */
