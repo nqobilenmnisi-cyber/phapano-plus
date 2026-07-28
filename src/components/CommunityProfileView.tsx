@@ -59,129 +59,148 @@ export function CommunityProfileView({
 
   return (
     <>
-      <section className="card mt-4 p-6">
-        <div className="flex items-start gap-4">
-          <MemberAvatar
-            name={profile.display_name}
-            avatarUrl={profile.avatar_url}
-            size={72}
-          />
-          <div className="min-w-0 flex-1">
+      <section className="card mt-4 overflow-hidden">
+        <div
+          className="h-24 bg-gradient-to-br from-blue-tint via-[#e8f4ff] to-bronze-soft/50 sm:h-28"
+          aria-hidden="true"
+        />
+        <div className="-mt-12 px-5 pb-6 sm:px-7">
+          <div className="flex items-end justify-between gap-4">
+            <div className="rounded-full bg-white p-1.5 shadow-card">
+              <MemberAvatar
+                name={profile.display_name}
+                avatarUrl={profile.avatar_url}
+                size={92}
+              />
+            </div>
+            {isOwnProfile && (
+              <Link
+                href="/app/community/profile/edit"
+                className="btn-secondary mb-1 inline-flex !px-4 !py-2 text-sm"
+              >
+                Edit profile
+              </Link>
+            )}
+          </div>
+
+          <div className="mt-4">
             {isOwnProfile ? (
-              <h2 className="break-words font-sora text-2xl font-bold tracking-tight">
+              <h2 className="break-words font-sora text-2xl font-bold tracking-tight sm:text-3xl">
                 {profile.display_name}
               </h2>
             ) : (
-              <h1 className="break-words font-sora text-2xl font-bold tracking-tight">
+              <h1 className="break-words font-sora text-2xl font-bold tracking-tight sm:text-3xl">
                 {profile.display_name}
               </h1>
             )}
             {pathwayStage && (
-              <p className="mt-1 break-words text-sm font-semibold text-charcoal-soft">
+              <p className="mt-1 break-words text-sm font-bold text-blue-deep">
                 {pathwayStage}
               </p>
             )}
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-              <ProfileStat
-                value={followers}
-                label={followers === 1 ? "follower" : "followers"}
-                href={isOwnProfile ? "/app/community/people" : undefined}
-              />
-              <ProfileStat
-                value={following}
-                label="following"
-                href={isOwnProfile ? "/app/community/people" : undefined}
-              />
-              <ProfileStat
-                value={connections}
-                label={connections === 1 ? "connection" : "connections"}
-                href={
-                  isOwnProfile ? "/app/community/connections" : undefined
-                }
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          {isOwnProfile ? (
-            <Link
-              href="/app/community/profile/edit"
-              className="btn-secondary inline-flex !px-4 !py-2 text-sm"
-            >
-              Edit profile
-            </Link>
-          ) : (
-            <CommunityMemberActions
-              userId={profile.user_id}
-              followedByMe={followedByMe}
-              blockedByMe={blockedByMe}
-              displayName={profile.display_name}
-              connectionId={connectionId}
-              connectionState={connectionState}
-              connectionNote={connectionNote}
-              canConnect={canConnect}
-            />
-          )}
-        </div>
-
-        {(headline || shouldShowBio(profile.bio)) && (
-          <div className="mt-5">
             {headline && (
-              <p className="break-words text-sm font-bold text-charcoal">
+              <p className="mt-2 break-words text-[0.95rem] font-semibold leading-snug text-charcoal">
                 {headline}
               </p>
             )}
             {shouldShowBio(profile.bio) && (
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-charcoal">
+              <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-charcoal-soft">
                 {profile.bio}
               </p>
             )}
           </div>
-        )}
 
-        {(psychologyStream || profile.institution) && (
-          <dl className="mt-5 grid gap-3 border-t border-line pt-4 text-sm sm:grid-cols-2">
-            {psychologyStream && (
-              <div>
-                <dt className="text-xs font-semibold text-charcoal-soft">
-                  Psychology stream
-                </dt>
-                <dd className="mt-0.5 text-charcoal">{psychologyStream}</dd>
-              </div>
-            )}
-            {profile.institution && (
-              <div>
-                <dt className="text-xs font-semibold text-charcoal-soft">
-                  Institution
-                </dt>
-                <dd className="mt-0.5 text-charcoal">
-                  {profile.institution}
-                </dd>
-              </div>
-            )}
-          </dl>
-        )}
+          <div className="mt-5 grid grid-cols-3 divide-x divide-line rounded-card border border-line bg-soft/70 py-3">
+            <ProfileStat
+              value={followers}
+              label={followers === 1 ? "Follower" : "Followers"}
+              href={isOwnProfile ? "/app/community/people" : undefined}
+            />
+            <ProfileStat
+              value={following}
+              label="Following"
+              href={isOwnProfile ? "/app/community/people" : undefined}
+            />
+            <ProfileStat
+              value={connections}
+              label={connections === 1 ? "Connection" : "Connections"}
+              href={isOwnProfile ? "/app/community/connections" : undefined}
+            />
+          </div>
 
-        {profile.interests.length > 0 && (
-          <ul className="mt-4 flex flex-wrap gap-1.5">
-            {profile.interests.map((interest) => (
-              <li
-                key={interest}
-                className="rounded-chip border border-line bg-soft px-2.5 py-1 text-xs font-semibold text-charcoal-soft"
-              >
-                {interest}
-              </li>
-            ))}
-          </ul>
-        )}
+          {!isOwnProfile && (
+            <div className="mt-4">
+              <CommunityMemberActions
+                userId={profile.user_id}
+                followedByMe={followedByMe}
+                blockedByMe={blockedByMe}
+                displayName={profile.display_name}
+                connectionId={connectionId}
+                connectionState={connectionState}
+                connectionNote={connectionNote}
+                canConnect={canConnect}
+              />
+            </div>
+          )}
+
+          {(psychologyStream ||
+            profile.institution ||
+            profile.interests.length > 0) && (
+            <div className="mt-6 border-t border-line pt-5">
+              <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-charcoal-soft">
+                About
+              </h3>
+              {(psychologyStream || profile.institution) && (
+                <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                  {psychologyStream && (
+                    <div className="rounded-card bg-blue-tint/55 px-4 py-3">
+                      <dt className="text-xs font-semibold text-charcoal-soft">
+                        Psychology stream
+                      </dt>
+                      <dd className="mt-1 font-semibold text-charcoal">
+                        {psychologyStream}
+                      </dd>
+                    </div>
+                  )}
+                  {profile.institution && (
+                    <div className="rounded-card bg-soft px-4 py-3">
+                      <dt className="text-xs font-semibold text-charcoal-soft">
+                        Institution
+                      </dt>
+                      <dd className="mt-1 font-semibold text-charcoal">
+                        {profile.institution}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+              {profile.interests.length > 0 && (
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {profile.interests.map((interest) => (
+                    <li
+                      key={interest}
+                      className="rounded-chip border border-blue/30 bg-white px-3 py-1.5 text-xs font-semibold text-blue-deep"
+                    >
+                      {interest}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       {!blockedByMe && (
         <section className="mt-6">
-          <h2 className="mb-3 font-sora text-lg font-bold tracking-tight">
-            Recent posts
-          </h2>
+          <div className="mb-3 flex items-center justify-between border-b border-line">
+            <h2 className="border-b-2 border-blue-action px-1 pb-3 font-sora text-base font-bold tracking-tight text-charcoal">
+              Posts
+            </h2>
+            <span className="pb-3 text-xs font-semibold text-charcoal-soft">
+              {posts.length} {posts.length === 1 ? "post" : "posts"}
+            </span>
+          </div>
           {posts.length === 0 ? (
             <p className="text-sm text-charcoal-soft">No posts yet.</p>
           ) : (
@@ -211,17 +230,19 @@ function ProfileStat({
   href?: string;
 }) {
   const content = (
-    <>
-      <span className="font-bold text-charcoal">{value}</span>{" "}
-      <span className="text-charcoal-soft">{label}</span>
-    </>
+    <span className="flex flex-col items-center px-1 text-center">
+      <span className="font-sora text-lg font-bold text-charcoal">{value}</span>
+      <span className="mt-0.5 text-[0.68rem] font-semibold text-charcoal-soft sm:text-xs">
+        {label}
+      </span>
+    </span>
   );
 
   return href ? (
-    <Link href={href} className="hover:underline">
+    <Link href={href} className="block hover:underline">
       {content}
     </Link>
   ) : (
-    <span>{content}</span>
+    content
   );
 }

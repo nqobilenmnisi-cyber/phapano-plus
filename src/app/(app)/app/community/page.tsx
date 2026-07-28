@@ -182,14 +182,17 @@ function Header({ mode }: { mode: "following" | "discover" }) {
           </Link>
         </div>
       </div>
-      <nav aria-label="Feed views" className="mt-4 flex gap-2">
+      <nav
+        aria-label="Feed views"
+        className="mt-5 flex gap-6 border-b border-line"
+      >
         <Link
           href="/app/community"
           aria-current={mode === "following" ? "page" : undefined}
-          className={`rounded-chip px-4 py-2 text-sm font-bold transition ${
+          className={`border-b-2 px-1 pb-3 text-sm font-bold transition ${
             mode === "following"
-              ? "bg-charcoal text-paper"
-              : "border border-line bg-paper text-charcoal-soft hover:text-charcoal"
+              ? "border-blue-action text-blue-deep"
+              : "border-transparent text-charcoal-soft hover:text-charcoal"
           }`}
         >
           Following
@@ -197,10 +200,10 @@ function Header({ mode }: { mode: "following" | "discover" }) {
         <Link
           href="/app/community?tab=discover"
           aria-current={mode === "discover" ? "page" : undefined}
-          className={`rounded-chip px-4 py-2 text-sm font-bold transition ${
+          className={`border-b-2 px-1 pb-3 text-sm font-bold transition ${
             mode === "discover"
-              ? "bg-charcoal text-paper"
-              : "border border-line bg-paper text-charcoal-soft hover:text-charcoal"
+              ? "border-blue-action text-blue-deep"
+              : "border-transparent text-charcoal-soft hover:text-charcoal"
           }`}
         >
           Discover

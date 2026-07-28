@@ -175,21 +175,25 @@ export function CommunityMemberActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <FollowButton userId={userId} initiallyFollowing={followedByMe} />
-      <ConnectionButton
-        userId={userId}
-        displayName={displayName}
-        state={connectionState}
-        connectionId={connectionId}
-        requestNote={connectionNote}
-        canConnect={canConnect}
-      />
+      <div className="min-w-[7rem] flex-1 [&>button]:w-full">
+        <FollowButton userId={userId} initiallyFollowing={followedByMe} />
+      </div>
+      <div className="min-w-[7rem] flex-1 [&>button]:w-full">
+        <ConnectionButton
+          userId={userId}
+          displayName={displayName}
+          state={connectionState}
+          connectionId={connectionId}
+          requestNote={connectionNote}
+          canConnect={canConnect}
+        />
+      </div>
 
       <div className="relative" ref={menuRef}>
         <button
           ref={menuButtonRef}
           type="button"
-          className="btn-secondary !px-3 !py-2 text-sm"
+          className="btn-secondary !h-10 !w-10 !rounded-full !px-0 !py-0 text-lg"
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           aria-controls={menuOpen ? menuId : undefined}

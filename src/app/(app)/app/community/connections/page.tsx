@@ -11,7 +11,7 @@ export default async function CommunityConnectionsPage() {
     : { connections: [], incoming: [], outgoing: [] };
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-12">
+    <main className="mx-auto max-w-3xl px-5 pb-12 sm:px-6">
       <section className="pb-5 pt-7">
         <Link
           href="/app/community"

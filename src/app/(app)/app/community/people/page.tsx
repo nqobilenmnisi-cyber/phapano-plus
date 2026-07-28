@@ -11,7 +11,7 @@ export default async function CommunityPeoplePage() {
     : [[], { followers: [], following: [] }];
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-12">
+    <main className="mx-auto max-w-3xl px-5 pb-12 sm:px-6">
       <section className="pb-4 pt-7">
         <Link
           href="/app/community"

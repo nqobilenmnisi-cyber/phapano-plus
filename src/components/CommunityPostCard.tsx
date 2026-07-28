@@ -67,7 +67,11 @@ export function CommunityPostCard({
   }
 
   return (
-    <article className="card p-5">
+    <article className="card overflow-hidden border-line/90">
+      {post.is_official && (
+        <div className="h-1 bg-gradient-to-r from-blue-action to-blue" />
+      )}
+      <div className="p-5">
       <header className="flex items-start gap-3">
         <Link
           href={`/app/community/member/${post.author_id}`}
@@ -145,7 +149,7 @@ export function CommunityPostCard({
         </p>
       )}
 
-      <footer className="mt-4 flex items-center gap-1 text-sm">
+      <footer className="mt-5 flex items-center gap-1 border-t border-line pt-3 text-sm">
         <button
           type="button"
           onClick={onLike}
@@ -238,6 +242,7 @@ export function CommunityPostCard({
           onClose={() => setReporting(false)}
         />
       )}
+      </div>
     </article>
   );
 }
