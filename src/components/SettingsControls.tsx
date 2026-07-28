@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import {
+  updateCommunityNotificationPreference,
   updateNotificationPrefs,
   deleteAccount,
 } from "@/app/(app)/app/settings/actions";
@@ -11,6 +12,83 @@ const PREF_ROWS: { key: keyof NotificationPrefs; title: string; body: string }[]
   { key: "deadlines", title: "Deadline reminders", body: "When an application, funding or note deadline you've saved is approaching." },
   { key: "funding", title: "New funding", body: "When funding that fits your stage and interests is added." },
 ];
+
+export function CommunityNotificationSetting({
+  enabled,
+  disabled,
+}: {
+  enabled: boolean;
+  disabled: boolean;
+}) {
+  const [active, setActive] = useState(enabled);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function save(next: boolean) {
+    if (disabled || pending) return;
+    setActive(next);
+    setSaved(false);
+    setError(null);
+    startTransition(async () => {
+      const result = await updateCommunityNotificationPreference(next);
+      if (!result.ok) {
+        setActive(!next);
+        setError(
+          "error" in result && result.error
+            ? result.error
+            : "We couldn't save your preference."
+        );
+        return;
+      }
+      setSaved(true);
+    });
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bold text-charcoal">Community activity</h3>
+          <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
+            In-app alerts for new followers, connection requests and accepted
+            connections.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={active}
+          aria-label="Community activity notifications"
+          onClick={() => save(!active)}
+          disabled={disabled || pending}
+          className={`relative h-7 w-12 flex-none rounded-full transition ${
+            active ? "bg-blue-action" : "bg-line"
+          } disabled:opacity-60`}
+        >
+          <span
+            className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+              active ? "left-6" : "left-1"
+            }`}
+          />
+        </button>
+      </div>
+      {saved && (
+        <p className="mt-2 text-xs font-semibold text-ok" aria-live="polite">
+          Preference saved.
+        </p>
+      )}
+      {error && (
+        <p
+          className="mt-2 text-xs text-bronze-deep"
+          aria-live="polite"
+        >
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function NotificationSettings({
   prefs,
@@ -133,8 +211,9 @@ export function DangerZone({ disabled }: { disabled: boolean }) {
         This permanently deletes your account and cannot be undone. Removed:
         your profile, saved institutions, applications, funding records,
         notes, reminders, and your community posts, comments, reactions and
-        follows. For community safety, any reports and moderation records may
-        be kept in anonymised form with your identity removed — see our{" "}
+        follows and connections. For community safety, any reports and
+        moderation records may be kept in anonymised form with your identity
+        removed — see our{" "}
         <a href="/privacy" className="font-semibold text-blue-action hover:underline">
           Privacy Policy
         </a>

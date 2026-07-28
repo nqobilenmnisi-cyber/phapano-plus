@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
-import { DangerZone } from "@/components/SettingsControls";
+import {
+  CommunityNotificationSetting,
+  DangerZone,
+} from "@/components/SettingsControls";
 import { getProfile, getCurrentUser } from "@/lib/queries";
 import { getBlockedAccounts } from "@/lib/community";
 import { CommunityBlockedList } from "@/components/CommunityBlockedList";
@@ -37,18 +40,24 @@ export default async function SettingsPage() {
           Updates and reminders
         </h2>
         <div className="card p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-charcoal">
-              Notification controls
-            </h3>
-            <span className="rounded-full bg-blue-tint px-2.5 py-1 text-xs font-bold text-blue-deep">
-              Coming soon
-            </span>
+          <CommunityNotificationSetting
+            enabled={profile?.notification_prefs.community ?? true}
+            disabled={!isSupabaseConfigured}
+          />
+          <div className="mt-5 border-t border-line pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-bold text-charcoal">
+                Deadline and funding alerts
+              </h3>
+              <span className="rounded-full bg-blue-tint px-2.5 py-1 text-xs font-bold text-blue-deep">
+                Coming soon
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
+              Deadline and funding delivery controls will appear here when
+              those alerts are active.
+            </p>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
-            In-app deadline, funding and Community alerts are being prepared.
-            We&apos;ll add controls here when delivery is active.
-          </p>
         </div>
       </section>
 

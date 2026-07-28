@@ -38,8 +38,13 @@ export default async function CommunityMemberPage({
         profile={member.profile}
         followers={member.followers}
         following={member.following}
+        connections={member.connections}
         followedByMe={member.followedByMe}
         blockedByMe={member.blockedByMe}
+        connectionId={member.connectionId}
+        connectionState={member.connectionState}
+        connectionNote={member.connectionNote}
+        canConnect={member.canConnect}
         posts={member.posts}
         viewerId={uid}
       />

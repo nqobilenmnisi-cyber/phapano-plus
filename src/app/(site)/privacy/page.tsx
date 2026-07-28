@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           <h1 className="font-sora text-4xl font-bold tracking-tight">
             Privacy Policy
           </h1>
-          <p className="mt-3 text-sm text-charcoal-soft">Version 2026-07-v1</p>
+          <p className="mt-3 text-sm text-charcoal-soft">Version 2026-07-v2</p>
         </div>
       </section>
 
@@ -28,8 +28,10 @@ export default function PrivacyPage() {
         </p>
         <p>
           If you take part in the community, we also store your community
-          profile, your posts and comments, your follows, reactions and blocks,
-          and a record that you accepted the Community Guidelines. When you
+          profile, your posts and comments, your follows, connection requests
+          and accepted connections, reactions and blocks, and a record that you
+          accepted the Community Guidelines. A short note you add to a
+          connection request is visible only to you and its recipient. When you
           submit a report, we store the report and enough context for our team
           to review it.
         </p>
@@ -53,6 +55,11 @@ export default function PrivacyPage() {
           moderation records are visible only to authorised administrators, and
           the person you report is never told who reported them.
         </p>
+        <p>
+          Other members may see your follower, following and connection counts.
+          They cannot browse the people in those lists. You can view and manage
+          your own lists while signed in.
+        </p>
 
         <h2>4. Data storage and security</h2>
         <p>
@@ -67,7 +74,7 @@ export default function PrivacyPage() {
         <p>
           You can delete your account at any time from Settings. When you do,
           your profile, saved items, applications, notes and community posts,
-          comments, reactions and follows are permanently removed.
+          comments, reactions, follows and connections are permanently removed.
         </p>
         <p>
           For the safety and integrity of the community, reports and moderation

@@ -30,6 +30,8 @@ describe("social-style Community profile", () => {
     expect(profileView).toContain("CommunityMemberActions");
     expect(profileView).toContain("followers");
     expect(profileView).toContain("following");
+    expect(profileView).toContain("connections");
+    expect(profileView).toContain("connectionState");
   });
 
   it("gives the owner a My profile view and a separate Edit profile action", () => {

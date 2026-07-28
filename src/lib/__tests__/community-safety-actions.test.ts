@@ -13,8 +13,9 @@ const profileActions = readFileSync(
 );
 
 describe("profile safety actions", () => {
-  it("keeps Follow as the primary visible action", () => {
+  it("keeps Follow and Connect as the primary visible actions", () => {
     expect(profileActions).toContain("FollowButton");
+    expect(profileActions).toContain("ConnectionButton");
   });
 
   it("places Report and Block in a labelled keyboard menu", () => {

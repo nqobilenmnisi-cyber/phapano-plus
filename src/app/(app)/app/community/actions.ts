@@ -8,6 +8,11 @@ import {
   validateCommunityProfileText,
 } from "@/lib/community-profile-fields";
 import {
+  CONNECTION_NOTE_MAX_LENGTH,
+  isUuid,
+  normalizeConnectionNote,
+} from "@/lib/community-connections";
+import {
   callRpc,
   COMMENT_MAX_LENGTH,
   COMMUNITY_TERMS_TYPE,
@@ -19,6 +24,7 @@ import {
 } from "@/lib/community";
 import type {
   CareerStage,
+  CommunityConnectionPermission,
   CommunityMemberCard,
   CommunityReportCategory,
   CommunityReportTargetType,
@@ -41,6 +47,11 @@ const GENERIC_ERROR =
   "Something went wrong on our side. Please try again in a moment.";
 
 const VISIBILITIES: CommunityVisibility[] = ["visible", "limited", "hidden"];
+const CONNECTION_PERMISSIONS: CommunityConnectionPermission[] = [
+  "everyone",
+  "following",
+  "nobody",
+];
 const REPORT_CATEGORIES: CommunityReportCategory[] = [
   "harassment",
   "misinformation",
@@ -75,6 +86,7 @@ async function withinLimit(
     | "community_posts"
     | "community_comments"
     | "community_follows"
+    | "community_connections"
     | "community_blocks"
     | "community_reports",
   column: string,
@@ -129,6 +141,9 @@ export async function saveCommunityProfile(
   const visibility = String(
     formData.get("visibility") ?? "visible"
   ) as CommunityVisibility;
+  const connection_permission = String(
+    formData.get("connection_permission") ?? "everyone"
+  ) as CommunityConnectionPermission;
   const interests = String(formData.get("interests") ?? "")
     .split(",")
     .map((s) => s.trim())
@@ -141,6 +156,8 @@ export async function saveCommunityProfile(
   if (profileTextError) return { error: profileTextError };
   if (!VISIBILITIES.includes(visibility))
     return { error: "Please choose a valid visibility option." };
+  if (!CONNECTION_PERMISSIONS.includes(connection_permission))
+    return { error: "Please choose who may send you connection requests." };
 
   const supabase = await createClient();
 
@@ -164,6 +181,7 @@ export async function saveCommunityProfile(
       bio: profileText.bio,
       interests,
       visibility,
+      connection_permission,
       avatar_url: passport?.avatar_url ?? null,
       updated_at: new Date().toISOString(),
     },
@@ -366,7 +384,7 @@ export async function deleteComment(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-/* ─── Follows, blocks ───────────────────────────────────────────────── */
+/* ─── Follows, connections, blocks ──────────────────────────────────── */
 
 export async function toggleFollow(
   userId: string,
@@ -399,6 +417,115 @@ export async function toggleFollow(
     if (error) return { error: GENERIC_ERROR };
   }
   revalidateCommunity();
+  return { ok: true };
+}
+
+function connectionActionError(message: string): string {
+  if (message.includes("connection_not_allowed"))
+    return "This member isn't accepting connection requests from you.";
+  if (message.includes("connection_exists"))
+    return "A connection or request already exists with this member.";
+  if (message.includes("connection_cooldown"))
+    return "Please wait 24 hours before sending this member another request.";
+  if (
+    message.includes("connection_request_unavailable") ||
+    message.includes("connection_unavailable")
+  )
+    return "This connection request is no longer available.";
+  if (message.includes("connection_blocked"))
+    return "You can't connect with this member.";
+  return GENERIC_ERROR;
+}
+
+function revalidateConnections() {
+  revalidateCommunity();
+  revalidatePath("/app/community/connections");
+  revalidatePath("/app/notifications");
+  revalidatePath("/dashboard");
+}
+
+export async function sendConnection(
+  userId: string,
+  note: string
+): Promise<ActionResult> {
+  const auth = await requireUser();
+  if ("error" in auth) return auth;
+  if (!isUuid(userId) || userId === auth.uid)
+    return { error: "Please choose another member to connect with." };
+  if (note.trim().length > CONNECTION_NOTE_MAX_LENGTH)
+    return {
+      error: `Your note can be up to ${CONNECTION_NOTE_MAX_LENGTH} characters.`,
+    };
+  if (
+    !(await withinLimit(
+      "community_connections",
+      "requester_id",
+      auth.uid,
+      DAY,
+      30
+    ))
+  )
+    return {
+      error:
+        "You've sent several connection requests today. Please try again tomorrow.",
+    };
+
+  const { error } = await callRpc("community_send_connection", {
+    target: userId,
+    note_text: normalizeConnectionNote(note),
+  });
+  if (error) return { error: connectionActionError(error.message) };
+  revalidateConnections();
+  return { ok: true };
+}
+
+export async function respondToConnection(
+  connectionId: string,
+  response: "accept" | "decline"
+): Promise<ActionResult> {
+  const auth = await requireUser();
+  if ("error" in auth) return auth;
+  if (!isUuid(connectionId))
+    return { error: "This connection request is no longer available." };
+
+  const { error } = await callRpc("community_respond_connection", {
+    connection_id: connectionId,
+    accept_request: response === "accept",
+  });
+  if (error) return { error: connectionActionError(error.message) };
+  revalidateConnections();
+  return { ok: true };
+}
+
+export async function cancelConnectionRequest(
+  connectionId: string
+): Promise<ActionResult> {
+  const auth = await requireUser();
+  if ("error" in auth) return auth;
+  if (!isUuid(connectionId))
+    return { error: "This connection request is no longer available." };
+
+  const { error } = await callRpc("community_cancel_connection", {
+    connection_id: connectionId,
+  });
+  if (error) return { error: connectionActionError(error.message) };
+  revalidateConnections();
+  return { ok: true };
+}
+
+export async function removeConnection(
+  connectionId: string
+): Promise<ActionResult> {
+  const auth = await requireUser();
+  if ("error" in auth) return auth;
+  if (!isUuid(connectionId))
+    return { error: "This connection is no longer available." };
+
+  const { error } = await callRpc("community_remove_connection", {
+    connection_id: connectionId,
+  });
+  if (error) return { error: connectionActionError(error.message) };
+  revalidateConnections();
   return { ok: true };
 }
 

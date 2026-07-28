@@ -31,7 +31,7 @@ export default function TermsPage() {
           Terms of Use
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-charcoal-soft">
-          Version 2026-07-v1. These terms are written in plain language on
+          Version 2026-07-v2. These terms are written in plain language on
           purpose — they are the agreement between you and Phapano, the
           non-profit organisation behind Phapano+ (&quot;we&quot;,
           &quot;us&quot;), for your use of the Phapano+ platform.
@@ -84,6 +84,12 @@ export default function TermsPage() {
           scams, false qualification claims, plagiarism, unauthorised
           advertising, false admission or funding information, irresponsible
           clinical advice, intellectual-property violations and spam.
+        </p>
+        <p>
+          Following is one-way. Connections are mutual and require acceptance.
+          You may cancel a pending request or remove a connection at any time.
+          Blocking another member ends follows and connection activity between
+          both accounts.
         </p>
       </Section>
 

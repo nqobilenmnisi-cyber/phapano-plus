@@ -33,3 +33,33 @@ describe("follower and following privacy", () => {
     );
   });
 });
+
+describe("connection-list privacy", () => {
+  it("only exposes the caller's own connection hub", () => {
+    const source = readFileSync(join(root, "src/lib/community.ts"), "utf8");
+    expect(source).toContain(
+      "export async function getConnectionHub(): Promise<{"
+    );
+    expect(source).not.toContain(
+      "export async function getConnectionHub(userId"
+    );
+  });
+
+  it("does not load another member's connection list on their profile", () => {
+    const source = readFileSync(
+      join(root, "src/app/(app)/app/community/member/[id]/page.tsx"),
+      "utf8"
+    );
+    expect(source).not.toContain("getConnectionHub");
+  });
+
+  it("enforces participant-only rows in the database", () => {
+    const migration = readFileSync(
+      join(root, "supabase/migrations/0018_community_connections.sql"),
+      "utf8"
+    );
+    expect(migration).toMatch(
+      /create policy cconn_select[\s\S]*requester_id = auth\.uid\(\)[\s\S]*recipient_id = auth\.uid\(\)/
+    );
+  });
+});

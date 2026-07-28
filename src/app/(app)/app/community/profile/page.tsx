@@ -31,8 +31,13 @@ export default async function MyCommunityProfilePage() {
           profile={member.profile}
           followers={member.followers}
           following={member.following}
+          connections={member.connections}
           followedByMe={false}
           blockedByMe={false}
+          connectionId={null}
+          connectionState="none"
+          connectionNote={null}
+          canConnect={false}
           posts={member.posts}
           viewerId={uid}
           isOwnProfile

@@ -11,18 +11,28 @@ import {
 import { useRouter } from "next/navigation";
 import { blockUser, unblockUser } from "@/app/(app)/app/community/actions";
 import { FollowButton } from "@/components/CommunityPeople";
+import { ConnectionButton } from "@/components/ConnectionButton";
 import { ReportDialog } from "@/components/ReportDialog";
+import type { CommunityConnectionState } from "@/types/database";
 
 export function CommunityMemberActions({
   userId,
   followedByMe,
   blockedByMe,
   displayName,
+  connectionId,
+  connectionState,
+  connectionNote,
+  canConnect,
 }: {
   userId: string;
   followedByMe: boolean;
   blockedByMe: boolean;
   displayName: string;
+  connectionId: string | null;
+  connectionState: CommunityConnectionState;
+  connectionNote: string | null;
+  canConnect: boolean;
 }) {
   const router = useRouter();
   const menuId = useId();
@@ -166,6 +176,14 @@ export function CommunityMemberActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <FollowButton userId={userId} initiallyFollowing={followedByMe} />
+      <ConnectionButton
+        userId={userId}
+        displayName={displayName}
+        state={connectionState}
+        connectionId={connectionId}
+        requestNote={connectionNote}
+        canConnect={canConnect}
+      />
 
       <div className="relative" ref={menuRef}>
         <button
@@ -252,7 +270,8 @@ export function CommunityMemberActions({
               className="mt-2 text-sm leading-relaxed text-charcoal-soft"
             >
               You will no longer see each other&apos;s Community profiles or
-              content. You can manage blocked users later in Settings.
+              content. Any follow or connection between you will also end. You
+              can manage blocked users later in Settings.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button

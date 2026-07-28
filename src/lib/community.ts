@@ -2,10 +2,18 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type {
   CommunityCommentView,
+  CommunityConnection,
+  CommunityConnectionItem,
+  CommunityConnectionState,
   CommunityMemberCard,
   CommunityPostView,
   CommunityProfile,
 } from "@/types/database";
+import {
+  canRequestConnection,
+  connectionStateFor,
+  isUuid,
+} from "@/lib/community-connections";
 
 /* Version of the Community Guidelines users must accept before first post. */
 export const COMMUNITY_TERMS_VERSION = "2026-07-v1";
@@ -303,17 +311,101 @@ export async function getFollowLists(): Promise<{
   return { followers, following };
 }
 
+export async function getConnectionHub(): Promise<{
+  connections: CommunityConnectionItem[];
+  incoming: CommunityConnectionItem[];
+  outgoing: CommunityConnectionItem[];
+}> {
+  const empty = { connections: [], incoming: [], outgoing: [] };
+  if (!isSupabaseConfigured) return empty;
+  const uid = await getMyUserId();
+  if (!uid) return empty;
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("community_connections")
+    .select("*")
+    .or(`requester_id.eq.${uid},recipient_id.eq.${uid}`)
+    .in("status", ["pending", "accepted"])
+    .order("updated_at", { ascending: false });
+
+  const rows = (data ?? []) as CommunityConnection[];
+  if (!rows.length) return empty;
+
+  const memberIds = Array.from(
+    new Set(
+      rows.map((row) =>
+        row.requester_id === uid ? row.recipient_id : row.requester_id
+      )
+    )
+  );
+  const { data: profileRows } = await supabase
+    .from("community_profiles")
+    .select(
+      "user_id, display_name, headline, stage, stream, institution, bio, avatar_url"
+    )
+    .in("user_id", memberIds);
+  const cards = await withFollowState(
+    (profileRows ?? []) as CommunityMemberCard[],
+    uid
+  );
+  const cardById = new Map(cards.map((card) => [card.user_id, card]));
+
+  const items = rows.map((row): CommunityConnectionItem => {
+    const memberId =
+      row.requester_id === uid ? row.recipient_id : row.requester_id;
+    const member =
+      cardById.get(memberId) ??
+      ({
+        user_id: memberId,
+        display_name: "Phapano+ member",
+        headline: null,
+        stage: null,
+        stream: null,
+        institution: null,
+        bio: null,
+        avatar_url: null,
+        followed_by_me: false,
+      } satisfies CommunityMemberCard);
+    const direction =
+      row.status === "accepted"
+        ? "connected"
+        : row.requester_id === uid
+          ? "outgoing"
+          : "incoming";
+    return {
+      connection_id: row.id,
+      status: row.status as "pending" | "accepted",
+      direction,
+      note: row.note,
+      created_at: row.created_at,
+      member,
+    };
+  });
+
+  return {
+    connections: items.filter((item) => item.direction === "connected"),
+    incoming: items.filter((item) => item.direction === "incoming"),
+    outgoing: items.filter((item) => item.direction === "outgoing"),
+  };
+}
+
 export async function getMemberProfile(id: string): Promise<{
   profile: CommunityProfile | null;
   followers: number;
   following: number;
+  connections: number;
   followedByMe: boolean;
   blockedByMe: boolean;
+  connectionId: string | null;
+  connectionState: CommunityConnectionState;
+  connectionNote: string | null;
+  canConnect: boolean;
   posts: CommunityPostView[];
 } | null> {
   if (!isSupabaseConfigured) return null;
   const uid = await getMyUserId();
-  if (!uid) return null;
+  if (!uid || !isUuid(id)) return null;
   const supabase = await createClient();
 
   const { data: profile } = await supabase
@@ -323,9 +415,19 @@ export async function getMemberProfile(id: string): Promise<{
     .maybeSingle();
   if (!profile) return null;
 
-  const [{ data: counts }, { data: followRow }, { data: blockRow }, postRes] =
-    await Promise.all([
+  const [
+    { data: counts },
+    { data: connectionCount },
+    { data: followRow },
+    { data: targetFollowRow },
+    { data: blockRow },
+    { data: connectionRow },
+    postRes,
+  ] = await Promise.all([
       (supabase as unknown as RpcClient).rpc("community_follow_counts", {
+        target: id,
+      }) as Promise<{ data: unknown; error: unknown }>,
+      (supabase as unknown as RpcClient).rpc("community_connection_count", {
         target: id,
       }) as Promise<{ data: unknown; error: unknown }>,
       supabase
@@ -335,10 +437,24 @@ export async function getMemberProfile(id: string): Promise<{
         .eq("followee_id", id)
         .maybeSingle(),
       supabase
+        .from("community_follows")
+        .select("followee_id")
+        .eq("follower_id", id)
+        .eq("followee_id", uid)
+        .maybeSingle(),
+      supabase
         .from("community_blocks")
         .select("blocked_id")
         .eq("blocker_id", uid)
         .eq("blocked_id", id)
+        .maybeSingle(),
+      supabase
+        .from("community_connections")
+        .select("*")
+        .or(
+          `and(requester_id.eq.${uid},recipient_id.eq.${id}),and(requester_id.eq.${id},recipient_id.eq.${uid})`
+        )
+        .in("status", ["pending", "accepted"])
         .maybeSingle(),
       supabase
         .from("community_posts")
@@ -350,6 +466,9 @@ export async function getMemberProfile(id: string): Promise<{
     ]);
 
   const countRow = (counts as { followers: number; following: number }[] | null)?.[0];
+  const activeConnection =
+    (connectionRow as CommunityConnection | null) ?? null;
+  const connectionState = connectionStateFor(activeConnection, uid);
   const posts = await attachViewerState(
     ((postRes.data ?? []) as unknown as RawPost[]),
     uid
@@ -359,8 +478,20 @@ export async function getMemberProfile(id: string): Promise<{
     profile: profile as CommunityProfile,
     followers: Number(countRow?.followers ?? 0),
     following: Number(countRow?.following ?? 0),
+    connections: Number(connectionCount ?? 0),
     followedByMe: !!followRow,
     blockedByMe: !!blockRow,
+    connectionId: activeConnection?.id ?? null,
+    connectionState,
+    connectionNote:
+      connectionState === "incoming_pending" ? activeConnection?.note ?? null : null,
+    canConnect:
+      id !== uid &&
+      connectionState === "none" &&
+      canRequestConnection(
+        (profile as CommunityProfile).connection_permission,
+        !!targetFollowRow
+      ),
     posts,
   };
 }
@@ -397,7 +528,13 @@ export async function getBlockedAccounts(): Promise<CommunityMemberCard[]> {
 
 /** Untyped rpc helper for actions. */
 export async function callRpc(
-  fn: "community_block_user" | "community_unblock_user",
+  fn:
+    | "community_block_user"
+    | "community_unblock_user"
+    | "community_send_connection"
+    | "community_respond_connection"
+    | "community_cancel_connection"
+    | "community_remove_connection",
   args: Record<string, unknown>
 ): Promise<{ error: { message: string } | null }> {
   const supabase = await createClient();

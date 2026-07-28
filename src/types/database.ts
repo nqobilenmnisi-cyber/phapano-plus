@@ -346,6 +346,15 @@ export interface Database {
         Update: Partial<CommunityFollow>;
         Relationships: [];
       };
+      community_connections: {
+        Row: CommunityConnection;
+        Insert: Partial<CommunityConnection> & {
+          requester_id: string;
+          recipient_id: string;
+        };
+        Update: Partial<CommunityConnection>;
+        Relationships: [];
+      };
       community_posts: {
         Row: CommunityPost;
         Insert: Partial<CommunityPost> & { author_id: string; body: string };
@@ -561,6 +570,21 @@ export type ProgrammeUpdate = {
 /* ─── Community Lite ─────────────────────────────────────────────────── */
 
 export type CommunityVisibility = "visible" | "limited" | "hidden";
+export type CommunityConnectionPermission =
+  | "everyone"
+  | "following"
+  | "nobody";
+export type CommunityConnectionStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "cancelled"
+  | "removed";
+export type CommunityConnectionState =
+  | "none"
+  | "outgoing_pending"
+  | "incoming_pending"
+  | "connected";
 export type CommunityContentStatus = "published" | "removed";
 export type CommunityReportTargetType = "post" | "comment" | "profile";
 export type CommunityReportStatus = "open" | "resolved" | "dismissed";
@@ -601,6 +625,7 @@ export type CommunityProfile = {
   bio: string | null;
   interests: string[];
   visibility: CommunityVisibility;
+  connection_permission: CommunityConnectionPermission;
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
@@ -617,6 +642,17 @@ export type CommunityFollow = {
   follower_id: string;
   followee_id: string;
   created_at: string;
+};
+
+export type CommunityConnection = {
+  id: string;
+  requester_id: string;
+  recipient_id: string;
+  status: CommunityConnectionStatus;
+  note: string | null;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type CommunityPost = {
@@ -721,6 +757,15 @@ export type CommunityMemberCard = Pick<
   | "bio"
   | "avatar_url"
 > & { followed_by_me: boolean };
+
+export type CommunityConnectionItem = {
+  connection_id: string;
+  status: "pending" | "accepted";
+  direction: "incoming" | "outgoing" | "connected";
+  note: string | null;
+  created_at: string;
+  member: CommunityMemberCard;
+};
 
 
 export type ContactMessage = {
