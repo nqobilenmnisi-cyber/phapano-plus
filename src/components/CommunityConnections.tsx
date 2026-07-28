@@ -19,9 +19,9 @@ export function CommunityConnections({
   outgoing: CommunityConnectionItem[];
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <section aria-labelledby="connection-requests-heading">
-        <div className="flex items-end justify-between gap-4">
+        <div className="rounded-card border border-blue/20 bg-gradient-to-r from-blue-tint/60 to-white p-5 sm:flex sm:items-end sm:justify-between sm:gap-4">
           <div>
             <h2
               id="connection-requests-heading"
@@ -121,7 +121,11 @@ function ConnectionRow({
         : "connected";
 
   return (
-    <div className={`card p-4 ${compact ? "h-full" : ""}`}>
+    <div
+      className={`card border-line/90 p-4 transition hover:border-blue/35 hover:shadow-md ${
+        compact ? "h-full" : ""
+      }`}
+    >
       <div className="flex items-start gap-3">
         <Link
           href={`/app/community/member/${member.user_id}`}

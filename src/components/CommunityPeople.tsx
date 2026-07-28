@@ -71,17 +71,21 @@ export function CommunityPeople({
 
   return (
     <div>
-      <div role="tablist" aria-label="People views" className="flex gap-2">
+      <div
+        role="tablist"
+        aria-label="People views"
+        className="grid grid-cols-3 gap-1 rounded-card border border-line bg-soft p-1"
+      >
         {tabs.map((t) => (
           <button
             key={t.id}
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-chip px-4 py-2 text-sm font-bold transition ${
+            className={`rounded-chip px-2 py-2.5 text-xs font-bold transition sm:px-4 sm:text-sm ${
               tab === t.id
-                ? "bg-charcoal text-paper"
-                : "border border-line bg-paper text-charcoal-soft hover:text-charcoal"
+                ? "bg-white text-blue-deep shadow-sm"
+                : "text-charcoal-soft hover:bg-white/70 hover:text-charcoal"
             }`}
           >
             {t.label}
@@ -90,7 +94,7 @@ export function CommunityPeople({
       </div>
 
       {tab === "discover" && (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="mt-4 grid gap-2 rounded-card border border-blue/20 bg-blue-tint/35 p-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="sr-only" htmlFor="people-search">
               Search members by display name
@@ -181,7 +185,8 @@ export function CommunityPeople({
 
 export function MemberRow({ member }: { member: CommunityMemberCard }) {
   return (
-    <li className="card flex items-center gap-3 p-4">
+    <li className="card flex min-h-[8.5rem] flex-col items-stretch p-4">
+      <div className="flex items-start gap-3">
       <Link
         href={`/app/community/member/${member.user_id}`}
         aria-label={`View ${member.display_name}'s profile`}
@@ -204,10 +209,18 @@ export function MemberRow({ member }: { member: CommunityMemberCard }) {
           </p>
         )}
       </div>
-      <FollowButton
-        userId={member.user_id}
-        initiallyFollowing={member.followed_by_me}
-      />
+      </div>
+      {member.bio && (
+        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-charcoal-soft">
+          {member.bio}
+        </p>
+      )}
+      <div className="mt-auto pt-3 [&>button]:w-full">
+        <FollowButton
+          userId={member.user_id}
+          initiallyFollowing={member.followed_by_me}
+        />
+      </div>
     </li>
   );
 }

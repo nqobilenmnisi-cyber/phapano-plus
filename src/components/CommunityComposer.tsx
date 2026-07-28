@@ -45,19 +45,31 @@ export function CommunityComposer({
   }
 
   return (
-    <section aria-label="Create a post" className="card p-5">
+    <section
+      aria-label="Create a post"
+      className="card overflow-hidden border-blue/20"
+    >
+      <div className="border-b border-line bg-gradient-to-r from-blue-tint/70 to-white px-5 py-4">
+        <h2 className="font-sora text-base font-bold tracking-tight">
+          Share with the community
+        </h2>
+        <p className="mt-0.5 text-xs text-charcoal-soft">
+          Ask a question, celebrate a milestone or share a useful resource.
+        </p>
+      </div>
+      <div className="p-5">
       <label className="sr-only" htmlFor="composer">
         Share something with the community
       </label>
-      <textarea
-        id="composer"
-        className="input min-h-24"
-        placeholder="Share a question, milestone or resource with the community…"
-        maxLength={POST_MAX_LENGTH}
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        disabled={pending}
-      />
+        <textarea
+          id="composer"
+          className="input min-h-24 resize-y border-0 bg-soft/70 focus:bg-white"
+          placeholder="What would you like to share?"
+          maxLength={POST_MAX_LENGTH}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          disabled={pending}
+        />
       <div className="mt-2 flex items-center justify-between text-xs text-charcoal-soft">
         <span>
           {body.length}/{POST_MAX_LENGTH}
@@ -96,14 +108,15 @@ export function CommunityComposer({
         </p>
       )}
 
-      <button
-        className="btn-primary mt-3 w-full sm:w-auto"
-        onClick={publish}
-        disabled={pending || !body.trim()}
-        aria-busy={pending}
-      >
-        {pending ? "Publishing…" : "Post"}
-      </button>
+        <button
+          className="btn-primary mt-3 w-full sm:w-auto"
+          onClick={publish}
+          disabled={pending || !body.trim()}
+          aria-busy={pending}
+        >
+          {pending ? "Publishing…" : "Post"}
+        </button>
+      </div>
     </section>
   );
 }
