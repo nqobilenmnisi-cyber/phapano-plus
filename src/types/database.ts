@@ -586,8 +586,11 @@ export type CommunityModerationActionType =
 export type CommunityProfile = {
   user_id: string;
   display_name: string;
+  headline: string | null;
   stage: CareerStage | null;
+  stage_other: string | null;
   stream: PsychologyStream | null;
+  stream_other: string | null;
   institution: string | null;
   bio: string | null;
   interests: string[];
@@ -687,7 +690,7 @@ export type CommunityTermsAcceptance = {
 export type CommunityPostView = CommunityPost & {
   author: Pick<
     CommunityProfile,
-    "user_id" | "display_name" | "stage" | "avatar_url"
+    "user_id" | "display_name" | "headline" | "stage" | "avatar_url"
   > | null;
   like_count: number;
   comment_count: number;
@@ -705,6 +708,7 @@ export type CommunityMemberCard = Pick<
   CommunityProfile,
   | "user_id"
   | "display_name"
+  | "headline"
   | "stage"
   | "stream"
   | "institution"

@@ -34,6 +34,7 @@ export default async function CommunityProfileEditPage() {
           defaults={{
             name: passport?.full_name ?? "",
             stage: passport?.career_stage ?? "",
+            stageOther: passport?.career_stage_other ?? "",
             institution: passport?.university ?? "",
           }}
         />

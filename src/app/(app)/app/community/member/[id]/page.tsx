@@ -4,6 +4,11 @@ import { CommunityMemberActions } from "@/components/CommunityMemberActions";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { MemberAvatar } from "@/components/CommunityShared";
 import { getMemberProfile, getMyUserId } from "@/lib/community";
+import {
+  communityChoiceLabel,
+  profileHeadline,
+  shouldShowBio,
+} from "@/lib/community-profile-fields";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { careerStageLabels, streamLabels } from "@/lib/utils";
 
@@ -39,6 +44,17 @@ export default async function CommunityMemberPage({
   const member = await getMemberProfile(params.id);
   if (!member?.profile) notFound();
   const p = member.profile;
+  const headline = profileHeadline(p.headline);
+  const pathwayStage = communityChoiceLabel(
+    p.stage,
+    p.stage_other,
+    careerStageLabels
+  );
+  const psychologyStream = communityChoiceLabel(
+    p.stream,
+    p.stream_other,
+    streamLabels
+  );
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-12">
@@ -58,15 +74,11 @@ export default async function CommunityMemberPage({
             <h1 className="break-words font-sora text-2xl font-bold tracking-tight">
               {p.display_name}
             </h1>
-            <p className="mt-0.5 text-sm text-charcoal-soft">
-              {[
-                p.stage ? careerStageLabels[p.stage] : null,
-                p.stream ? streamLabels[p.stream] : null,
-                p.institution,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
+            {headline && (
+              <p className="mt-0.5 break-words text-sm font-semibold text-charcoal">
+                {headline}
+              </p>
+            )}
             <p className="mt-1 text-xs text-charcoal-soft">
               {member.followers} follower{member.followers === 1 ? "" : "s"} ·{" "}
               {member.following} following
@@ -74,10 +86,42 @@ export default async function CommunityMemberPage({
           </div>
         </div>
 
-        {p.bio && (
-          <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-charcoal">
-            {p.bio}
-          </p>
+        {(pathwayStage || psychologyStream || p.institution) && (
+          <dl className="mt-5 grid gap-3 rounded-card border border-line bg-soft p-4 text-sm sm:grid-cols-2">
+            {pathwayStage && (
+              <div>
+                <dt className="text-xs font-semibold text-charcoal-soft">
+                  Pathway stage
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{pathwayStage}</dd>
+              </div>
+            )}
+            {psychologyStream && (
+              <div>
+                <dt className="text-xs font-semibold text-charcoal-soft">
+                  Psychology stream
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{psychologyStream}</dd>
+              </div>
+            )}
+            {p.institution && (
+              <div>
+                <dt className="text-xs font-semibold text-charcoal-soft">
+                  Institution
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{p.institution}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+
+        {p.bio && shouldShowBio(p.bio) && (
+          <section className="mt-5">
+            <h2 className="text-sm font-bold text-charcoal">About</h2>
+            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-charcoal">
+              {p.bio}
+            </p>
+          </section>
         )}
         {p.interests.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-1.5">

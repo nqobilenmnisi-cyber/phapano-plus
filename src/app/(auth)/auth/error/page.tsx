@@ -17,8 +17,9 @@ export default function AuthErrorPage() {
         Verification link unavailable
       </h1>
       <p className="mx-auto mt-3 max-w-sm text-charcoal-soft">
-        This verification link is invalid or has expired. Request a new
-        verification email to continue.
+        This verification link is invalid, has expired or has already been
+        used. Request a new verification email if you still need to confirm
+        your account.
       </p>
 
       <div className="mt-6 text-left">

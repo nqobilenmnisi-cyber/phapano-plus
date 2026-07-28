@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { blockUser, unblockUser } from "@/app/(app)/app/community/actions";
 import { FollowButton } from "@/components/CommunityPeople";
@@ -18,12 +25,101 @@ export function CommunityMemberActions({
   displayName: string;
 }) {
   const router = useRouter();
+  const menuId = useId();
   const [reporting, setReporting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    menuRef.current
+      ?.querySelector<HTMLButtonElement>('[role="menuitem"]')
+      ?.focus();
+
+    function onPointerDown(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+
+    function onEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!confirmingBlock) return;
+    cancelButtonRef.current?.focus();
+  }, [confirmingBlock]);
+
+  function onMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const items = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"]'
+      ) ?? []
+    );
+    if (!items.length) return;
+    const current = items.indexOf(document.activeElement as HTMLButtonElement);
+    let next = current;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = items.length - 1;
+    if (event.key === "ArrowDown") next = (current + 1) % items.length;
+    if (event.key === "ArrowUp")
+      next = (current - 1 + items.length) % items.length;
+    items[next]?.focus();
+  }
+
+  function closeBlockDialog() {
+    setConfirmingBlock(false);
+    requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }
+
+  function onDialogKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape" && !pending) {
+      closeBlockDialog();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    const controls = Array.from(
+      dialogRef.current?.querySelectorAll<HTMLButtonElement>(
+        'button:not([disabled])'
+      ) ?? []
+    );
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   function doBlock() {
+    setError(null);
     startTransition(async () => {
       const result = await blockUser(userId);
       if ("error" in result) setError(result.error);
@@ -35,6 +131,7 @@ export function CommunityMemberActions({
   }
 
   function doUnblock() {
+    setError(null);
     startTransition(async () => {
       const result = await unblockUser(userId);
       if ("error" in result) setError(result.error);
@@ -50,6 +147,7 @@ export function CommunityMemberActions({
           you won&apos;t see theirs.
         </p>
         <button
+          type="button"
           className="btn-secondary mt-3"
           onClick={doUnblock}
           disabled={pending}
@@ -68,51 +166,116 @@ export function CommunityMemberActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <FollowButton userId={userId} initiallyFollowing={followedByMe} />
-      <button
-        className="btn-secondary !px-4 !py-2 text-sm"
-        onClick={() => setReporting(true)}
-      >
-        Report
-      </button>
-      {confirmingBlock ? (
-        <span className="flex items-center gap-2 text-sm">
-          <span className="text-charcoal-soft">
-            Block {displayName}?
-          </span>
-          <button
-            className="font-bold text-bronze-deep"
-            onClick={doBlock}
-            disabled={pending}
-          >
-            {pending ? "Blocking…" : "Yes, block"}
-          </button>
-          <button
-            className="font-semibold text-charcoal-soft"
-            onClick={() => setConfirmingBlock(false)}
-            disabled={pending}
-          >
-            Cancel
-          </button>
-        </span>
-      ) : (
+
+      <div className="relative" ref={menuRef}>
         <button
-          className="btn-secondary !px-4 !py-2 text-sm"
-          onClick={() => setConfirmingBlock(true)}
+          ref={menuButtonRef}
+          type="button"
+          className="btn-secondary !px-3 !py-2 text-sm"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-controls={menuOpen ? menuId : undefined}
+          aria-label={`More actions for ${displayName}`}
+          onClick={() => setMenuOpen((open) => !open)}
         >
-          Block user
+          <span aria-hidden="true">⋯</span>
         </button>
-      )}
+        {menuOpen && (
+          <div
+            id={menuId}
+            role="menu"
+            aria-label={`Actions for ${displayName}`}
+            className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-card border border-line bg-paper shadow-lg"
+            onKeyDown={onMenuKeyDown}
+          >
+            <button
+              type="button"
+              role="menuitem"
+              className="block w-full px-4 py-2.5 text-left text-sm text-charcoal hover:bg-soft"
+              onClick={() => {
+                setMenuOpen(false);
+                setReporting(true);
+              }}
+            >
+              Report profile
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="block w-full px-4 py-2.5 text-left text-sm text-bronze-deep hover:bg-soft"
+              onClick={() => {
+                setMenuOpen(false);
+                setConfirmingBlock(true);
+              }}
+            >
+              Block user
+            </button>
+          </div>
+        )}
+      </div>
+
       {error && (
         <p className="w-full text-xs text-bronze-deep" aria-live="polite">
           {error}
         </p>
       )}
+
       {reporting && (
         <ReportDialog
           targetType="profile"
           targetUserId={userId}
           onClose={() => setReporting(false)}
         />
+      )}
+
+      {confirmingBlock && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="block-user-title"
+          aria-describedby="block-user-description"
+          onKeyDown={onDialogKeyDown}
+        >
+          <div
+            ref={dialogRef}
+            className="w-full max-w-sm rounded-card border border-line bg-paper p-6"
+          >
+            <h2
+              id="block-user-title"
+              className="font-sora text-lg font-bold tracking-tight"
+            >
+              Block this user?
+            </h2>
+            <p
+              id="block-user-description"
+              className="mt-2 text-sm leading-relaxed text-charcoal-soft"
+            >
+              You will no longer see each other&apos;s Community profiles or
+              content. You can manage blocked users later in Settings.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                ref={cancelButtonRef}
+                type="button"
+                className="btn-secondary !px-4 !py-2 text-sm"
+                onClick={closeBlockDialog}
+                disabled={pending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary !px-4 !py-2 text-sm"
+                onClick={doBlock}
+                disabled={pending}
+                aria-busy={pending}
+              >
+                {pending ? "Blocking…" : "Block user"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
+  normalizeCommunityProfileText,
+  validateCommunityProfileText,
+} from "@/lib/community-profile-fields";
+import {
   callRpc,
   COMMENT_MAX_LENGTH,
   COMMUNITY_TERMS_TYPE,
@@ -106,15 +110,22 @@ export async function saveCommunityProfile(
   const display_name = String(formData.get("display_name") ?? "").trim();
   const stageRaw = String(formData.get("stage") ?? "");
   const streamRaw = String(formData.get("stream") ?? "");
+  const profileTextInput = {
+    headline: String(formData.get("headline") ?? ""),
+    stage: stageRaw,
+    stageOther: String(formData.get("stage_other") ?? ""),
+    stream: streamRaw,
+    streamOther: String(formData.get("stream_other") ?? ""),
+    institution: String(formData.get("institution") ?? ""),
+    bio: String(formData.get("bio") ?? ""),
+  };
+  const profileText = normalizeCommunityProfileText(profileTextInput);
   const stage = (CAREER_STAGES as readonly string[]).includes(stageRaw)
     ? (stageRaw as CareerStage)
     : null;
   const stream = (PSYCH_STREAMS as readonly string[]).includes(streamRaw)
     ? (streamRaw as PsychologyStream)
     : null;
-  const institution =
-    String(formData.get("institution") ?? "").trim() || null;
-  const bio = String(formData.get("bio") ?? "").trim() || null;
   const visibility = String(
     formData.get("visibility") ?? "visible"
   ) as CommunityVisibility;
@@ -126,8 +137,8 @@ export async function saveCommunityProfile(
 
   if (display_name.length < 2 || display_name.length > 60)
     return { error: "Please choose a display name of 2–60 characters." };
-  if (bio && bio.length > 280)
-    return { error: "Your bio can be up to 280 characters." };
+  const profileTextError = validateCommunityProfileText(profileTextInput);
+  if (profileTextError) return { error: profileTextError };
   if (!VISIBILITIES.includes(visibility))
     return { error: "Please choose a valid visibility option." };
 
@@ -144,10 +155,13 @@ export async function saveCommunityProfile(
     {
       user_id: auth.uid,
       display_name,
+      headline: profileText.headline,
       stage,
+      stage_other: profileText.stageOther,
       stream,
-      institution,
-      bio,
+      stream_other: profileText.streamOther,
+      institution: profileText.institution,
+      bio: profileText.bio,
       interests,
       visibility,
       avatar_url: passport?.avatar_url ?? null,

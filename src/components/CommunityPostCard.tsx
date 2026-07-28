@@ -7,7 +7,7 @@ import {
   toggleReaction,
   updatePost,
 } from "@/app/(app)/app/community/actions";
-import { MemberAvatar, StageLine, timeAgo } from "@/components/CommunityShared";
+import { MemberAvatar, timeAgo } from "@/components/CommunityShared";
 import { ReportDialog } from "@/components/ReportDialog";
 import { POST_MAX_LENGTH } from "@/lib/community-constants";
 import type { CommunityPostView } from "@/types/database";
@@ -90,8 +90,7 @@ export function CommunityPostCard({
             )}
           </div>
           <p className="text-xs text-charcoal-soft">
-            <StageLine stage={post.author?.stage ?? null} />
-            {post.author?.stage ? " · " : ""}
+            {post.author?.headline ? `${post.author.headline} · ` : ""}
             <time dateTime={post.created_at}>{timeAgo(post.created_at)}</time>
             {post.edited_at ? " · edited" : ""}
           </p>
