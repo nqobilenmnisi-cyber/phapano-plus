@@ -64,6 +64,7 @@ export function CommunityProfileForm({
       if (result && "error" in result) setError(result.error);
       else {
         setSaved(true);
+        router.push("/app/community/profile");
         router.refresh();
       }
     });
