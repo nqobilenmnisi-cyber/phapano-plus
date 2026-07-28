@@ -16,13 +16,14 @@ export const metadata = { title: "Post — Phapano+" };
 export default async function CommunityPostPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   if (!isSupabaseConfigured) notFound();
+  const { id } = await params;
 
   const [uid, post] = await Promise.all([
     getMyUserId(),
-    getPostView(params.id),
+    getPostView(id),
   ]);
   if (!post || !uid) notFound();
 

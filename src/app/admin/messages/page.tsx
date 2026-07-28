@@ -7,10 +7,11 @@ export const metadata = { title: "Messages — Phapano+ Admin" };
 export default async function AdminMessagesPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   const ctx = await requireAdmin();
-  const status = searchParams.status === "handled" ? "handled" : "new";
+  const query = await searchParams;
+  const status = query.status === "handled" ? "handled" : "new";
 
   let messages: ContactMessage[] = [];
   if (!ctx.demo) {

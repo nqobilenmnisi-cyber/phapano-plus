@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   SAFE_SUPABASE_URL,
   SAFE_SUPABASE_ANON_KEY,
+  isDemoMode,
   isSupabaseConfigured,
 } from "./config";
 import type { Database } from "@/types/database";
@@ -13,15 +14,24 @@ import type { Database } from "@/types/database";
  * Protected prefixes: /dashboard, /app, /onboarding, /admin.
  * Unauthenticated users hitting these are redirected to /login.
  *
- * In placeholder mode (no real Supabase) we DO NOT redirect — this lets the
- * public website and the app shell be developed/previewed without real auth.
+ * Missing production configuration fails closed. Auth-free demo behaviour is
+ * available only through an explicit development-only flag.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  // Without real credentials, skip auth gating so development can proceed.
   if (!isSupabaseConfigured) {
-    return supabaseResponse;
+    if (isDemoMode) return supabaseResponse;
+    return new NextResponse(
+      "Phapano+ is temporarily unavailable because required service configuration is missing.",
+      {
+        status: 503,
+        headers: {
+          "Cache-Control": "no-store",
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+      }
+    );
   }
 
   const supabase = createServerClient<Database>(

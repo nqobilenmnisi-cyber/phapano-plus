@@ -16,9 +16,10 @@ export const metadata = { title: "Email verified — Phapano+" };
 export default async function VerifiedPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
-  const already = searchParams.status === "already";
+  const query = await searchParams;
+  const already = query.status === "already";
 
   return (
     <div className="animate-fade text-center" role="status">

@@ -39,7 +39,7 @@ export default async function ProfilePage() {
         : null;
 
   const counts = {
-    programmes: savedProgrammes.length,
+    programmes: savedProgrammes.filter((programme) => programme.is_saved).length,
     funding: savedFunding.length,
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { JournalEntry } from "@/types/database";
 import {
   createEntry,
@@ -107,7 +107,7 @@ export function JournalEntries({
   const [editText, setEditText] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [pending, start] = useTransition();
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   const resolvedTag = tag === "Other" ? customTag.trim() || "Other" : tag;
 
@@ -149,7 +149,7 @@ export function JournalEntries({
     setDue("");
   }
 
-  function add() {
+  async function add() {
     if (!content.trim()) return;
     setNotice(null);
 
@@ -164,48 +164,87 @@ export function JournalEntries({
     if (priority) fd.set("priority", priority);
     if (due) fd.set("due_date", due);
 
-    const optimistic: JournalEntry = {
-      id: `tmp-${Date.now()}`,
-      user_id: "me",
-      content,
-      prompt: null,
-      approach: resolvedTag,
-      priority,
-      due_date: due || null,
-      mood: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setEntries((e) => [optimistic, ...e]);
-    resetComposer();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-
-    start(async () => {
+    setPendingAction("create");
+    try {
       const res = await createEntry(fd);
-      if (res && "error" in res && res.error) setNotice(`Couldn't save: ${res.error}`);
-    });
+      if (!res.ok || !("entry" in res) || !res.entry) {
+        setNotice(
+          "error" in res && res.error
+            ? res.error
+            : "We couldn't save your note. Your text is still here, so you can try again."
+        );
+        return;
+      }
+
+      setEntries((current) => [res.entry, ...current]);
+      resetComposer();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setPendingAction(null);
+    }
   }
 
-  function saveEdit(id: string) {
+  async function saveEdit(id: string) {
+    if (!editText.trim()) {
+      setNotice("A note needs some text before it can be saved.");
+      return;
+    }
     if (demo) {
-      setEditing(null);
+      setNotice("In demo mode, notes aren't saved. Connect Supabase to keep them.");
       return;
     }
     const fd = new FormData();
     fd.set("id", id);
     fd.set("content", editText);
-    setEntries((es) => es.map((e) => (e.id === id ? { ...e, content: editText } : e)));
-    setEditing(null);
-    start(() => {
-      updateEntry(fd);
-    });
+    setNotice(null);
+    setPendingAction(`edit:${id}`);
+    try {
+      const res = await updateEntry(fd);
+      if (!res.ok || !("entry" in res) || !res.entry) {
+        setNotice(
+          "error" in res && res.error
+            ? res.error
+            : "We couldn't save your note. Your text is still here, so you can try again."
+        );
+        return;
+      }
+
+      setEntries((current) =>
+        current.map((entry) => (entry.id === id ? res.entry : entry))
+      );
+      setEditing(null);
+      setEditText("");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setPendingAction(null);
+    }
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
     if (!confirm("Delete this note? This cannot be undone.")) return;
-    setEntries((es) => es.filter((e) => e.id !== id));
-    if (!demo) start(() => { deleteEntry(id); });
+    if (demo) {
+      setNotice("In demo mode, notes aren't changed. Connect Supabase to manage them.");
+      return;
+    }
+
+    setNotice(null);
+    setPendingAction(`delete:${id}`);
+    try {
+      const res = await deleteEntry(id);
+      if (!res.ok) {
+        setNotice(
+          "error" in res && res.error
+            ? res.error
+            : "We couldn't delete your note. Please try again."
+        );
+        return;
+      }
+      setEntries((current) => current.filter((entry) => entry.id !== id));
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   const hasNotes = entries.filter((e) => e.content.trim()).length > 0;
@@ -296,11 +335,19 @@ export function JournalEntries({
           </div>
         </div>
 
-        {notice && <p className="mt-3 text-sm text-bronze-deep">{notice}</p>}
+        {notice && (
+          <p role="alert" className="mt-3 text-sm text-bronze-deep">
+            {notice}
+          </p>
+        )}
 
         <div className="mt-4 flex items-center gap-3">
-          <button onClick={add} disabled={!content.trim() || pending} className="btn-primary disabled:opacity-50">
-            {pending ? "Saving…" : "Save note"}
+          <button
+            onClick={add}
+            disabled={!content.trim() || pendingAction !== null}
+            className="btn-primary disabled:opacity-50"
+          >
+            {pendingAction === "create" ? "Saving…" : "Save note"}
           </button>
           {saved && (
             <span className="flex items-center gap-1.5 text-sm font-semibold text-ok">
@@ -415,12 +462,17 @@ export function JournalEntries({
                         <div className="flex flex-none gap-3 text-xs font-semibold text-charcoal-soft">
                           <button
                             onClick={() => { setEditing(e.id); setEditText(e.content); }}
+                            disabled={pendingAction !== null}
                             className="hover:text-blue-action"
                           >
                             Edit
                           </button>
-                          <button onClick={() => remove(e.id)} className="hover:text-bronze-deep">
-                            Delete
+                          <button
+                            onClick={() => remove(e.id)}
+                            disabled={pendingAction !== null}
+                            className="hover:text-bronze-deep"
+                          >
+                            {pendingAction === `delete:${e.id}` ? "Deleting…" : "Delete"}
                           </button>
                         </div>
                       </div>
@@ -434,8 +486,20 @@ export function JournalEntries({
                             className="input resize-y leading-relaxed"
                           />
                           <div className="mt-2 flex gap-2">
-                            <button onClick={() => saveEdit(e.id)} className="btn-primary !py-2 text-sm">Save</button>
-                            <button onClick={() => setEditing(null)} className="btn-secondary !py-2 text-sm">Cancel</button>
+                            <button
+                              onClick={() => saveEdit(e.id)}
+                              disabled={!editText.trim() || pendingAction !== null}
+                              className="btn-primary !py-2 text-sm disabled:opacity-50"
+                            >
+                              {pendingAction === `edit:${e.id}` ? "Saving…" : "Save"}
+                            </button>
+                            <button
+                              onClick={() => setEditing(null)}
+                              disabled={pendingAction !== null}
+                              className="btn-secondary !py-2 text-sm disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
                           </div>
                         </div>
                       ) : (

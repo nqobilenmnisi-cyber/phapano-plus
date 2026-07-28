@@ -1,24 +1,34 @@
 /**
  * Centralised Supabase configuration.
  *
- * The app is designed to run with placeholder credentials so development can
- * proceed before real Supabase keys exist. `isSupabaseConfigured` lets the UI
- * show a calm "demo mode" state instead of throwing when keys are absent.
- *
- * When you add real credentials to .env.local, nothing else needs to change.
+ * Missing credentials fail closed unless an explicit development-only demo
+ * flag is enabled. Production must never relax authentication because an
+ * environment variable is absent.
  */
 
-export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "placeholder";
+import {
+  hasSupabaseConfiguration,
+  isExplicitDevelopmentDemo,
+} from "@/lib/runtime-config";
 
-export const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "placeholder";
+const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const configuredKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+export const SUPABASE_URL = configuredUrl ?? "placeholder";
+
+export const SUPABASE_ANON_KEY = configuredKey ?? "placeholder";
 
 /** True only when real (non-placeholder) credentials are present. */
-export const isSupabaseConfigured =
-  SUPABASE_URL !== "placeholder" &&
-  SUPABASE_ANON_KEY !== "placeholder" &&
-  SUPABASE_URL.startsWith("http");
+export const isSupabaseConfigured = hasSupabaseConfiguration({
+  supabaseUrl: configuredUrl,
+  supabaseKey: configuredKey,
+});
+
+/** Demo mode must be deliberately enabled and cannot run in production. */
+export const isDemoMode = isExplicitDevelopmentDemo({
+  nodeEnv: process.env.NODE_ENV,
+  demoFlag: process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE,
+});
 
 /**
  * A safe URL to hand to the Supabase client even in placeholder mode.

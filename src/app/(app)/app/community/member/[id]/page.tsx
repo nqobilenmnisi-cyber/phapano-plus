@@ -9,17 +9,18 @@ export const metadata = { title: "Community profile — Phapano+" };
 export default async function CommunityMemberPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   if (!isSupabaseConfigured) notFound();
+  const { id } = await params;
   const uid = await getMyUserId();
   if (!uid) notFound();
 
-  if (params.id === uid) {
+  if (id === uid) {
     redirect("/app/community/profile");
   }
 
-  const member = await getMemberProfile(params.id);
+  const member = await getMemberProfile(id);
   if (!member?.profile) notFound();
 
   return (

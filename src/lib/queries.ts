@@ -223,7 +223,8 @@ export async function getSavedProgrammeIds(): Promise<string[]> {
   const { data } = await supabase
     .from("saved_programmes")
     .select("programme_id")
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .eq("is_saved", true);
   return (data ?? []).map((r: { programme_id: string }) => r.programme_id);
 }
 
@@ -259,7 +260,7 @@ export async function getSavedProgramme(
   const { data } = await supabase
     .from("saved_programmes")
     .select(
-      "status, next_action, my_deadline, my_fee, documents_uploaded, referees_requested, personal_statement_done, cv_done, transcript_uploaded, fee_paid, submitted, interview_received, selection_completed, outcome_received, custom_steps, notes"
+      "is_saved, status, next_action, my_deadline, my_fee, documents_uploaded, referees_requested, personal_statement_done, cv_done, transcript_uploaded, fee_paid, submitted, interview_received, selection_completed, outcome_received, custom_steps, notes"
     )
     .eq("user_id", user.id)
     .eq("programme_id", programmeId)

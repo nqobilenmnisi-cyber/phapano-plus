@@ -15,33 +15,57 @@ async function requireUser() {
 }
 
 /**
- * Save or unsave a programme from the Apply directory. Saved programmes appear
- * on the user's dashboard (radar + progress). Owner-scoped by RLS.
+ * Save or unsave a programme from the Apply directory without deleting the
+ * user's application plan. Owner-scoped by RLS.
  */
 export async function toggleSaveProgramme(programmeId: string, saved: boolean) {
   if (!isSupabaseConfigured) return { ok: false, demo: true };
   const { supabase, user } = await requireUser();
 
   if (saved) {
-    await supabase
+    const { error } = await supabase
       .from("saved_programmes")
-      .delete()
+      .update({ is_saved: false, updated_at: new Date().toISOString() })
       .eq("user_id", user.id)
       .eq("programme_id", programmeId);
+    if (error) {
+      console.error("Unable to unsave programme", error);
+      return {
+        ok: false,
+        error: "We couldn't update this saved programme. Please try again.",
+      };
+    }
   } else {
-    await supabase
+    const { error } = await supabase
       .from("saved_programmes")
-      .insert({ user_id: user.id, programme_id: programmeId });
+      .upsert(
+        {
+          user_id: user.id,
+          programme_id: programmeId,
+          is_saved: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,programme_id" }
+      );
+    if (error) {
+      console.error("Unable to save programme", error);
+      return {
+        ok: false,
+        error: "We couldn't save this programme. Please try again.",
+      };
+    }
   }
   revalidatePath("/app/apply");
+  revalidatePath(`/app/apply/programme/${programmeId}`);
   revalidatePath("/dashboard");
   return { ok: true };
 }
 
 /**
  * Save or update the user's personal application tracker for a programme.
- * Upserts the saved_programmes row (so filling the tracker also saves the
- * programme). Owner-scoped by RLS. Personal data only — never public.
+ * Upserts the saved_programmes row. A new plan starts saved, while editing an
+ * existing unsaved plan preserves its bookmark state. Owner-scoped by RLS.
+ * Personal data only — never public.
  */
 export async function updateApplicationPlan(
   programmeId: string,
@@ -92,7 +116,13 @@ export async function updateApplicationPlan(
     { onConflict: "user_id,programme_id" }
   );
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error("Unable to update application plan", error);
+    return {
+      ok: false,
+      error: "We couldn't save your application plan. Please try again.",
+    };
+  }
   revalidatePath("/app/apply");
   revalidatePath(`/app/apply/programme/${programmeId}`);
   revalidatePath("/dashboard");

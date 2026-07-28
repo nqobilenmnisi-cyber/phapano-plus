@@ -17,9 +17,10 @@ export const metadata = { title: "Community — Phapano+" };
 export default async function CommunityPage({
   searchParams,
 }: {
-  searchParams: { tab?: string; before?: string };
+  searchParams: Promise<{ tab?: string; before?: string }>;
 }) {
-  const mode = searchParams.tab === "discover" ? "discover" : "following";
+  const query = await searchParams;
+  const mode = query.tab === "discover" ? "discover" : "following";
 
   if (!isSupabaseConfigured) {
     return (
@@ -78,7 +79,7 @@ export default async function CommunityPage({
   }
 
   const [{ posts, hasMore }, accepted, moderation] = await Promise.all([
-    getFeed({ mode, before: searchParams.before }),
+    getFeed({ mode, before: query.before }),
     hasAcceptedGuidelines(),
     getMyModerationState(),
   ]);

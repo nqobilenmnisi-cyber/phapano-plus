@@ -295,9 +295,13 @@ export interface Database {
             | "notes"
           >;
         Insert: { user_id: string; programme_id: string } & Partial<ApplicationPlan> & {
+          is_saved?: boolean;
           updated_at?: string;
         };
-        Update: Partial<ApplicationPlan> & { updated_at?: string };
+        Update: Partial<ApplicationPlan> & {
+          is_saved?: boolean;
+          updated_at?: string;
+        };
         Relationships: [];
       };
       programme_sources: {
@@ -475,6 +479,7 @@ export type SavedProgrammeWithPlan = {
   id: string;
   user_id: string;
   programme_id: string;
+  is_saved: boolean;
   my_deadline: string | null;
   my_fee: string | null;
   status: string | null;
@@ -498,6 +503,7 @@ export type CustomStep = {
 
 /** The personal tracker fields on their own (no joined programme). */
 export type ApplicationPlan = {
+  is_saved: boolean;
   status: string | null;
   next_action: string | null;
   my_deadline: string | null;

@@ -71,7 +71,10 @@ export default async function ProgrammeDetailPage({
       </header>
 
       <div className="mt-5">
-        <SaveProgrammeButton programmeId={p.id} initialSaved={plan !== null} />
+        <SaveProgrammeButton
+          programmeId={p.id}
+          initialSaved={plan?.is_saved ?? false}
+        />
       </div>
 
       {/* Official quick links — the navigation hub */}

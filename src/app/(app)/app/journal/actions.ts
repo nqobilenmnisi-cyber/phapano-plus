@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { JournalEntry } from "@/types/database";
 
+const NOTE_SAVE_ERROR =
+  "We couldn't save your note. Your text is still here, so you can try again.";
+const NOTE_DELETE_ERROR =
+  "We couldn't delete your note. Please try again.";
+
 async function requireUser() {
   const supabase = await createClient();
   const {
@@ -16,7 +21,9 @@ async function requireUser() {
 }
 
 export async function createEntry(formData: FormData) {
-  if (!isSupabaseConfigured) return { ok: false, demo: true };
+  if (!isSupabaseConfigured) {
+    return { ok: false, demo: true, error: NOTE_SAVE_ERROR };
+  }
   const { supabase, user } = await requireUser();
 
   const content = String(formData.get("content") ?? "").trim();
@@ -29,28 +36,39 @@ export async function createEntry(formData: FormData) {
 
   if (!content) return { ok: false, error: "Write a little something first." };
 
-  const { error } = await supabase.from("journal_entries").insert({
-    user_id: user.id,
-    content,
-    prompt,
-    approach,
-    priority,
-    due_date,
-  });
+  const { data, error } = await supabase
+    .from("journal_entries")
+    .insert({
+      user_id: user.id,
+      content,
+      prompt,
+      approach,
+      priority,
+      due_date,
+    })
+    .select("*")
+    .single();
 
-  if (error) return { ok: false, error: error.message };
+  if (error || !data) {
+    console.error("Unable to create journal entry", error);
+    return { ok: false, error: NOTE_SAVE_ERROR };
+  }
 
   revalidatePath("/app/journal");
-  return { ok: true };
+  return { ok: true, entry: data as JournalEntry };
 }
 
 export async function updateEntry(formData: FormData) {
-  if (!isSupabaseConfigured) return { ok: false, demo: true };
+  if (!isSupabaseConfigured) {
+    return { ok: false, demo: true, error: NOTE_SAVE_ERROR };
+  }
   const { supabase, user } = await requireUser();
 
   const id = String(formData.get("id") ?? "");
   const content = String(formData.get("content") ?? "").trim();
-  if (!id || !content) return { ok: false };
+  if (!id || !content) {
+    return { ok: false, error: "A note needs some text before it can be saved." };
+  }
 
   // Only set fields that were provided, so a simple content edit still works.
   const patch: Partial<JournalEntry> = { content };
@@ -61,25 +79,40 @@ export async function updateEntry(formData: FormData) {
   if (formData.has("due_date"))
     patch.due_date = String(formData.get("due_date") ?? "").trim() || null;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("journal_entries")
     .update(patch)
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select("*")
+    .single();
 
-  if (error) return { ok: false, error: error.message };
+  if (error || !data) {
+    console.error("Unable to update journal entry", error);
+    return { ok: false, error: NOTE_SAVE_ERROR };
+  }
   revalidatePath("/app/journal");
-  return { ok: true };
+  return { ok: true, entry: data as JournalEntry };
 }
 
 export async function deleteEntry(id: string) {
-  if (!isSupabaseConfigured) return { ok: false };
+  if (!isSupabaseConfigured) {
+    return { ok: false, demo: true, error: NOTE_DELETE_ERROR };
+  }
   const { supabase, user } = await requireUser();
-  await supabase
+  const { data, error } = await supabase
     .from("journal_entries")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Unable to delete journal entry", error);
+    return { ok: false, error: NOTE_DELETE_ERROR };
+  }
+
   revalidatePath("/app/journal");
   return { ok: true };
 }

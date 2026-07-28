@@ -2,18 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { updateApplicationPlan } from "@/app/(app)/app/apply/actions";
+import { APPLICATION_STATUS_OPTIONS } from "@/lib/application-plan-status";
 import type { ApplicationPlan, CustomStep } from "@/types/database";
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "interested", label: "Interested" },
-  { value: "preparing", label: "Preparing application" },
-  { value: "submitted", label: "Submitted" },
-  { value: "interview", label: "Interview invited" },
-  { value: "waitlisted", label: "Waitlisted" },
-  { value: "accepted", label: "Accepted" },
-  { value: "unsuccessful", label: "Unsuccessful" },
-  { value: "withdrawn", label: "Withdrawn" },
-];
 
 const CHECKS: { key: keyof ApplicationPlan; label: string }[] = [
   { key: "documents_uploaded", label: "Documents completed" },
@@ -29,6 +19,7 @@ const CHECKS: { key: keyof ApplicationPlan; label: string }[] = [
 ];
 
 const EMPTY: ApplicationPlan = {
+  is_saved: true,
   status: "interested",
   next_action: null,
   my_deadline: null,
@@ -145,7 +136,7 @@ export function ApplicationPlanTracker({
             onChange={(e) => set("status", e.target.value)}
             className="input"
           >
-            {STATUS_OPTIONS.map((o) => (
+            {APPLICATION_STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
