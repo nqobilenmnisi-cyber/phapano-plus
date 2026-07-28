@@ -15,12 +15,13 @@ export const metadata = { title: "Community moderation — Phapano+ Admin" };
 export default async function AdminCommunityPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   const ctx = await requireAdmin();
+  const query = await searchParams;
   const status =
-    searchParams.status === "resolved" || searchParams.status === "dismissed"
-      ? searchParams.status
+    query.status === "resolved" || query.status === "dismissed"
+      ? query.status
       : "open";
 
   let rows: ModerationRow[] = [];

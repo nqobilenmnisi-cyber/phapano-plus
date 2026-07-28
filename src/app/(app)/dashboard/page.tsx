@@ -13,6 +13,7 @@ import {
   getSavedProgrammes,
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isApplicationStarted } from "@/lib/application-plan-status";
 import { greeting, firstName } from "@/lib/utils";
 import { demoRadar, DEMO_NOTICE } from "@/lib/demo";
 import type { CareerStage } from "@/types/database";
@@ -78,6 +79,8 @@ export default async function DashboardPage() {
   // toward progress. Only SAVED programmes surface here — never the whole list.
   if (isSupabaseConfigured) {
     for (const sp of savedProgrammes) {
+      const applicationStarted = isApplicationStarted(sp);
+      if (!sp.is_saved && !applicationStarted) continue;
       const prog = sp.programme;
       if (!prog) continue;
       const label =
@@ -86,7 +89,7 @@ export default async function DashboardPage() {
           : `${prog.institution} · Honours`;
       radarItems.push({
         id: `saved-prog-${prog.id}`,
-        kind: "Programme deadline",
+        kind: sp.is_saved ? "Programme deadline" : "Application plan",
         title: label,
         date: sp.my_deadline ?? prog.closing_date,
         verifiedAt: null,
@@ -112,12 +115,10 @@ export default async function DashboardPage() {
 
   const name = firstName(profile?.full_name);
   const unread = notifications.filter((n) => !n.read).length;
-  const programmesSaved = savedProgrammes.length;
+  const programmesSaved = savedProgrammes.filter((sp) => sp.is_saved).length;
   // An application is "in progress" once the user moves it beyond Interested
   // (or marks it submitted) in their planner.
-  const appsStarted = savedProgrammes.filter(
-    (sp) => sp.submitted || (sp.status != null && sp.status !== "Interested")
-  ).length;
+  const appsStarted = savedProgrammes.filter(isApplicationStarted).length;
   const fundingSaved = savedFunding.length;
   const deadlinesTracked = datedNotes.length;
   const stage = profile?.career_stage ?? null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { ApplyProgramme } from "@/types/database";
 import { applyStreamLabel, APPLY_STREAMS } from "@/lib/utils";
@@ -29,11 +29,13 @@ function fmtDate(d: string | null): string | null {
 function ProgrammeCard({
   p,
   saved,
+  saving,
   onToggleSave,
 }: {
   p: ApplyProgramme;
   saved: boolean;
-  onToggleSave: (p: ApplyProgramme, saved: boolean) => void;
+  saving: boolean;
+  onToggleSave: (p: ApplyProgramme, saved: boolean) => Promise<void>;
 }) {
   const deadline = fmtDate(p.closing_date);
 
@@ -64,16 +66,17 @@ function ProgrammeCard({
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line-soft pt-4">
         <button
           onClick={() => onToggleSave(p, saved)}
+          disabled={saving}
           className={`inline-flex items-center gap-1.5 rounded-chip px-3 py-2 text-sm font-semibold transition ${
             saved
               ? "bg-bronze text-white"
               : "border border-line bg-white text-charcoal hover:border-blue"
-          }`}
+          } disabled:opacity-60`}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"}>
             <path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
           </svg>
-          {saved ? "Saved" : "Save"}
+          {saving ? "Saving…" : saved ? "Saved" : "Save"}
         </button>
 
         <Link
@@ -97,7 +100,8 @@ export function ApplyDirectory({
   demo: boolean;
 }) {
   const [saved, setSaved] = useState<Set<string>>(new Set(savedIds));
-  const [, start] = useTransition();
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [qual, setQual] = useState<"all" | "honours" | "masters">("all");
   const [province, setProvince] = useState("all");
@@ -105,17 +109,34 @@ export function ApplyDirectory({
   const [savedOnly, setSavedOnly] = useState(false);
   const [q, setQ] = useState("");
 
-  function onToggleSave(p: ApplyProgramme, isSaved: boolean) {
+  async function onToggleSave(p: ApplyProgramme, isSaved: boolean) {
     if (demo) return;
+    setSaveError(null);
+    setSavingId(p.id);
     setSaved((prev) => {
       const next = new Set(prev);
       if (isSaved) next.delete(p.id);
       else next.add(p.id);
       return next;
     });
-    start(() => {
-      toggleSaveProgramme(p.id, isSaved);
-    });
+    try {
+      const result = await toggleSaveProgramme(p.id, isSaved);
+      if (!result.ok) {
+        setSaved((prev) => {
+          const next = new Set(prev);
+          if (isSaved) next.add(p.id);
+          else next.delete(p.id);
+          return next;
+        });
+        setSaveError(
+          "error" in result && result.error
+            ? result.error
+            : "We couldn't update this saved programme. Please try again."
+        );
+      }
+    } finally {
+      setSavingId(null);
+    }
   }
 
   const base = useMemo(() => {
@@ -159,6 +180,15 @@ export function ApplyDirectory({
         and jump straight to each university&apos;s official psychology pages.
         Universities remain the source of truth for dates, fees and requirements.
       </div>
+
+      {saveError && (
+        <p
+          role="alert"
+          className="mt-3 rounded-card border border-bronze-soft bg-[#FCF6F2] px-4 py-3 text-sm text-charcoal"
+        >
+          {saveError}
+        </p>
+      )}
 
       {/* filters */}
       <div className="mt-5 space-y-3">
@@ -235,7 +265,13 @@ export function ApplyDirectory({
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {honours.map((p) => (
-                <ProgrammeCard key={p.id} p={p} saved={saved.has(p.id)} onToggleSave={onToggleSave} />
+                <ProgrammeCard
+                  key={p.id}
+                  p={p}
+                  saved={saved.has(p.id)}
+                  saving={savingId === p.id}
+                  onToggleSave={onToggleSave}
+                />
               ))}
             </div>
           )}
@@ -262,7 +298,13 @@ export function ApplyDirectory({
                   </h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {mastersByStream.get(s.value)!.map((p) => (
-                      <ProgrammeCard key={p.id} p={p} saved={saved.has(p.id)} onToggleSave={onToggleSave} />
+                      <ProgrammeCard
+                        key={p.id}
+                        p={p}
+                        saved={saved.has(p.id)}
+                        saving={savingId === p.id}
+                        onToggleSave={onToggleSave}
+                      />
                     ))}
                   </div>
                 </div>
@@ -292,27 +334,48 @@ export function SaveProgrammeButton({
   initialSaved: boolean;
 }) {
   const [saved, setSaved] = useState(initialSaved);
-  const [, start] = useTransition();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function toggle() {
+  async function toggle() {
     const wasSaved = saved;
+    setError(null);
+    setPending(true);
     setSaved(!wasSaved);
-    start(() => {
-      toggleSaveProgramme(programmeId, wasSaved);
-    });
+    try {
+      const result = await toggleSaveProgramme(programmeId, wasSaved);
+      if (!result.ok) {
+        setSaved(wasSaved);
+        setError(
+          "error" in result && result.error
+            ? result.error
+            : "We couldn't update this saved programme. Please try again."
+        );
+      }
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
-    <button
-      onClick={toggle}
-      className={`inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm font-semibold transition ${
-        saved ? "bg-bronze text-white" : "border border-line bg-white text-charcoal hover:border-blue"
-      }`}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"}>
-        <path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      </svg>
-      {saved ? "Saved" : "Save programme"}
-    </button>
+    <div>
+      <button
+        onClick={toggle}
+        disabled={pending}
+        className={`inline-flex items-center gap-1.5 rounded-chip px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${
+          saved ? "bg-bronze text-white" : "border border-line bg-white text-charcoal hover:border-blue"
+        }`}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"}>
+          <path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        </svg>
+        {pending ? "Saving…" : saved ? "Saved" : "Save programme"}
+      </button>
+      {error && (
+        <p role="alert" className="mt-2 max-w-xs text-sm text-bronze-deep">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

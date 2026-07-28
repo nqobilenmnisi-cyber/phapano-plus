@@ -1,23 +1,12 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
-import {
-  NotificationSettings,
-  DangerZone,
-} from "@/components/SettingsControls";
+import { DangerZone } from "@/components/SettingsControls";
 import { getProfile, getCurrentUser } from "@/lib/queries";
 import { getBlockedAccounts } from "@/lib/community";
 import { CommunityBlockedList } from "@/components/CommunityBlockedList";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import type { NotificationPrefs } from "@/types/database";
 
 export const metadata = { title: "Settings — Phapano+" };
-
-const DEFAULT_PREFS: NotificationPrefs = {
-  deadlines: true,
-  funding: true,
-  community: true,
-  product: true,
-};
 
 export default async function SettingsPage() {
   const [user, profile, blockedAccounts] = await Promise.all([
@@ -25,7 +14,6 @@ export default async function SettingsPage() {
     getProfile(),
     getBlockedAccounts(),
   ]);
-  const prefs = profile?.notification_prefs ?? DEFAULT_PREFS;
   // Real Supabase Auth email for the signed-in user. Never a demo value.
   const email = user?.email ?? profile?.email ?? "—";
 
@@ -46,9 +34,22 @@ export default async function SettingsPage() {
       {/* notifications */}
       <section className="mt-8">
         <h2 className="mb-3 font-sora text-lg font-bold tracking-tight">
-          Notifications
+          Updates and reminders
         </h2>
-        <NotificationSettings prefs={prefs} disabled={!isSupabaseConfigured} />
+        <div className="card p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-bold text-charcoal">
+              Notification controls
+            </h3>
+            <span className="rounded-full bg-blue-tint px-2.5 py-1 text-xs font-bold text-blue-deep">
+              Coming soon
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
+            In-app deadline, funding and Community alerts are being prepared.
+            We&apos;ll add controls here when delivery is active.
+          </p>
+        </div>
       </section>
 
       {/* account */}
