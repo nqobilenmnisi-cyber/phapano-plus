@@ -128,6 +128,11 @@ describe("Passport sharing controls", () => {
       "https://linkedin.com/in/member"
     );
     expect(safeExternalProfileUrl("javascript:alert(1)")).toBeNull();
+    expect(safeExternalProfileUrl("data:text/html,unsafe")).toBeNull();
+    expect(safeExternalProfileUrl("not a website")).toBeNull();
+    expect(safeExternalProfileUrl("  example.org/profile  ")).toBe(
+      "https://example.org/profile"
+    );
     expect(orcidProfileUrl("0000-0002-1825-0097")).toBe(
       "https://orcid.org/0000-0002-1825-0097"
     );

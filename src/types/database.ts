@@ -315,7 +315,15 @@ export interface Database {
           is_saved?: boolean;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "saved_programmes_programme_id_fkey";
+            columns: ["programme_id"];
+            isOneToOne: false;
+            referencedRelation: "programmes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       programme_sources: {
         Row: ProgrammeSource;
@@ -327,7 +335,15 @@ export interface Database {
         Row: SavedFunding;
         Insert: { user_id: string; funding_id: string };
         Update: Partial<SavedFunding>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "saved_funding_funding_id_fkey";
+            columns: ["funding_id"];
+            isOneToOne: false;
+            referencedRelation: "funding_opportunities";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       journal_entries: {
         Row: JournalEntry;
@@ -439,7 +455,12 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      delete_own_account: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+    };
     Enums: {
       career_stage: CareerStage;
       user_role: UserRole;

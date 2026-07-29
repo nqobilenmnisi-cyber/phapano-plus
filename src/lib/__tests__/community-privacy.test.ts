@@ -100,6 +100,16 @@ describe("Passport-to-Community field privacy", () => {
     );
   });
 
+  it("has a follow-up migration that permits the full canonical Passport bio", () => {
+    const reliabilityMigration = readFileSync(
+      join(root, "supabase/migrations/0020_account_profile_reliability.sql"),
+      "utf8"
+    );
+    expect(reliabilityMigration).toContain(
+      "drop constraint if exists community_profiles_bio_check"
+    );
+  });
+
   it("whitelists submitted share controls and never offers private records", () => {
     expect(actions).toContain("normalizeCommunitySharingSelection");
     expect(actions).not.toContain('formData.get("email")');

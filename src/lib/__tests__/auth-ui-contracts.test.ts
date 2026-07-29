@@ -55,3 +55,32 @@ describe("email confirmation states", () => {
     expect(unavailable).not.toContain("Supabase");
   });
 });
+
+describe("login and account creation stay separate", () => {
+  const actions = readFileSync(
+    join(root, "src/app/(auth)/actions.ts"),
+    "utf8"
+  );
+  const loginPage = readFileSync(
+    join(root, "src/app/(auth)/login/page.tsx"),
+    "utf8"
+  );
+  const signupPage = readFileSync(
+    join(root, "src/app/(auth)/signup/page.tsx"),
+    "utf8"
+  );
+
+  it("uses password sign-in only from the login action", () => {
+    const signInSource = actions.slice(
+      actions.indexOf("export async function signIn("),
+      actions.indexOf("export async function resendVerification(")
+    );
+    expect(signInSource).toContain("signInWithPassword");
+    expect(signInSource).not.toContain(".signUp(");
+  });
+
+  it("binds each route to its explicit action and mode", () => {
+    expect(loginPage).toContain('mode="login" action={signIn}');
+    expect(signupPage).toContain('mode="signup" action={signUp}');
+  });
+});
