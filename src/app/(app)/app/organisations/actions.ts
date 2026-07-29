@@ -81,3 +81,37 @@ export async function updateOrganisationPage(
   revalidatePath("/app/profile");
   return { ok: true };
 }
+
+export async function saveOrganisationMediaUrl(
+  pageId: string,
+  kind: "avatar" | "banner",
+  url: string
+): Promise<OrganisationActionResult> {
+  if (!isUuid(pageId)) return { error: "This page is not available." };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Please log in again to manage this page." };
+  const expectedOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!expectedOrigin || !url.startsWith(`${expectedOrigin}/storage/v1/object/public/avatars/`))
+    return { error: "That page image address is not valid." };
+  const { data: admin } = await supabase
+    .from("organisation_page_admins")
+    .select("role")
+    .eq("page_id", pageId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!admin) return { error: "You do not have permission to manage this page." };
+  const mediaValue =
+    kind === "avatar" ? { avatar_url: url } : { banner_url: url };
+  const { error } = await supabase
+    .from("organisation_pages")
+    .update({ ...mediaValue, updated_at: new Date().toISOString() })
+    .eq("id", pageId);
+  if (error) return { error: "We could not save this page image." };
+  revalidatePath(`/app/organisations/${pageId}/edit`);
+  revalidatePath(`/app/community/member/${pageId}`);
+  revalidatePath("/app/community", "layout");
+  return { ok: true };
+}

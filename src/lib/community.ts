@@ -8,6 +8,7 @@ import type {
   CommunityEmbeddedPost,
   CommunityMemberCard,
   CommunityMention,
+  CommunityPostAttachmentView,
   CommunityPostView,
   CommunityProfile,
   OrganisationPage,
@@ -142,6 +143,7 @@ async function attachViewerState(
     .filter((row) => row.media_status === "approved" && row.image_path)
     .map((row) => row.image_path as string);
   const signedUrls = new Map<string, string>();
+  const attachmentsByPost = new Map<string, CommunityPostAttachmentView[]>();
   const resharedIds = Array.from(
     new Set(
       rows
@@ -165,11 +167,11 @@ async function attachViewerState(
       await Promise.all([
         supabase
           .from("community_reactions")
-          .select("post_id, user_id, reaction_type")
+          .select("post_id, user_id, actor_id, created_by, reaction_type")
           .in("post_id", ids),
         supabase
           .from("community_posts")
-          .select("reshared_post_id, created_by")
+          .select("reshared_post_id, author_id, created_by")
           .in("reshared_post_id", ids)
           .eq("status", "published"),
         supabase
@@ -195,12 +197,12 @@ async function attachViewerState(
       };
       counts[type] += 1;
       reactionCounts.set(postId, counts);
-      if (row.user_id === uid) myReactions.set(postId, type);
+      if (row.actor_id === uid) myReactions.set(postId, type);
     }
     for (const row of passes ?? []) {
       const originalId = row.reshared_post_id as string;
       passCounts.set(originalId, (passCounts.get(originalId) ?? 0) + 1);
-      if (row.created_by === uid) passedByMe.add(originalId);
+      if (row.author_id === uid) passedByMe.add(originalId);
     }
     for (const row of admins ?? []) managedIds.add(row.page_id as string);
     for (const row of (mentions ?? []) as CommunityMention[]) {
@@ -271,8 +273,46 @@ async function attachViewerState(
           post.image_path && post.media_status === "approved"
             ? signedUrls.get(post.image_path) ?? null
             : null,
+        attachments: [],
         mentions: mentionsByPost.get(post.id) ?? [],
         verification_badges: verificationByAuthor.get(post.author_id) ?? [],
+      });
+    }
+  }
+
+  const allPostIds = [...ids, ...resharedIds];
+  if (allPostIds.length) {
+    const { data: attachments } = await supabase
+      .from("community_post_attachments")
+      .select("*")
+      .in("post_id", allPostIds)
+      .order("position", { ascending: true });
+    const paths = (attachments ?? []).map(
+      (attachment) => attachment.storage_path as string
+    );
+    if (paths.length) {
+      const { data: attachmentUrls } = await supabase.storage
+        .from(COMMUNITY_IMAGE_BUCKET)
+        .createSignedUrls(paths, 60 * 60);
+      for (const row of attachmentUrls ?? []) {
+        if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
+      }
+    }
+    for (const attachment of attachments ?? []) {
+      const url = signedUrls.get(attachment.storage_path as string);
+      if (!url) continue;
+      const postId = attachment.post_id as string;
+      const current = attachmentsByPost.get(postId) ?? [];
+      current.push({
+        ...(attachment as unknown as Omit<CommunityPostAttachmentView, "url">),
+        url,
+      });
+      attachmentsByPost.set(postId, current);
+    }
+    for (const [postId, post] of embedded) {
+      embedded.set(postId, {
+        ...post,
+        attachments: attachmentsByPost.get(postId) ?? [],
       });
     }
   }
@@ -284,6 +324,7 @@ async function attachViewerState(
       r.image_path && r.media_status === "approved"
         ? signedUrls.get(r.image_path as string) ?? null
         : null,
+    attachments: attachmentsByPost.get(r.id as string) ?? [],
     reaction_counts: reactionCounts.get(r.id as string) ?? {
       support: 0,
       insightful: 0,

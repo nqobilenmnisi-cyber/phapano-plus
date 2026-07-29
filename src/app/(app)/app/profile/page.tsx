@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/ProfileForm";
 import { CommunityProfileForm } from "@/components/CommunityProfileForm";
 import { CommunityProfileView } from "@/components/CommunityProfileView";
-import { AvatarUploader } from "@/components/AvatarUploader";
+import { ProfileMediaUploader } from "@/components/ProfileMediaUploader";
 import { SupportLine } from "@/components/AppChrome";
 import { Star, IconProfile } from "@/components/illustrations";
 import { VerificationBadges } from "@/components/VerificationBadges";
@@ -21,7 +21,7 @@ import {
   getSavedProgrammes,
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { careerStageLabels, firstName } from "@/lib/utils";
+import { careerStageLabels } from "@/lib/utils";
 
 export const metadata = { title: "You | Phapano+" };
 
@@ -55,8 +55,7 @@ export default async function ProfilePage({
 
   if (isSupabaseConfigured && !user) redirect("/login?redirect=/app/profile");
 
-  const name = profile?.full_name ?? "";
-  const initial = firstName(name).slice(0, 1).toUpperCase();
+  const name = [profile?.full_name, profile?.surname].filter(Boolean).join(" ").trim();
   const email = user?.email ?? profile?.email ?? "";
   const stageLabel =
     profile?.career_stage === "other"
@@ -75,8 +74,9 @@ export default async function ProfilePage({
       <section className="relative overflow-hidden pt-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="font-sora text-2xl font-bold tracking-tight">
-              {name || "Your profile"}
+            <h1 className="flex items-center gap-1.5 font-sora text-2xl font-bold tracking-tight">
+              <span>{name || "Your profile"}</span>
+              <VerificationBadges badges={verificationBadges} />
             </h1>
             <p className="truncate text-sm text-charcoal-soft">
               {stageLabel ?? "Welcome to Phapano+"}
@@ -85,21 +85,21 @@ export default async function ProfilePage({
             {email && (
               <p className="mt-0.5 truncate text-sm text-charcoal-soft">{email}</p>
             )}
-            {verificationBadges.length ? (
-              <span className="mt-2 block">
-                <VerificationBadges badges={verificationBadges} />
-              </span>
-            ) : null}
           </div>
         </div>
 
-        {/* avatar uploader */}
+        {/* profile artwork */}
         {isSupabaseConfigured && user && (
-          <div className="mt-5">
-            <AvatarUploader
+          <div className="mt-5 space-y-5">
+            <ProfileMediaUploader
               userId={user.id}
+              kind="banner"
+              initialUrl={profile?.banner_url ?? null}
+            />
+            <ProfileMediaUploader
+              userId={user.id}
+              kind="avatar"
               initialUrl={profile?.avatar_url ?? null}
-              initial={initial}
             />
           </div>
         )}
@@ -161,7 +161,7 @@ export default async function ProfilePage({
               >
                 <span className="font-semibold text-charcoal">{page.name}</span>
                 <span className="mt-1 block text-xs text-charcoal-soft">
-                  Manage official page
+                  Manage page
                 </span>
               </Link>
             ))}

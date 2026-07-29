@@ -100,10 +100,19 @@ export function CommunityProfileView({
   return (
     <>
       <section className="card mt-4 overflow-hidden">
-        <div
-          className="h-24 bg-gradient-to-br from-blue-tint via-[#e8f4ff] to-bronze-soft/50 sm:h-28"
-          aria-hidden="true"
-        />
+        {profile.banner_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={profile.banner_url}
+            alt=""
+            className="aspect-[4/1] w-full bg-soft object-cover"
+          />
+        ) : (
+          <div
+            className="aspect-[4/1] w-full bg-gradient-to-br from-blue-tint via-[#e8f4ff] to-bronze-soft/50"
+            aria-hidden="true"
+          />
+        )}
         <div className="-mt-12 px-5 pb-6 sm:px-7">
           <div className="flex items-end justify-between gap-4">
             <div className="rounded-full bg-white p-1.5 shadow-card">

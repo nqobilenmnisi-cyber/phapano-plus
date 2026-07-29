@@ -48,7 +48,15 @@ export default async function CommunityPostPage({
         </Link>
       </section>
       <div className="mt-4">
-        <CommunityPostCard post={post} viewerId={uid} detail />
+        <CommunityPostCard
+          post={post}
+          viewerId={uid}
+          detail
+          postingIdentities={[
+            { id: uid, name: "Your profile" },
+            ...managedPages.map((page) => ({ id: page.id, name: page.name })),
+          ]}
+        />
       </div>
       <CommunityComments
         postId={post.id}

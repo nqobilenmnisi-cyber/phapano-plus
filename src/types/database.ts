@@ -123,6 +123,7 @@ export type Profile = {
   education: EducationEntry[];
   experience: ExperienceEntry[];
   avatar_url: string | null;
+  banner_url?: string | null;
   share_bio: boolean;
   share_career_stage: boolean;
   share_university: boolean;
@@ -459,6 +460,20 @@ export interface Database {
         Update: Partial<CommunityPost>;
         Relationships: [];
       };
+      community_post_attachments: {
+        Row: CommunityPostAttachment;
+        Insert: Partial<CommunityPostAttachment> & {
+          post_id: string;
+          created_by: string;
+          storage_path: string;
+          kind: CommunityPostAttachment["kind"];
+          mime_type: CommunityPostAttachment["mime_type"];
+          size_bytes: number;
+          position: number;
+        };
+        Update: Partial<CommunityPostAttachment>;
+        Relationships: [];
+      };
       community_comments: {
         Row: CommunityComment;
         Insert: Partial<CommunityComment> & {
@@ -474,6 +489,8 @@ export interface Database {
         Insert: {
           post_id: string;
           user_id: string;
+          actor_id: string;
+          created_by: string;
           reaction_type?: CommunityReactionType;
         };
         Update: Partial<CommunityReaction>;
@@ -760,6 +777,7 @@ export type CommunityProfile = {
   visibility: CommunityVisibility;
   connection_permission: CommunityConnectionPermission;
   avatar_url: string | null;
+  banner_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -826,8 +844,27 @@ export type CommunityComment = {
 export type CommunityReaction = {
   post_id: string;
   user_id: string;
+  actor_id: string;
+  created_by: string;
   reaction_type: CommunityReactionType;
   created_at: string;
+};
+
+export type CommunityPostAttachment = {
+  id: string;
+  post_id: string;
+  created_by: string | null;
+  storage_path: string;
+  kind: "image" | "pdf";
+  mime_type: CommunityImageMimeType | "application/pdf";
+  size_bytes: number;
+  position: number;
+  status: Exclude<CommunityMediaStatus, "none">;
+  created_at: string;
+};
+
+export type CommunityPostAttachmentView = CommunityPostAttachment & {
+  url: string;
 };
 
 export type CommunityMention = {
@@ -911,6 +948,7 @@ export type OrganisationPage = {
   contact_email: string | null;
   website_url: string | null;
   avatar_url: string | null;
+  banner_url?: string | null;
   is_official: boolean;
   status: OrganisationPageStatus;
   created_at: string;
@@ -940,6 +978,7 @@ export type CommunityPostAuthor = Pick<
 export type CommunityEmbeddedPost = CommunityPost & {
   author: CommunityPostAuthor | null;
   image_url: string | null;
+  attachments: CommunityPostAttachmentView[];
   mentions?: CommunityMention[];
   verification_badges?: ProfileVerificationBadge[];
 };
@@ -947,6 +986,7 @@ export type CommunityEmbeddedPost = CommunityPost & {
 export type CommunityPostView = CommunityPost & {
   author: CommunityPostAuthor | null;
   image_url: string | null;
+  attachments: CommunityPostAttachmentView[];
   reaction_counts: Record<CommunityReactionType, number>;
   my_reaction: CommunityReactionType | null;
   like_count: number;

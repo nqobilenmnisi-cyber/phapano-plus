@@ -27,6 +27,7 @@ import {
   COMMUNITY_IMAGE_BUCKET,
   extractFirstHttpUrl,
   normaliseHttpUrl,
+  validCommunityAttachmentMetadata,
   validCommunityImageMetadata,
   type LinkPreview,
 } from "@/lib/community-posts";
@@ -67,6 +68,52 @@ const REPORT_CATEGORIES: CommunityReportCategory[] = [
   "professional_misconduct",
   "other",
 ];
+
+type SubmittedAttachment = {
+  path: string;
+  mimeType: string;
+  size: number;
+  kind: "image" | "pdf";
+  position: number;
+};
+
+function parseSubmittedAttachments(
+  raw: FormDataEntryValue | null,
+  actorId: string
+): SubmittedAttachment[] | null {
+  try {
+    const parsed = JSON.parse(String(raw ?? "[]")) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    const attachments = parsed.map((item, position) => {
+      if (!item || typeof item !== "object") return null;
+      const candidate = item as Partial<SubmittedAttachment>;
+      const kind = candidate.kind === "pdf" ? "pdf" : "image";
+      const attachment = {
+        path: String(candidate.path ?? ""),
+        mimeType: String(candidate.mimeType ?? ""),
+        size: Number(candidate.size ?? 0),
+        kind,
+        position,
+      } satisfies SubmittedAttachment;
+      return validCommunityAttachmentMetadata({
+        path: attachment.path,
+        actorId,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+      })
+        ? attachment
+        : null;
+    });
+    if (attachments.some((attachment) => !attachment)) return null;
+    const valid = attachments as SubmittedAttachment[];
+    const pdfs = valid.filter((attachment) => attachment.kind === "pdf");
+    if (pdfs.length > 1 || (pdfs.length === 1 && valid.length > 1)) return null;
+    if (!pdfs.length && valid.length > 4) return null;
+    return valid;
+  } catch {
+    return null;
+  }
+}
 
 async function requireUser(): Promise<
   { uid: string } | { error: string }
@@ -267,7 +314,14 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
   if ("error" in auth) return auth;
 
   const body = String(formData.get("body") ?? "").trim();
-  if (!body) return { error: "Write something before posting." };
+  const attachments = parseSubmittedAttachments(
+    formData.get("attachments"),
+    auth.uid
+  );
+  if (!attachments)
+    return { error: "One or more attachments could not be verified. Add them again." };
+  if (!body && attachments.length === 0)
+    return { error: "Write something or add an attachment before posting." };
   if (body.length > POST_MAX_LENGTH)
     return { error: `Posts can be up to ${POST_MAX_LENGTH} characters.` };
 
@@ -380,6 +434,34 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
         "We couldn't publish that. Make sure your community profile is set up and the guidelines are accepted — and try again.",
     };
   }
+  if (attachments.length) {
+    const { error: attachmentError } = await supabase
+      .from("community_post_attachments")
+      .insert(
+        attachments.map((attachment) => ({
+          post_id: createdPost.id,
+          created_by: auth.uid,
+          storage_path: attachment.path,
+          kind: attachment.kind,
+          mime_type: attachment.mimeType as
+            | CommunityImageMimeType
+            | "application/pdf",
+          size_bytes: attachment.size,
+          position: attachment.position,
+          status: "pending" as const,
+        }))
+      );
+    if (attachmentError) {
+      await supabase.from("community_posts").delete().eq("id", createdPost.id);
+      await supabase.storage
+        .from(COMMUNITY_IMAGE_BUCKET)
+        .remove(attachments.map((attachment) => attachment.path));
+      return {
+        error:
+          "The post could not attach your media safely. Nothing was published; please try again.",
+      };
+    }
+  }
   await saveMentions({
     postId: createdPost.id,
     body,
@@ -432,57 +514,104 @@ export async function deletePost(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("created_by", auth.uid)
     .maybeSingle();
+  const { data: attachments } = await supabase
+    .from("community_post_attachments")
+    .select("storage_path")
+    .eq("post_id", id)
+    .eq("created_by", auth.uid);
   const { error } = await supabase
     .from("community_posts")
     .delete()
     .eq("id", id)
     .eq("created_by", auth.uid);
   if (error) return { error: GENERIC_ERROR };
-  if (post?.image_path)
+  const mediaPaths = [
+    ...(post?.image_path ? [post.image_path] : []),
+    ...(attachments ?? []).map((attachment) => attachment.storage_path),
+  ];
+  if (mediaPaths.length)
     await supabase.storage
       .from(COMMUNITY_IMAGE_BUCKET)
-      .remove([post.image_path]);
+      .remove(mediaPaths);
   revalidateCommunity();
   return { ok: true };
 }
 
 export async function toggleReaction(
   postId: string,
-  reaction: CommunityReactionType | null
+  reaction: CommunityReactionType | null,
+  actorId?: string
 ): Promise<ActionResult> {
   const auth = await requireUser();
   if ("error" in auth) return auth;
   const supabase = await createClient();
+  const identityId = actorId && isUuid(actorId) ? actorId : auth.uid;
+  if (identityId !== auth.uid) {
+    const { data: allowed } = await supabase
+      .from("organisation_page_admins")
+      .select("page_id")
+      .eq("page_id", identityId)
+      .eq("user_id", auth.uid)
+      .maybeSingle();
+    if (!allowed)
+      return { error: "You do not have permission to react as that page." };
+  }
   if (reaction) {
     const { error: removeError } = await supabase
       .from("community_reactions")
       .delete()
       .eq("post_id", postId)
-      .eq("user_id", auth.uid);
+      .eq("actor_id", identityId);
     if (removeError) return { error: GENERIC_ERROR };
     const { error: insertError } = await supabase
       .from("community_reactions")
-      .insert({ post_id: postId, user_id: auth.uid, reaction_type: reaction });
+      .insert({
+        post_id: postId,
+        user_id: auth.uid,
+        actor_id: identityId,
+        created_by: auth.uid,
+        reaction_type: reaction,
+      });
     if (insertError) return { error: GENERIC_ERROR };
   } else {
     const { error } = await supabase
       .from("community_reactions")
       .delete()
       .eq("post_id", postId)
-      .eq("user_id", auth.uid);
+      .eq("actor_id", identityId);
     if (error) return { error: GENERIC_ERROR };
   }
   revalidateCommunity();
   return { ok: true };
 }
 
-export async function passOnPost(postId: string): Promise<ActionResult> {
+export async function passOnPost(
+  postId: string,
+  authorId?: string,
+  thoughts = ""
+): Promise<ActionResult> {
   const auth = await requireUser();
   if ("error" in auth) return auth;
   if (!isUuid(postId)) return { error: "That post is not available." };
   if (!(await withinLimit("community_posts", "created_by", auth.uid, HOUR, 10)))
-    return { error: "You've posted quite a lot. Try passing this on again later." };
+    return { error: "You've posted quite a lot. Try carrying this forward again later." };
   const supabase = await createClient();
+  const identityId = authorId && isUuid(authorId) ? authorId : auth.uid;
+  let officialIdentity = false;
+  if (identityId !== auth.uid) {
+    const { data: page } = await supabase
+      .from("organisation_pages")
+      .select("id, is_official, organisation_page_admins!inner(user_id)")
+      .eq("id", identityId)
+      .eq("organisation_page_admins.user_id", auth.uid)
+      .maybeSingle();
+    if (!page)
+      return { error: "You do not have permission to carry this forward as that page." };
+    officialIdentity = Boolean(page.is_official);
+  }
+  const caption = thoughts.trim();
+  if (caption.length > POST_MAX_LENGTH)
+    return { error: `Your thoughts can be up to ${POST_MAX_LENGTH} characters.` };
   const { count: acceptanceCount } = await supabase
     .from("community_terms_acceptances")
     .select("id", { count: "exact", head: true })
@@ -492,7 +621,7 @@ export async function passOnPost(postId: string): Promise<ActionResult> {
   if (!acceptanceCount)
     return {
       error:
-        "Please accept the current Community Guidelines by posting or commenting before passing a post on.",
+        "Please accept the current Community Guidelines by posting or commenting before carrying a post forward.",
     };
   const { data: source } = await supabase
     .from("community_posts")
@@ -503,16 +632,16 @@ export async function passOnPost(postId: string): Promise<ActionResult> {
   if (!source) return { error: "That post is no longer available." };
   const originalId = source.reshared_post_id ?? source.id;
   const { error } = await supabase.from("community_posts").insert({
-    author_id: auth.uid,
+    author_id: identityId,
     created_by: auth.uid,
-    body: "",
-    is_official: false,
+    body: caption,
+    is_official: officialIdentity,
     reshared_post_id: originalId,
   });
   if (error)
     return {
       error: error.code === "23505"
-        ? "You have already passed this post on."
+        ? "This identity has already carried the post forward."
         : GENERIC_ERROR,
     };
   revalidateCommunity();

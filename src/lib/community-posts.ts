@@ -4,12 +4,18 @@ import type {
 } from "@/types/database";
 
 export const COMMUNITY_IMAGE_BUCKET = "community-post-media";
-export const COMMUNITY_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const COMMUNITY_MEDIA_MAX_BYTES = 20 * 1024 * 1024;
+export const COMMUNITY_IMAGE_MAX_BYTES = COMMUNITY_MEDIA_MAX_BYTES;
+export const COMMUNITY_MAX_IMAGES = 4;
 export const COMMUNITY_IMAGE_MIME_TYPES: CommunityImageMimeType[] = [
   "image/jpeg",
   "image/png",
   "image/webp",
 ];
+export const COMMUNITY_MEDIA_MIME_TYPES = [
+  ...COMMUNITY_IMAGE_MIME_TYPES,
+  "application/pdf",
+] as const;
 export const COMMUNITY_REACTIONS: {
   value: CommunityReactionType;
   label: string;
@@ -91,6 +97,32 @@ export function validCommunityImageMetadata(input: {
     Number.isInteger(input.size) &&
     input.size > 0 &&
     input.size <= COMMUNITY_IMAGE_MAX_BYTES
+  );
+}
+
+export function validCommunityAttachmentMetadata(input: {
+  path: string;
+  actorId: string;
+  mimeType: string;
+  size: number;
+}): boolean {
+  const extension = input.path.split(".").at(-1)?.toLowerCase();
+  const extensionMatches =
+    (input.mimeType === "image/jpeg" &&
+      (extension === "jpg" || extension === "jpeg")) ||
+    (input.mimeType === "image/png" && extension === "png") ||
+    (input.mimeType === "image/webp" && extension === "webp") ||
+    (input.mimeType === "application/pdf" && extension === "pdf");
+  return (
+    input.path.startsWith(`${input.actorId}/pending/`) &&
+    !input.path.includes("..") &&
+    COMMUNITY_MEDIA_MIME_TYPES.includes(
+      input.mimeType as (typeof COMMUNITY_MEDIA_MIME_TYPES)[number]
+    ) &&
+    extensionMatches &&
+    Number.isInteger(input.size) &&
+    input.size > 0 &&
+    input.size <= COMMUNITY_MEDIA_MAX_BYTES
   );
 }
 

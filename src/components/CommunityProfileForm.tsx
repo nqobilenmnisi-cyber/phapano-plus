@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { saveCommunityProfile } from "@/app/(app)/app/community/actions";
 import {
@@ -65,6 +66,8 @@ export function CommunityProfileForm({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const fullName = [passport?.full_name, passport?.surname]
@@ -136,19 +139,28 @@ export function CommunityProfileForm({
 
   function submit(formData: FormData) {
     setError(null);
+    setSaved(false);
     startTransition(async () => {
       const result = await saveCommunityProfile(formData);
       if (result && "error" in result) {
         setError(result.error);
         return;
       }
-      router.push("/app/profile?section=community");
+      setDirty(false);
+      setSaved(true);
       router.refresh();
     });
   }
 
   return (
-    <form action={submit} className="space-y-6">
+    <form
+      action={submit}
+      className="space-y-6"
+      onChange={() => {
+        setDirty(true);
+        setSaved(false);
+      }}
+    >
       <section>
         <h2 className="font-sora text-base font-bold tracking-tight">
           Community identity
@@ -220,7 +232,7 @@ export function CommunityProfileForm({
                   {control.label}
                 </span>
                 <span className="mt-0.5 block break-words text-xs leading-relaxed text-charcoal-soft">
-                  {control.value || "Not added to your Passport yet"}
+                  {control.value || "Add this field in your Passport"}
                 </span>
               </span>
             </label>
@@ -228,7 +240,11 @@ export function CommunityProfileForm({
         </div>
         <p className="mt-3 text-xs leading-relaxed text-charcoal-soft">
           Turning a field off removes its value from your public Community
-          profile immediately. Edit the source value from your main profile.
+          profile immediately.{" "}
+          <Link href="/app/profile" className="font-bold text-blue-action hover:underline">
+            Edit source fields in your Passport
+          </Link>
+          .
         </p>
       </fieldset>
 
@@ -281,11 +297,16 @@ export function CommunityProfileForm({
           {error}
         </p>
       )}
+      {saved && (
+        <p role="status" className="text-sm font-semibold text-ok">
+          Community profile and privacy choices saved.
+        </p>
+      )}
 
       <button
         type="submit"
         className="btn-primary w-full sm:w-auto"
-        disabled={pending}
+        disabled={pending || (Boolean(existing) && !dirty)}
         aria-busy={pending}
       >
         {pending ? "Saving…" : existing ? "Save changes" : "Join the community"}

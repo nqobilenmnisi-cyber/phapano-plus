@@ -219,3 +219,42 @@ export async function saveAvatarUrl(url: string) {
   revalidatePath("/app/community", "layout");
   return { ok: true };
 }
+
+export async function saveProfileMediaUrl(
+  kind: "avatar" | "banner",
+  url: string
+) {
+  if (!isSupabaseConfigured) return { error: "Supabase isn't connected yet." };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not signed in." };
+  const expectedOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!expectedOrigin || !url.startsWith(`${expectedOrigin}/storage/v1/object/public/avatars/`))
+    return { error: "That profile image address is not valid." };
+
+  const now = new Date().toISOString();
+  const mediaValue =
+    kind === "avatar" ? { avatar_url: url } : { banner_url: url };
+  const { error } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        ...mediaValue,
+        updated_at: now,
+      },
+      { onConflict: "id" }
+    );
+  if (error) return { error: error.message };
+  await supabase
+    .from("community_profiles")
+    .update({ ...mediaValue, updated_at: now })
+    .eq("user_id", user.id);
+  revalidatePath("/app/profile");
+  revalidatePath("/dashboard");
+  revalidatePath("/app/community", "layout");
+  return { ok: true };
+}

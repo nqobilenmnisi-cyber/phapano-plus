@@ -2,9 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { updateOrganisationPage } from "@/app/(app)/app/organisations/actions";
+import { ProfileMediaUploader } from "@/components/ProfileMediaUploader";
 import type { OrganisationPage } from "@/types/database";
 
-export function OrganisationPageForm({ page }: { page: OrganisationPage }) {
+export function OrganisationPageForm({
+  page,
+  userId,
+}: {
+  page: OrganisationPage;
+  userId: string;
+}) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -21,6 +28,26 @@ export function OrganisationPageForm({ page }: { page: OrganisationPage }) {
 
   return (
     <form action={submit} className="space-y-5">
+      <section className="space-y-5 rounded-card border border-line bg-soft/40 p-4">
+        <div>
+          <p className="label">Page banner</p>
+          <ProfileMediaUploader
+            userId={userId}
+            pageId={page.id}
+            kind="banner"
+            initialUrl={page.banner_url ?? null}
+          />
+        </div>
+        <div>
+          <p className="label">Page profile picture</p>
+          <ProfileMediaUploader
+            userId={userId}
+            pageId={page.id}
+            kind="avatar"
+            initialUrl={page.avatar_url}
+          />
+        </div>
+      </section>
       <div>
         <label className="label" htmlFor="name">
           Page name

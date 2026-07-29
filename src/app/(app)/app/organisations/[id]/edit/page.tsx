@@ -54,7 +54,10 @@ export default async function EditOrganisationPage({
         </p>
       </section>
       <section className="card mt-5 p-5 sm:p-7">
-        <OrganisationPageForm page={page as OrganisationPage} />
+        <OrganisationPageForm
+          page={page as OrganisationPage}
+          userId={user.id}
+        />
       </section>
     </main>
   );

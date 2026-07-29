@@ -102,23 +102,33 @@ export async function setContentStatus(
 
 /** Approve or remove an image independently from its post caption. */
 export async function setPostMediaStatus(
-  postId: string,
-  status: "approved" | "removed"
+  id: string,
+  status: "approved" | "removed",
+  target: "post" | "attachment" = "post"
 ): Promise<AdminActionResult> {
   const ctx = await requireAdmin();
   if (ctx.demo) return { error: "Not available in demo mode." };
-  const { data: post, error } = await ctx.supabase
-    .from("community_posts")
-    .update({ media_status: status, updated_at: new Date().toISOString() })
-    .eq("id", postId)
-    .not("image_path", "is", null)
-    .select("created_by")
-    .maybeSingle();
+  const query =
+    target === "attachment"
+      ? ctx.supabase
+          .from("community_post_attachments")
+          .update({ status })
+          .eq("id", id)
+          .select("created_by")
+          .maybeSingle()
+      : ctx.supabase
+          .from("community_posts")
+          .update({ media_status: status, updated_at: new Date().toISOString() })
+          .eq("id", id)
+          .not("image_path", "is", null)
+          .select("created_by")
+          .maybeSingle();
+  const { data: post, error } = await query;
   if (error || !post) return { error: FAIL };
   await logAction({
     targetUserId: post.created_by,
     action: status === "approved" ? "approve_media" : "remove_media",
-    notes: `Post image ${status}`,
+    notes: `Post ${target === "attachment" ? "attachment" : "image"} ${status}`,
   });
   revalidate();
   return { ok: true };
