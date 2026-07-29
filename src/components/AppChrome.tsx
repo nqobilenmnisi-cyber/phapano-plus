@@ -1,50 +1,31 @@
-import { Logo } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
-import { signOut } from "@/app/(auth)/actions";
+import { GlobalSearch } from "@/components/GlobalSearch";
+import { MemberAvatar } from "@/components/CommunityShared";
 import Link from "next/link";
 
 export function AppTopBar({
   unread,
+  profileName,
+  avatarUrl,
 }: {
   unread?: number;
+  profileName?: string | null;
+  avatarUrl?: string | null;
 }) {
-  const today = new Date().toLocaleDateString("en-ZA", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  const name = profileName?.trim() || "Your profile";
   return (
-    <header className="mx-auto flex max-w-3xl items-center justify-between px-6 pb-1.5 pt-5">
-      <Logo href="/dashboard" priority />
-      <div className="flex items-center gap-1.5">
-        <span
-          className="hidden items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[0.82rem] font-semibold text-charcoal-soft shadow-card sm:flex"
+    <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/95 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-3 sm:gap-3 sm:px-6">
+        <Link
+          href="/app/profile"
+          aria-label="Open your profile"
+          title="Your profile"
+          className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue focus-visible:outline-offset-2"
         >
-          <svg viewBox="0 0 24 24" fill="none" className="h-[16px] w-[16px]">
-            <rect x="4" y="5" width="16" height="15" rx="2.5" stroke="#76B9F0" strokeWidth="1.7" />
-            <path d="M4 9h16M8 3v4M16 3v4" stroke="#76B9F0" strokeWidth="1.7" strokeLinecap="round" />
-            <circle cx="12" cy="14" r="1.6" fill="#AD795B" />
-          </svg>
-          {today}
-        </span>
+          <MemberAvatar name={name} avatarUrl={avatarUrl ?? null} size={40} />
+        </Link>
+        <GlobalSearch />
         <NotificationBell unread={unread ?? 0} />
-        <form action={signOut}>
-          <button
-            type="submit"
-            aria-label="Sign out"
-            className="grid h-10 w-10 place-items-center rounded-chip border border-line bg-white text-charcoal-soft transition hover:border-blue hover:text-charcoal"
-          >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3M10 8l-4 4 4 4M6 12h10"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </form>
       </div>
     </header>
   );

@@ -1,0 +1,132 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement> & {
+  title?: string;
+};
+
+function IconFrame({
+  title,
+  children,
+  ...props
+}: IconProps & { children: React.ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden={title ? undefined : true}
+      role={title ? "img" : undefined}
+      {...props}
+    >
+      {title ? <title>{title}</title> : null}
+      {children}
+    </svg>
+  );
+}
+
+const line = {
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+export function HeartIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path
+        d="M12 20.2 4.8 13.4C1.2 10 3.1 4.5 7.5 4.5c2 0 3.6 1.1 4.5 2.5.9-1.4 2.5-2.5 4.5-2.5 4.4 0 6.3 5.5 2.7 8.9L12 20.2Z"
+        {...line}
+      />
+    </IconFrame>
+  );
+}
+
+export function LightbulbIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path
+        d="M8.2 14.7A6 6 0 1 1 15.8 14.7c-.9.7-1.3 1.5-1.3 2.3h-5c0-.8-.4-1.6-1.3-2.3Z"
+        {...line}
+      />
+      <path d="M9.6 20h4.8M10 17h4" {...line} />
+      <path d="M12 1.8V.8M4.9 4.9l-.8-.8M19.1 4.9l.8-.8M2 11H.9M23.1 11H22" {...line} />
+    </IconFrame>
+  );
+}
+
+export function CelebrateIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="m8.7 13.7-2.4-5a1.35 1.35 0 0 1 2.4-1.2l2.2 4.4" {...line} />
+      <path d="m10.9 11.9-2.6-6a1.35 1.35 0 0 1 2.5-1.1l2.5 5.8" {...line} />
+      <path d="m13.3 10.6-2-5.1a1.35 1.35 0 0 1 2.5-1l2.2 5.6" {...line} />
+      <path d="m16 10.1-1.1-3a1.35 1.35 0 0 1 2.5-.9l1.7 4.7c1.5 4.2-.6 8.6-4.7 10.1-3.7 1.3-7.8-.2-9.8-3.7l-1.5-2.6a1.45 1.45 0 0 1 2.4-1.6l2.2 2.5" {...line} />
+      <path d="M18.3 2.4 19.4 1M21.1 5.2l1.8-.3M17.2 1l-.2-1" {...line} />
+    </IconFrame>
+  );
+}
+
+export function CommentIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="M20 11.4a7.7 7.7 0 0 1-8 7.4 8.8 8.8 0 0 1-3.1-.6L4 20l1.3-4A7 7 0 0 1 4 11.9C4 7.6 7.6 4 12 4s8 3.3 8 7.4Z" {...line} />
+    </IconFrame>
+  );
+}
+
+export function PassOnIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="M6.2 7.5h10.4l-2.4-2.4M17.8 16.5H7.4l2.4 2.4" {...line} />
+      <path d="M18.8 8.5v2.3M5.2 15.5v-2.3" {...line} />
+    </IconFrame>
+  );
+}
+
+export function SendIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="M6 18 18 6M9 6h9v9" {...line} />
+      <path d="M18 12v6H6V6h6" {...line} />
+    </IconFrame>
+  );
+}
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <circle cx="10.8" cy="10.8" r="6.4" {...line} />
+      <path d="m15.6 15.6 4 4" {...line} />
+    </IconFrame>
+  );
+}
+
+export function PostIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <circle cx="12" cy="12" r="8.5" {...line} />
+      <path d="M12 8v8M8 12h8" {...line} />
+    </IconFrame>
+  );
+}
+
+export function BellIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" {...line} />
+      <path d="M10 20a2 2 0 0 0 4 0" {...line} />
+    </IconFrame>
+  );
+}
+
+export function VerifiedIcon(props: IconProps) {
+  return (
+    <IconFrame {...props}>
+      <path
+        d="m12 2 2.2 1.5 2.7-.1.8 2.5 2.2 1.6-.9 2.5.9 2.5-2.2 1.6-.8 2.5-2.7-.1L12 18l-2.2-1.5-2.7.1-.8-2.5-2.2-1.6L5 10l-.9-2.5 2.2-1.6.8-2.5 2.7.1L12 2Z"
+        fill="currentColor"
+      />
+      <path d="m8.8 10.1 2 2 4.3-4.4" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </IconFrame>
+  );
+}

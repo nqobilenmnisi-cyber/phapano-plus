@@ -16,7 +16,7 @@ export function InstitutionAutocomplete({
   placeholder = "Start typing your institution…",
   id,
 }: {
-  name?: string;
+  name?: string | null;
   value: string;
   onChange?: (v: string) => void;
   placeholder?: string;
@@ -91,7 +91,7 @@ export function InstitutionAutocomplete({
         onKeyDown={onKeyDown}
       />
       {/* mirror value for form submission */}
-      <input type="hidden" name={name} value={text} />
+      {name && <input type="hidden" name={name} value={text} />}
 
       {open && results.length > 0 && (
         <ul className="absolute z-20 mt-1.5 max-h-64 w-full overflow-auto rounded-card border border-line bg-white p-1 shadow-lift">

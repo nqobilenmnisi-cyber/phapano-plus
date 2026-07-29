@@ -7,6 +7,7 @@ import type {
   CommunityConnectionState,
   CommunityEmbeddedPost,
   CommunityMemberCard,
+  CommunityMention,
   CommunityPostView,
   CommunityProfile,
   OrganisationPage,
@@ -134,6 +135,8 @@ async function attachViewerState(
   const myReactions = new Map<string, CommunityReactionType>();
   const passCounts = new Map<string, number>();
   const passedByMe = new Set<string>();
+  const mentionsByPost = new Map<string, CommunityMention[]>();
+  const verificationByAuthor = new Map<string, ProfileVerificationBadge[]>();
   const managedIds = new Set<string>([uid]);
   const imagePaths = rows
     .filter((row) => row.media_status === "approved" && row.image_path)
@@ -147,8 +150,18 @@ async function attachViewerState(
     )
   );
 
+  const mentionPostIds = [...ids, ...resharedIds];
+  const authorIds = Array.from(
+    new Set(rows.map((row) => row.author_id as string).filter(Boolean))
+  );
   if (ids.length) {
-    const [{ data: reactions }, { data: passes }, { data: admins }] =
+    const [
+      { data: reactions },
+      { data: passes },
+      { data: admins },
+      { data: mentions },
+      { data: verifications },
+    ] =
       await Promise.all([
         supabase
           .from("community_reactions")
@@ -163,13 +176,21 @@ async function attachViewerState(
           .from("organisation_page_admins")
           .select("page_id")
           .eq("user_id", uid),
+        supabase
+          .from("community_mentions")
+          .select("*")
+          .in("post_id", mentionPostIds),
+        supabase
+          .from("profile_verifications")
+          .select("user_id, badge")
+          .in("user_id", authorIds),
       ]);
     for (const row of reactions ?? []) {
       const postId = row.post_id as string;
       const type = row.reaction_type as CommunityReactionType;
       const counts = reactionCounts.get(postId) ?? {
         support: 0,
-        helpful: 0,
+        insightful: 0,
         celebrate: 0,
       };
       counts[type] += 1;
@@ -182,6 +203,18 @@ async function attachViewerState(
       if (row.created_by === uid) passedByMe.add(originalId);
     }
     for (const row of admins ?? []) managedIds.add(row.page_id as string);
+    for (const row of (mentions ?? []) as CommunityMention[]) {
+      if (!row.post_id) continue;
+      const current = mentionsByPost.get(row.post_id) ?? [];
+      current.push(row);
+      mentionsByPost.set(row.post_id, current);
+    }
+    for (const row of verifications ?? []) {
+      const authorId = row.user_id as string;
+      const current = verificationByAuthor.get(authorId) ?? [];
+      current.push(row.badge as ProfileVerificationBadge);
+      verificationByAuthor.set(authorId, current);
+    }
   }
 
   if (imagePaths.length) {
@@ -201,6 +234,23 @@ async function attachViewerState(
       .in("id", resharedIds)
       .eq("status", "published");
     const originals = (data ?? []) as unknown as RawPost[];
+    const originalAuthorIds = Array.from(
+      new Set(
+        originals.map((row) => row.author_id as string).filter(Boolean)
+      )
+    );
+    if (originalAuthorIds.length) {
+      const { data: originalVerifications } = await supabase
+        .from("profile_verifications")
+        .select("user_id, badge")
+        .in("user_id", originalAuthorIds);
+      for (const row of originalVerifications ?? []) {
+        const authorId = row.user_id as string;
+        const current = verificationByAuthor.get(authorId) ?? [];
+        current.push(row.badge as ProfileVerificationBadge);
+        verificationByAuthor.set(authorId, current);
+      }
+    }
     const originalPaths = originals
       .filter((row) => row.media_status === "approved" && row.image_path)
       .map((row) => row.image_path as string);
@@ -221,6 +271,8 @@ async function attachViewerState(
           post.image_path && post.media_status === "approved"
             ? signedUrls.get(post.image_path) ?? null
             : null,
+        mentions: mentionsByPost.get(post.id) ?? [],
+        verification_badges: verificationByAuthor.get(post.author_id) ?? [],
       });
     }
   }
@@ -234,7 +286,7 @@ async function attachViewerState(
         : null,
     reaction_counts: reactionCounts.get(r.id as string) ?? {
       support: 0,
-      helpful: 0,
+      insightful: 0,
       celebrate: 0,
     },
     my_reaction: myReactions.get(r.id as string) ?? null,
@@ -250,6 +302,9 @@ async function attachViewerState(
     reshared_post: r.reshared_post_id
       ? embedded.get(r.reshared_post_id as string) ?? null
       : null,
+    mentions: mentionsByPost.get(r.id as string) ?? [],
+    verification_badges:
+      verificationByAuthor.get(r.author_id as string) ?? [],
   }));
 }
 
@@ -330,7 +385,53 @@ export async function getComments(
     .eq("status", "published")
     .order("created_at", { ascending: true })
     .limit(200);
-  return (data ?? []) as unknown as CommunityCommentView[];
+  const comments = (data ?? []) as unknown as CommunityCommentView[];
+  if (!comments.length) return [];
+  const commentIds = comments.map((comment) => comment.id);
+  const commentAuthorIds = comments.map((comment) => comment.author_id);
+  const [
+    { data: mentionRows },
+    { data: verificationRows },
+    { data: organisationRows },
+  ] = await Promise.all([
+    supabase
+      .from("community_mentions")
+      .select("*")
+      .in("comment_id", commentIds),
+    supabase
+      .from("profile_verifications")
+      .select("user_id, badge")
+      .in("user_id", commentAuthorIds),
+    supabase
+      .from("organisation_pages")
+      .select("id")
+      .in("id", commentAuthorIds)
+      .eq("is_official", true)
+      .eq("status", "active"),
+  ]);
+  const byComment = new Map<string, CommunityMention[]>();
+  const badgesByAuthor = new Map<string, ProfileVerificationBadge[]>();
+  const officialAuthors = new Set(
+    (organisationRows ?? []).map((row) => row.id as string)
+  );
+  for (const mention of (mentionRows ?? []) as CommunityMention[]) {
+    if (!mention.comment_id) continue;
+    const current = byComment.get(mention.comment_id) ?? [];
+    current.push(mention);
+    byComment.set(mention.comment_id, current);
+  }
+  for (const row of verificationRows ?? []) {
+    const authorId = row.user_id as string;
+    const current = badgesByAuthor.get(authorId) ?? [];
+    current.push(row.badge as ProfileVerificationBadge);
+    badgesByAuthor.set(authorId, current);
+  }
+  return comments.map((comment) => ({
+    ...comment,
+    mentions: byComment.get(comment.id) ?? [],
+    verification_badges: badgesByAuthor.get(comment.author_id) ?? [],
+    is_official: officialAuthors.has(comment.author_id),
+  }));
 }
 
 /* ─── Members ────────────────────────────────────────────────────────── */
@@ -411,6 +512,7 @@ export async function searchMembers(
                 followed_by_me: false,
                 identity_type: "organisation",
                 organisation_type: page.page_type,
+                official_organisation: page.is_official,
               }) satisfies CommunityMemberCard
           );
 
@@ -463,6 +565,7 @@ async function decorateMemberCards(
         avatar_url: page.avatar_url,
         identity_type: "organisation",
         organisation_type: page.page_type,
+        official_organisation: page.is_official,
         verification_badges: [],
       };
     }

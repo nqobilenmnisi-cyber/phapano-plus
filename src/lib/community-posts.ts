@@ -13,11 +13,10 @@ export const COMMUNITY_IMAGE_MIME_TYPES: CommunityImageMimeType[] = [
 export const COMMUNITY_REACTIONS: {
   value: CommunityReactionType;
   label: string;
-  symbol: string;
 }[] = [
-  { value: "support", label: "Support", symbol: "♡" },
-  { value: "helpful", label: "Helpful", symbol: "✦" },
-  { value: "celebrate", label: "Celebrate", symbol: "👏" },
+  { value: "support", label: "Support" },
+  { value: "insightful", label: "Insightful" },
+  { value: "celebrate", label: "Celebrate" },
 ];
 
 export type LinkPreview = {
@@ -28,11 +27,14 @@ export type LinkPreview = {
   imageUrl: string | null;
 };
 
-const URL_PATTERN = /https?:\/\/[^\s<>"')\]]+/gi;
+const URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
 
 export function normaliseHttpUrl(value: string): string | null {
   try {
-    const url = new URL(value.trim());
+    const trimmed = value.trim();
+    const url = new URL(
+      /^www\./i.test(trimmed) ? `https://${trimmed}` : trimmed
+    );
     if (url.protocol !== "http:" && url.protocol !== "https:") return null;
     url.username = "";
     url.password = "";

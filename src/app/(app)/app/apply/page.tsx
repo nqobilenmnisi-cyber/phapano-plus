@@ -12,7 +12,7 @@ export default async function ApplyPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 pb-12">
+    <main className="mx-auto max-w-4xl px-4 pb-12 sm:px-6">
       <section className="relative pb-2 pt-7">
         <div className="flex items-center gap-2.5">
           <IconApplication className="h-7 w-7 flex-none" />

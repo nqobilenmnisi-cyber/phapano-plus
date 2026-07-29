@@ -9,7 +9,7 @@ export default async function JournalPage() {
   const entries = await getJournalEntries();
 
   return (
-    <main className="mx-auto max-w-2xl px-6">
+    <main className="mx-auto max-w-2xl px-4 sm:px-6">
       <section className="pt-7">
         <h1 className="font-sora text-3xl font-bold tracking-tight">
           My notes

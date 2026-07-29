@@ -20,9 +20,14 @@ export type CareerStage =
 export type UserRole = "student" | "professional" | "admin";
 
 export type ProfessionalCategory =
-  | "psychologist"
-  | "registered_counsellor"
+  | "clinical_psychologist"
+  | "counselling_psychologist"
+  | "educational_psychologist"
+  | "industrial_psychologist"
+  | "neuropsychologist"
+  | "research_psychologist"
   | "psychometrist"
+  | "registered_counsellor"
   | "other";
 
 export type EducationEntry = {
@@ -290,6 +295,7 @@ export type Notification = {
   title: string;
   body: string | null;
   link: string | null;
+  dedupe_key?: string | null;
   read: boolean;
   created_at: string;
 };
@@ -471,6 +477,16 @@ export interface Database {
           reaction_type?: CommunityReactionType;
         };
         Update: Partial<CommunityReaction>;
+        Relationships: [];
+      };
+      community_mentions: {
+        Row: CommunityMention;
+        Insert: Partial<CommunityMention> & {
+          mentioned_user_id: string;
+          created_by: string;
+          label: string;
+        };
+        Update: Partial<CommunityMention>;
         Relationships: [];
       };
       community_blocks: {
@@ -814,7 +830,17 @@ export type CommunityReaction = {
   created_at: string;
 };
 
-export type CommunityReactionType = "support" | "helpful" | "celebrate";
+export type CommunityMention = {
+  id: string;
+  post_id: string | null;
+  comment_id: string | null;
+  mentioned_user_id: string;
+  created_by: string;
+  label: string;
+  created_at: string;
+};
+
+export type CommunityReactionType = "support" | "insightful" | "celebrate";
 export type CommunityMediaStatus = "none" | "pending" | "approved" | "removed";
 export type CommunityImageMimeType =
   | "image/jpeg"
@@ -914,6 +940,8 @@ export type CommunityPostAuthor = Pick<
 export type CommunityEmbeddedPost = CommunityPost & {
   author: CommunityPostAuthor | null;
   image_url: string | null;
+  mentions?: CommunityMention[];
+  verification_badges?: ProfileVerificationBadge[];
 };
 
 export type CommunityPostView = CommunityPost & {
@@ -927,6 +955,8 @@ export type CommunityPostView = CommunityPost & {
   passed_by_me: boolean;
   can_manage: boolean;
   reshared_post: CommunityEmbeddedPost | null;
+  mentions?: CommunityMention[];
+  verification_badges?: ProfileVerificationBadge[];
 };
 
 export type CommunityCommentView = CommunityComment & {
@@ -934,6 +964,9 @@ export type CommunityCommentView = CommunityComment & {
     CommunityProfile,
     "user_id" | "display_name" | "stage" | "avatar_url"
   > | null;
+  mentions?: CommunityMention[];
+  verification_badges?: ProfileVerificationBadge[];
+  is_official?: boolean;
 };
 
 export type CommunityMemberCard = Pick<
@@ -951,6 +984,7 @@ export type CommunityMemberCard = Pick<
   identity_type?: "person" | "organisation";
   verification_badges?: ProfileVerificationBadge[];
   organisation_type?: OrganisationPageType;
+  official_organisation?: boolean;
 };
 
 export type CommunityConnectionItem = {

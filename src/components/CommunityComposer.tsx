@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   acceptGuidelines,
   createPost,
   previewPostLink,
 } from "@/app/(app)/app/community/actions";
 import { MemberAvatar } from "@/components/CommunityShared";
+import {
+  MentionTextarea,
+  type MentionSelection,
+} from "@/components/MentionTextarea";
 import { POST_MAX_LENGTH } from "@/lib/community-constants";
 import {
   COMMUNITY_IMAGE_BUCKET,
@@ -31,6 +36,8 @@ type UploadedImage = {
   size: number;
   previewUrl: string;
 };
+
+const DRAFT_KEY = "phapano:community-post-draft";
 
 async function removeMetadata(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
@@ -70,13 +77,61 @@ export function CommunityComposer({
   const [altText, setAltText] = useState("");
   const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
   const [includePreview, setIncludePreview] = useState(true);
+  const [mentions, setMentions] = useState<MentionSelection[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
-  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const uploadedPathRef = useRef<string | null>(null);
+  const publishedRef = useRef(false);
+  const router = useRouter();
   const identities = [personalIdentity, ...managedPages];
   const activeIdentity =
     identities.find((identity) => identity.id === authorId) ?? personalIdentity;
+
+  useEffect(() => {
+    const savedDraft = window.localStorage.getItem(DRAFT_KEY);
+    if (!savedDraft) return;
+    try {
+      const parsed = JSON.parse(savedDraft) as {
+        body?: string;
+        mentions?: MentionSelection[];
+      };
+      setBody(String(parsed.body ?? "").slice(0, POST_MAX_LENGTH));
+      if (Array.isArray(parsed.mentions)) setMentions(parsed.mentions.slice(0, 20));
+    } catch {
+      // Backwards-compatible with the earlier plain-text draft format.
+      setBody(savedDraft.slice(0, POST_MAX_LENGTH));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (body.trim())
+      window.localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ body, mentions })
+      );
+    else window.localStorage.removeItem(DRAFT_KEY);
+  }, [body, mentions]);
+
+  useEffect(() => {
+    function warnBeforeLeaving(event: BeforeUnloadEvent) {
+      if (!body.trim() && !image) return;
+      event.preventDefault();
+    }
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [body, image]);
+
+  useEffect(
+    () => () => {
+      const abandonedPath = uploadedPathRef.current;
+      if (!abandonedPath || publishedRef.current) return;
+      void createClient().storage
+        .from(COMMUNITY_IMAGE_BUCKET)
+        .remove([abandonedPath]);
+    },
+    []
+  );
 
   useEffect(() => {
     const url = extractFirstHttpUrl(body);
@@ -105,6 +160,7 @@ export function CommunityComposer({
       await supabase.storage.from(COMMUNITY_IMAGE_BUCKET).remove([image.path]);
       URL.revokeObjectURL(image.previewUrl);
     }
+    uploadedPathRef.current = null;
     setImage(null);
     setAltText("");
     if (fileRef.current) fileRef.current.value = "";
@@ -146,6 +202,7 @@ export function CommunityComposer({
         size: prepared.size,
         previewUrl: URL.createObjectURL(prepared),
       });
+      uploadedPathRef.current = path;
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -155,12 +212,6 @@ export function CommunityComposer({
     } finally {
       setUploading(false);
     }
-  }
-
-  function addLink() {
-    const addition = body && !body.endsWith(" ") ? " https://" : "https://";
-    setBody(`${body}${addition}`);
-    requestAnimationFrame(() => composerRef.current?.focus());
   }
 
   function publish() {
@@ -184,6 +235,7 @@ export function CommunityComposer({
       formData.set("body", body);
       formData.set("author_id", authorId);
       formData.set("include_link_preview", String(includePreview));
+      formData.set("mentions", JSON.stringify(mentions));
       if (image) {
         formData.set("image_path", image.path);
         formData.set("image_mime_type", image.mimeType);
@@ -194,13 +246,20 @@ export function CommunityComposer({
       if ("error" in result) {
         setError(result.error);
       } else {
+        publishedRef.current = true;
+        uploadedPathRef.current = null;
         if (image) URL.revokeObjectURL(image.previewUrl);
+        window.localStorage.removeItem(DRAFT_KEY);
         setBody("");
         setImage(null);
         setAltText("");
         setLinkPreview(null);
         setIncludePreview(true);
+        setMentions([]);
         if (fileRef.current) fileRef.current.value = "";
+        router.push(
+          result.id ? `/app/community/post/${result.id}` : "/app/community"
+        );
       }
     });
   }
@@ -209,7 +268,7 @@ export function CommunityComposer({
     <section aria-label="Create a post" className="card overflow-hidden border-blue/20">
       <div className="border-b border-line bg-gradient-to-r from-blue-tint/70 to-white px-5 py-4">
         <h2 className="font-sora text-base font-bold tracking-tight">
-          Share with the community
+          Create a post
         </h2>
         <p className="mt-0.5 text-xs text-charcoal-soft">
           Ask a question, celebrate a milestone or share a useful resource.
@@ -234,7 +293,7 @@ export function CommunityComposer({
           >
             {identities.map((identity) => (
               <option key={identity.id} value={identity.id}>
-                {identity.name}{identity.official ? " — Official page" : ""}
+                {identity.name}
               </option>
             ))}
           </select>
@@ -243,14 +302,15 @@ export function CommunityComposer({
         <label className="sr-only" htmlFor="composer">
           Share something with the community
         </label>
-        <textarea
-          ref={composerRef}
+        <MentionTextarea
           id="composer"
           className="input mt-3 min-h-28 resize-y border-0 bg-soft/70 focus:bg-white"
           placeholder="What would you like to share?"
           maxLength={POST_MAX_LENGTH}
           value={body}
-          onChange={(event) => setBody(event.target.value)}
+          onChange={setBody}
+          mentions={mentions}
+          onMentionsChange={setMentions}
           disabled={pending}
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -268,14 +328,6 @@ export function CommunityComposer({
             disabled={pending || uploading}
           >
             {uploading ? "Preparing image…" : image ? "Replace image" : "Add image"}
-          </button>
-          <button
-            type="button"
-            className="btn-secondary !px-3.5 !py-2 text-sm"
-            onClick={addLink}
-            disabled={pending}
-          >
-            Add link
           </button>
           <span className="ml-auto text-xs text-charcoal-soft">
             {body.length}/{POST_MAX_LENGTH}

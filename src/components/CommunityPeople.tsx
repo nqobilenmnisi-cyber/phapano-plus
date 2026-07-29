@@ -198,22 +198,22 @@ export function MemberRow({ member }: { member: CommunityMemberCard }) {
         />
       </Link>
       <div className="min-w-0 flex-1">
-        <Link
-          href={`/app/community/member/${member.user_id}`}
-          className="block truncate font-semibold text-charcoal hover:underline"
-        >
-          {member.display_name}
-        </Link>
-        {(member.verification_badges?.length ||
-          member.identity_type === "organisation") && (
-          <span className="mt-1 block">
+        <span className="flex min-w-0 items-center gap-1">
+          <Link
+            href={`/app/community/member/${member.user_id}`}
+            className="truncate font-semibold text-charcoal hover:underline"
+          >
+            {member.display_name}
+          </Link>
+          {(member.verification_badges?.length ||
+            member.official_organisation) && (
             <VerificationBadges
               badges={member.verification_badges}
               organisationType={member.organisation_type}
-              officialOrganisation={member.identity_type === "organisation"}
+              officialOrganisation={member.official_organisation}
             />
-          </span>
-        )}
+          )}
+        </span>
         {(member.headline || member.institution) && (
           <p className="truncate text-xs text-charcoal-soft">
             {member.headline || member.institution}

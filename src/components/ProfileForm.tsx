@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { updateProfile } from "@/app/(app)/profile-actions";
 import {
   careerStageLabels,
@@ -13,6 +13,11 @@ import {
 } from "@/lib/utils";
 import { InstitutionAutocomplete } from "@/components/InstitutionAutocomplete";
 import { ProfileHistoryFields } from "@/components/ProfileHistoryFields";
+import { StandardOptionPicker } from "@/components/StandardOptionPicker";
+import {
+  PSYCHOLOGY_INTERESTS,
+  PSYCHOLOGY_SKILLS,
+} from "@/lib/profile-options";
 import type {
   Profile,
   CareerStage,
@@ -32,8 +37,10 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [interests, setInterests] = useState<PsychologyStream[]>(
     profile.interests ?? []
   );
-  const [saved, setSaved] = useState(false);
+  const [savedSection, setSavedSection] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastSection, setLastSection] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   // Research links/sections appear for more senior stages so junior users
@@ -47,24 +54,46 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const senior = stage !== "" && SENIOR_STAGES.includes(stage as string);
 
   function toggle(s: PsychologyStream) {
-    setSaved(false);
+    setSavedSection(null);
+    setDirty(true);
     setInterests((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
     );
   }
 
   function onSubmit(fd: FormData) {
+    const section = String(fd.get("section") ?? "all");
+    setLastSection(section);
     setError(null);
-    setSaved(false);
+    setSavedSection(null);
     start(async () => {
       const res = await updateProfile(fd);
       if (res?.error) setError(res.error);
-      else setSaved(true);
+      else {
+        setSavedSection(section);
+        setDirty(false);
+      }
     });
   }
 
+  useEffect(() => {
+    function warn(event: BeforeUnloadEvent) {
+      if (!dirty) return;
+      event.preventDefault();
+    }
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
   return (
-    <form action={onSubmit} className="space-y-5">
+    <form
+      action={onSubmit}
+      className="space-y-5"
+      onChange={() => {
+        setDirty(true);
+        setSavedSection(null);
+      }}
+    >
       <p className="text-xs text-charcoal-soft">
         Fields marked with <span className="font-semibold text-charcoal">*</span> are required.
       </p>
@@ -106,6 +135,13 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           placeholder="Write a short bio that summarises your psychology pathway, interests, experience and goals."
         />
       </div>
+
+      <SectionSave
+        section="identity"
+        pending={pending}
+        saved={savedSection === "identity"}
+        error={lastSection === "identity" ? error : null}
+      />
 
       {/* career stage */}
       <div>
@@ -158,7 +194,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           }
           className="input"
         >
-          <option value="">Not applicable yet</option>
+          <option value="">Select a category (optional)</option>
           {PROFESSIONAL_CATEGORIES.map((category) => (
             <option key={category} value={category}>
               {professionalCategoryLabels[category]}
@@ -242,18 +278,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </div>
 
       {/* research interests */}
-      <div>
-        <label className="label" htmlFor="research_interests">
-          Research interests
-        </label>
-        <input
-          id="research_interests"
-          name="research_interests"
-          defaultValue={profile.research_interests ?? ""}
-          className="input"
-          placeholder="e.g. trauma, child development"
-        />
-      </div>
+      <SectionSave
+        section="professional"
+        pending={pending}
+        saved={savedSection === "professional"}
+        error={lastSection === "professional" ? error : null}
+      />
 
       {/* Phapano Passport — grows with your stage */}
       <div className="rounded-card border border-line bg-soft/50 p-5">
@@ -266,16 +296,24 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         </p>
 
         <div className="mt-4 space-y-4">
-          <div>
-            <label className="label" htmlFor="skills">Skills &amp; interests</label>
-            <input
-              id="skills"
-              name="skills"
-              defaultValue={profile.skills ?? ""}
-              className="input"
-              placeholder="e.g. SPSS, qualitative research, peer support"
-            />
-          </div>
+          <StandardOptionPicker
+            id="skills"
+            name="skills"
+            label="Skills"
+            options={PSYCHOLOGY_SKILLS}
+            initialValue={profile.skills}
+            maximum={10}
+            placeholder="Search psychology skills"
+          />
+          <StandardOptionPicker
+            id="research_interests"
+            name="research_interests"
+            label="Professional and research interests"
+            options={PSYCHOLOGY_INTERESTS}
+            initialValue={profile.research_interests}
+            maximum={6}
+            placeholder="Search psychology interests"
+          />
           <div>
             <label className="label" htmlFor="volunteering">Volunteering experience</label>
             <input
@@ -299,6 +337,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           <ProfileHistoryFields
             education={profile.education ?? []}
             experience={profile.experience ?? []}
+          />
+          <SectionSave
+            section="experience"
+            pending={pending}
+            saved={savedSection === "experience"}
+            error={lastSection === "experience" ? error : null}
           />
         </div>
       </div>
@@ -346,6 +390,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             </p>
           </>
         )}
+        <SectionSave
+          section="links"
+          pending={pending}
+          saved={savedSection === "links"}
+          error={lastSection === "links" ? error : null}
+        />
       </div>
 
       {/* Preserve existing values for fields no longer shown in the form, so
@@ -353,19 +403,42 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <input type="hidden" name="application_year" value={profile.application_year ?? ""} />
       <input type="hidden" name="goals" value={profile.goals ?? ""} />
 
-      {error && <p className="text-sm text-bronze-deep">{error}</p>}
-      {saved && (
-        <p className="flex items-center gap-2 text-sm font-semibold text-ok">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M5 13l4 4L19 7" stroke="#3F8F6F" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Saved
-        </p>
-      )}
-
-      <button type="submit" disabled={pending} className="btn-primary">
-        {pending ? "Saving…" : "Save changes"}
-      </button>
     </form>
+  );
+}
+
+function SectionSave({
+  section,
+  pending,
+  saved,
+  error,
+}: {
+  section: "identity" | "professional" | "experience" | "links";
+  pending: boolean;
+  saved: boolean;
+  error: string | null;
+}) {
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-3">
+      <button
+        type="submit"
+        name="section"
+        value={section}
+        disabled={pending}
+        className="btn-primary whitespace-nowrap"
+      >
+        {pending ? "Saving…" : "Save section"}
+      </button>
+      {saved && (
+        <span className="text-sm font-semibold text-ok" role="status">
+          Saved
+        </span>
+      )}
+      {error && (
+        <span className="w-full text-sm font-semibold text-bronze-deep" role="alert">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }

@@ -65,16 +65,26 @@ export const careerStageLabels: Record<CareerStage, string> = {
 };
 
 export const professionalCategoryLabels: Record<ProfessionalCategory, string> = {
-  psychologist: "Psychologist",
-  registered_counsellor: "Registered Counsellor",
+  clinical_psychologist: "Clinical Psychologist",
+  counselling_psychologist: "Counselling Psychologist",
+  educational_psychologist: "Educational Psychologist",
+  industrial_psychologist: "Industrial Psychologist",
+  neuropsychologist: "Neuropsychologist",
+  research_psychologist: "Research Psychologist",
   psychometrist: "Psychometrist",
+  registered_counsellor: "Registered Counsellor",
   other: "Other",
 };
 
 export const PROFESSIONAL_CATEGORIES: ProfessionalCategory[] = [
-  "psychologist",
-  "registered_counsellor",
+  "clinical_psychologist",
+  "counselling_psychologist",
+  "educational_psychologist",
+  "industrial_psychologist",
+  "neuropsychologist",
+  "research_psychologist",
   "psychometrist",
+  "registered_counsellor",
   "other",
 ];
 

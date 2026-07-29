@@ -41,7 +41,7 @@ import type {
   CommunityVisibility,
 } from "@/types/database";
 
-export type ActionResult = { ok: true } | { error: string };
+export type ActionResult = { ok: true; id?: string } | { error: string };
 export type LinkPreviewResult = { ok: true; preview: LinkPreview | null } | {
   error: string;
 };
@@ -112,6 +112,69 @@ const DAY = 24 * HOUR;
 
 function revalidateCommunity() {
   revalidatePath("/app/community", "layout");
+}
+
+export type SubmittedMention = { userId: string; label: string };
+
+function parseSubmittedMentions(raw: FormDataEntryValue | null): SubmittedMention[] {
+  try {
+    const parsed = JSON.parse(String(raw ?? "[]")) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const unique = new Map<string, SubmittedMention>();
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") continue;
+      const userId = String((item as SubmittedMention).userId ?? "");
+      const label = String((item as SubmittedMention).label ?? "").trim();
+      if (isUuid(userId) && label.length >= 2 && label.length <= 60)
+        unique.set(userId, { userId, label });
+    }
+    return [...unique.values()].slice(0, 20);
+  } catch {
+    return [];
+  }
+}
+
+async function saveMentions(input: {
+  postId?: string;
+  commentId?: string;
+  body: string;
+  actorId: string;
+  submitted: SubmittedMention[];
+}) {
+  const submitted = input.submitted.filter(
+    (mention) =>
+      mention.userId !== input.actorId &&
+      input.body.includes(`@${mention.label}`)
+  );
+  if (!submitted.length) return;
+  const supabase = await createClient();
+  const { data: profiles } = await supabase
+    .from("community_profiles")
+    .select("user_id, display_name")
+    .in(
+      "user_id",
+      submitted.map((mention) => mention.userId)
+    );
+  const canonical = new Map(
+    (profiles ?? []).map((profile) => [
+      profile.user_id as string,
+      profile.display_name as string,
+    ])
+  );
+  const rows = submitted
+    .filter(
+      (mention) =>
+        canonical.get(mention.userId) === mention.label &&
+        input.body.includes(`@${mention.label}`)
+    )
+    .map((mention) => ({
+      post_id: input.postId ?? null,
+      comment_id: input.commentId ?? null,
+      mentioned_user_id: mention.userId,
+      created_by: input.actorId,
+      label: mention.label,
+    }));
+  if (rows.length) await supabase.from("community_mentions").insert(rows);
 }
 
 /* ─── Community profile ─────────────────────────────────────────────── */
@@ -286,24 +349,28 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
   const preview =
     includePreview && linkInBody ? await fetchSafeLinkPreview(linkInBody) : null;
 
-  const { error } = await supabase.from("community_posts").insert({
-    author_id: authorId,
-    created_by: auth.uid,
-    body,
-    is_official: Boolean(organisation?.is_official),
-    image_path: imagePath || null,
-    image_alt_text: imageAltText || null,
-    image_mime_type: imagePath
-      ? (imageMimeType as CommunityImageMimeType)
-      : null,
-    image_size_bytes: imagePath ? imageSize : null,
-    media_status: imagePath ? "pending" : "none",
-    link_url: preview?.url ?? null,
-    link_title: preview?.title ?? null,
-    link_site_name: preview?.siteName ?? null,
-    link_description: preview?.description ?? null,
-    link_image_url: preview?.imageUrl ?? null,
-  });
+  const { data: createdPost, error } = await supabase
+    .from("community_posts")
+    .insert({
+      author_id: authorId,
+      created_by: auth.uid,
+      body,
+      is_official: Boolean(organisation?.is_official),
+      image_path: imagePath || null,
+      image_alt_text: imageAltText || null,
+      image_mime_type: imagePath
+        ? (imageMimeType as CommunityImageMimeType)
+        : null,
+      image_size_bytes: imagePath ? imageSize : null,
+      media_status: imagePath ? "pending" : "none",
+      link_url: preview?.url ?? null,
+      link_title: preview?.title ?? null,
+      link_site_name: preview?.siteName ?? null,
+      link_description: preview?.description ?? null,
+      link_image_url: preview?.imageUrl ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     // RLS blocks posting without an accepted-guidelines record, a community
@@ -313,8 +380,14 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
         "We couldn't publish that. Make sure your community profile is set up and the guidelines are accepted — and try again.",
     };
   }
+  await saveMentions({
+    postId: createdPost.id,
+    body,
+    actorId: auth.uid,
+    submitted: parseSubmittedMentions(formData.get("mentions")),
+  });
   revalidateCommunity();
-  return { ok: true };
+  return { ok: true, id: createdPost.id };
 }
 
 export async function updatePost(
@@ -460,7 +533,8 @@ export async function previewPostLink(url: string): Promise<LinkPreviewResult> {
 export async function addComment(
   postId: string,
   body: string,
-  authorId?: string
+  authorId?: string,
+  mentions: SubmittedMention[] = []
 ): Promise<ActionResult> {
   const auth = await requireUser();
   if ("error" in auth) return auth;
@@ -485,17 +559,27 @@ export async function addComment(
     if (!pageAdmin)
       return { error: "You do not have permission to reply as that page." };
   }
-  const { error } = await supabase.from("community_comments").insert({
-    post_id: postId,
-    author_id: identityId,
-    created_by: auth.uid,
-    body: trimmed,
-  });
+  const { data: createdComment, error } = await supabase
+    .from("community_comments")
+    .insert({
+      post_id: postId,
+      author_id: identityId,
+      created_by: auth.uid,
+      body: trimmed,
+    })
+    .select("id")
+    .single();
   if (error)
     return {
       error:
         "We couldn't add that comment. Make sure the guidelines are accepted and try again.",
     };
+  await saveMentions({
+    commentId: createdComment.id,
+    body: trimmed,
+    actorId: auth.uid,
+    submitted: mentions,
+  });
   revalidateCommunity();
   return { ok: true };
 }

@@ -71,7 +71,7 @@ export default async function ProfilePage({
   };
 
   return (
-    <main className="mx-auto max-w-2xl px-6">
+    <main className="mx-auto max-w-2xl px-4 sm:px-6">
       <section className="relative overflow-hidden pt-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">

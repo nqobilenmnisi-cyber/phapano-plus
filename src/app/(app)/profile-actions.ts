@@ -86,6 +86,7 @@ export async function updateProfile(formData: FormData) {
   const professionalCategoryOther = String(
     formData.get("professional_category_other") ?? ""
   ).trim();
+  const section = String(formData.get("section") ?? "all");
   const profileLinks = [
     ["linkedin_url", "LinkedIn"],
     ["website_url", "website"],
@@ -100,6 +101,7 @@ export async function updateProfile(formData: FormData) {
   };
 
   for (const [field, label] of profileLinks) {
+    if (section !== "all" && section !== "links") break;
     const submitted = String(formData.get(field) ?? "").trim();
     if (!submitted) continue;
     const safeUrl = safeExternalProfileUrl(submitted);
@@ -111,39 +113,77 @@ export async function updateProfile(formData: FormData) {
     normalisedLinks[field] = safeUrl;
   }
 
+  const values = {
+    full_name: String(formData.get("full_name") ?? "").trim() || null,
+    surname: String(formData.get("surname") ?? "").trim() || null,
+    bio: String(formData.get("bio") ?? "").trim() || null,
+    career_stage: stage,
+    career_stage_other: stage === "other" ? stageOther || null : null,
+    professional_category: professionalCategory,
+    professional_category_other:
+      professionalCategory === "other"
+        ? professionalCategoryOther || null
+        : null,
+    university: String(formData.get("university") ?? "").trim() || null,
+    province: String(formData.get("province") ?? "").trim() || null,
+    interests,
+    research_interests:
+      String(formData.get("research_interests") ?? "").trim() || null,
+    skills: String(formData.get("skills") ?? "").trim() || null,
+    volunteering: String(formData.get("volunteering") ?? "").trim() || null,
+    workshops: String(formData.get("workshops") ?? "").trim() || null,
+    education: parseEducationFormValue(formData.get("education")),
+    experience: parseExperienceFormValue(formData.get("experience")),
+    linkedin_url: normalisedLinks.linkedin_url,
+    website_url: normalisedLinks.website_url,
+    scholar_url: normalisedLinks.scholar_url,
+    researchgate_url: normalisedLinks.researchgate_url,
+    orcid: String(formData.get("orcid") ?? "").trim() || null,
+    application_year:
+      String(formData.get("application_year") ?? "").trim() || null,
+    goals: String(formData.get("goals") ?? "").trim() || null,
+  };
+  const fieldsBySection = {
+    identity: ["full_name", "surname", "bio"],
+    professional: [
+      "career_stage",
+      "career_stage_other",
+      "professional_category",
+      "professional_category_other",
+      "university",
+      "province",
+      "interests",
+    ],
+    experience: [
+      "research_interests",
+      "skills",
+      "volunteering",
+      "workshops",
+      "education",
+      "experience",
+    ],
+    links: [
+      "linkedin_url",
+      "website_url",
+      "scholar_url",
+      "researchgate_url",
+      "orcid",
+    ],
+  } as const;
+  const selectedFields =
+    section in fieldsBySection
+      ? fieldsBySection[section as keyof typeof fieldsBySection]
+      : (Object.keys(values) as (keyof typeof values)[]);
+  const selectedValues = Object.fromEntries(
+    selectedFields.map((field) => [field, values[field]])
+  );
+
   // UPSERT so editing works even if the row was never created.
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
       email: user.email ?? null,
-      full_name: String(formData.get("full_name") ?? "").trim() || null,
-      surname: String(formData.get("surname") ?? "").trim() || null,
-      career_stage: stage,
-      career_stage_other: stage === "other" ? stageOther || null : null,
-      professional_category: professionalCategory,
-      professional_category_other:
-        professionalCategory === "other"
-          ? professionalCategoryOther || null
-          : null,
-      university: String(formData.get("university") ?? "").trim() || null,
-      province: String(formData.get("province") ?? "").trim() || null,
-      bio: String(formData.get("bio") ?? "").trim() || null,
-      research_interests:
-        String(formData.get("research_interests") ?? "").trim() || null,
-      application_year:
-        String(formData.get("application_year") ?? "").trim() || null,
-      goals: String(formData.get("goals") ?? "").trim() || null,
-      skills: String(formData.get("skills") ?? "").trim() || null,
-      volunteering: String(formData.get("volunteering") ?? "").trim() || null,
-      workshops: String(formData.get("workshops") ?? "").trim() || null,
-      education: parseEducationFormValue(formData.get("education")),
-      experience: parseExperienceFormValue(formData.get("experience")),
-      linkedin_url: normalisedLinks.linkedin_url,
-      website_url: normalisedLinks.website_url,
-      scholar_url: normalisedLinks.scholar_url,
-      researchgate_url: normalisedLinks.researchgate_url,
-      orcid: String(formData.get("orcid") ?? "").trim() || null,
-      interests,
+      ...selectedValues,
       onboarding_complete: true,
       updated_at: new Date().toISOString(),
     },

@@ -38,7 +38,7 @@ export default async function CommunityPostPage({
     !moderation.posting_restricted && !moderation.community_suspended;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-12">
+    <main className="mx-auto max-w-2xl px-4 pb-12 sm:px-6">
       <section className="pt-7">
         <Link
           href="/app/community"
