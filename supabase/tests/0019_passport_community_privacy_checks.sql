@@ -40,7 +40,7 @@ where table_schema = 'public'
   )
 order by verified_item;
 
-select event_object_table || '.' || trigger_name as verified_trigger
+select distinct event_object_table || '.' || trigger_name as verified_trigger
 from information_schema.triggers
 where trigger_schema = 'public'
   and trigger_name in (
