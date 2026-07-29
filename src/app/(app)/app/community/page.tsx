@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { CommunityComposer } from "@/components/CommunityComposer";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
-import { CommunityProfileForm } from "@/components/CommunityProfileForm";
 import {
   getFeed,
   getManagedOrganisationPages,
@@ -10,7 +10,6 @@ import {
   getMyUserId,
   hasAcceptedGuidelines,
 } from "@/lib/community";
-import { getProfile } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata = { title: "Community | Phapano+" };
@@ -41,36 +40,7 @@ export default async function CommunityPage({
 
   // First visit: set up the community profile before anything else.
   if (uid && !communityProfile) {
-    const passport = await getProfile();
-    return (
-      <main className="mx-auto max-w-2xl px-6 pb-12">
-        <section className="pb-2 pt-7">
-          <h1 className="font-sora text-3xl font-bold tracking-tight">
-            Join the community
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
-            Choose what fellow psychology students and professionals see about
-            you. Your applications, notes, funding and documents stay private.
-          </p>
-        </section>
-        <div className="card mt-4 p-6">
-          <CommunityProfileForm
-            existing={null}
-            passport={passport}
-          />
-        </div>
-        <p className="mt-4 text-center text-xs text-charcoal-soft">
-          By joining you agree to our{" "}
-          <Link
-            href="/community-guidelines"
-            className="font-semibold text-blue-action hover:underline"
-          >
-            Community Guidelines
-          </Link>
-          .
-        </p>
-      </main>
-    );
+    redirect("/app/profile?section=community");
   }
 
   const [{ posts, hasMore }, accepted, moderation, managedPages] = await Promise.all([
@@ -184,12 +154,6 @@ function Header({ mode }: { mode: "following" | "discover" }) {
             className="btn-secondary !px-3.5 !py-2 text-sm"
           >
             People
-          </Link>
-          <Link
-            href="/app/community/profile"
-            className="btn-secondary !px-3.5 !py-2 text-sm"
-          >
-            My profile
           </Link>
         </div>
       </div>

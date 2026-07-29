@@ -35,7 +35,7 @@ export function Prose({ children }: { children: React.ReactNode }) {
 /** Auth-aware marketing CTA: signed-in users get "Open Phapano+". */
 export function MarketingCTA({
   authed,
-  signedOutLabel = "Create Account",
+  signedOutLabel = "Log in",
   secondaryHref = "/features",
   secondaryLabel = "See all features",
 }: {
@@ -46,7 +46,7 @@ export function MarketingCTA({
 }) {
   return (
     <div className="mt-8 flex flex-wrap gap-3">
-      <Link href={authed ? "/dashboard" : "/signup"} className="btn-primary">
+      <Link href={authed ? "/dashboard" : "/login"} className="btn-primary">
         {authed ? "Open Phapano+" : signedOutLabel}
       </Link>
       <Link href={secondaryHref} className="btn-secondary">

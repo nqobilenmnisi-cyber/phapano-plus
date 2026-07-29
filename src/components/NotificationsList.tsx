@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import type { Notification } from "@/types/database";
 import { markAllRead, markRead } from "@/app/(app)/app/settings/actions";
@@ -32,20 +32,24 @@ export function NotificationsList({
   demo: boolean;
 }) {
   const [items, setItems] = useState(initial);
+  const [highlightedIds] = useState(
+    () => new Set(initial.filter((item) => !item.read).map((item) => item.id))
+  );
   const [, start] = useTransition();
-  const unread = items.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    if (demo || highlightedIds.size === 0) return;
+    start(async () => {
+      await markAllRead();
+      setItems((current) => current.map((item) => ({ ...item, read: true })));
+      window.dispatchEvent(new Event("phapano:notifications-read"));
+    });
+  }, [demo, highlightedIds]);
 
   function readOne(id: string) {
     setItems((xs) => xs.map((n) => (n.id === id ? { ...n, read: true } : n)));
     if (!demo) start(() => {
       markRead(id);
-    });
-  }
-
-  function readAll() {
-    setItems((xs) => xs.map((n) => ({ ...n, read: true })));
-    if (!demo) start(() => {
-      markAllRead();
     });
   }
 
@@ -60,13 +64,10 @@ export function NotificationsList({
 
   return (
     <div className="mt-6">
-      {unread > 0 && (
-        <button
-          onClick={readAll}
-          className="mb-3 text-sm font-semibold text-blue-action hover:underline"
-        >
-          Mark all as read
-        </button>
+      {highlightedIds.size > 0 && (
+        <p className="mb-3 text-xs font-semibold text-blue-deep" role="status">
+          New notifications are highlighted and have been marked as read.
+        </p>
       )}
       <div className="space-y-2">
         {items.map((n) => {
@@ -74,9 +75,9 @@ export function NotificationsList({
           const inner = (
             <div
               className={`flex items-start gap-3 rounded-card border p-4 transition ${
-                n.read
-                  ? "border-line bg-white"
-                  : "border-[#D2E4F7] bg-blue-tint/40"
+                highlightedIds.has(n.id)
+                  ? "border-[#D2E4F7] bg-blue-tint/40"
+                  : "border-line bg-white"
               }`}
             >
               <span

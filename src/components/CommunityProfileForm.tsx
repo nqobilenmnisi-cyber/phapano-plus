@@ -142,7 +142,7 @@ export function CommunityProfileForm({
         setError(result.error);
         return;
       }
-      router.push("/app/community/profile");
+      router.push("/app/profile?section=community");
       router.refresh();
     });
   }

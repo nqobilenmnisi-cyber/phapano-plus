@@ -34,16 +34,22 @@ describe("social-style Community profile", () => {
     expect(profileView).toContain("connectionState");
   });
 
-  it("gives the owner a My profile view and a separate Edit profile action", () => {
-    expect(myProfilePage).toContain("My profile");
-    expect(myProfilePage).toContain("isOwnProfile");
-    expect(profileView).toContain('href="/app/community/profile/edit"');
+  it("keeps Community profile editing inside the canonical You tab", () => {
+    expect(myProfilePage).toContain(
+      'redirect("/app/profile?section=community")'
+    );
+    expect(profileView).toContain(
+      'href="/app/profile?section=community#community-settings"'
+    );
     expect(profileView).toContain("Edit profile");
-    expect(editProfilePage).toContain("Edit Community profile");
-    expect(editProfilePage).toContain("CommunityProfileForm");
+    expect(editProfilePage).toContain(
+      'redirect("/app/profile?section=community#community-settings")'
+    );
   });
 
-  it("redirects self-profile member links to the canonical My profile page", () => {
-    expect(memberPage).toContain('redirect("/app/community/profile")');
+  it("redirects self-profile member links to the canonical You page", () => {
+    expect(memberPage).toContain(
+      'redirect("/app/profile?section=community")'
+    );
   });
 });

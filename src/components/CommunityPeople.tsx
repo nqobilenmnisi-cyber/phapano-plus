@@ -239,9 +239,11 @@ export function MemberRow({ member }: { member: CommunityMemberCard }) {
 export function FollowButton({
   userId,
   initiallyFollowing,
+  subtleWhenFollowing = false,
 }: {
   userId: string;
   initiallyFollowing: boolean;
+  subtleWhenFollowing?: boolean;
 }) {
   const [following, setFollowing] = useState(initiallyFollowing);
   const [pending, startTransition] = useTransition();
@@ -263,7 +265,9 @@ export function FollowButton({
       aria-pressed={following}
       className={
         following
-          ? "btn-secondary shrink-0 !px-4 !py-2 text-sm"
+          ? subtleWhenFollowing
+            ? "shrink-0 rounded-chip px-4 py-2 text-sm font-semibold text-charcoal-soft transition hover:bg-soft hover:text-charcoal"
+            : "btn-secondary shrink-0 !px-4 !py-2 text-sm"
           : "btn-primary shrink-0 !px-4 !py-2 text-sm"
       }
     >

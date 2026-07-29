@@ -124,7 +124,7 @@ export default async function SettingsPage() {
             .
           </p>
           <Link
-            href="/app/community/profile/edit"
+            href="/app/profile?section=community#community-settings"
             className="inline-flex font-semibold text-blue-action hover:underline"
           >
             Edit community profile &amp; visibility →

@@ -33,12 +33,12 @@ export function SiteHeader({ authed = false }: { authed?: boolean }) {
             <>
               <Link
                 href="/login"
-                className="hidden text-sm font-semibold text-charcoal-soft transition hover:text-charcoal sm:inline"
+                className="btn-primary !px-3.5 !py-2 text-sm sm:!px-4"
               >
                 Log in
               </Link>
-              <Link href="/signup" className="btn-primary !px-4 !py-2 text-sm">
-                Create Account
+              <Link href="/signup" className="btn-secondary !px-3.5 !py-2 text-sm sm:!px-4">
+                Create account
               </Link>
             </>
           )}
@@ -74,7 +74,7 @@ export function SiteFooter({ authed = false }: { authed?: boolean }) {
               {authed ? (
                 <li><Link href="/dashboard" className="hover:text-charcoal">Open Phapano+</Link></li>
               ) : (
-                <li><Link href="/signup" className="hover:text-charcoal">Create Account</Link></li>
+                <li><Link href="/signup" className="hover:text-charcoal">Create account</Link></li>
               )}
             </ul>
             <h4 className="mt-6 font-sora text-sm font-bold">Legal</h4>

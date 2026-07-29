@@ -151,9 +151,11 @@ export function ConnectionButton({
     <>
       <button
         type="button"
-        className={
-          state === "none" || state === "incoming_pending"
-            ? "btn-primary shrink-0 !px-4 !py-2 text-sm"
+      className={
+        state === "none" || state === "incoming_pending"
+          ? "btn-primary shrink-0 !px-4 !py-2 text-sm"
+          : state === "connected"
+            ? "shrink-0 rounded-chip border border-blue/35 bg-blue-tint px-4 py-2 text-sm font-bold text-blue-deep transition hover:border-blue-action"
             : "btn-secondary shrink-0 !px-4 !py-2 text-sm"
         }
         onClick={() => {

@@ -79,6 +79,15 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
 
   if (error) return { error: friendlyAuthError(error.message) };
 
+  // Supabase may deliberately return an obfuscated user with no identities
+  // when sign-up is attempted for an existing email. Do not present that as a
+  // newly created account.
+  if (data.user && data.user.identities?.length === 0) {
+    return {
+      error: "An account with this email already exists. Log in instead.",
+    };
+  }
+
   // With email confirmation ON, no session is returned until the user clicks
   // the link in their email. Show a calm "check your email" screen.
   if (!data.session) {

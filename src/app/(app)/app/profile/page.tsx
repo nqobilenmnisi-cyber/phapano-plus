@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/ProfileForm";
+import { CommunityProfileForm } from "@/components/CommunityProfileForm";
+import { CommunityProfileView } from "@/components/CommunityProfileView";
 import { AvatarUploader } from "@/components/AvatarUploader";
 import { SupportLine } from "@/components/AppChrome";
 import { Star, IconProfile } from "@/components/illustrations";
 import { VerificationBadges } from "@/components/VerificationBadges";
 import {
   getManagedOrganisationPages,
+  getMemberProfile,
+  getMyCommunityProfile,
+  getMyUserId,
   getMyProfileVerifications,
 } from "@/lib/community";
 import {
@@ -20,7 +25,13 @@ import { careerStageLabels, firstName } from "@/lib/utils";
 
 export const metadata = { title: "You | Phapano+" };
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ section?: string }>;
+}) {
+  const query = await searchParams;
+  const section = query.section === "community" ? "community" : "passport";
   // Authenticated user's own data only. getProfile self-heals (creates the row
   // if missing) so a signed-in user always has a profile to show.
   const [user, profile, savedProgrammes, savedFunding] =
@@ -34,6 +45,13 @@ export default async function ProfilePage() {
     getManagedOrganisationPages(),
     getMyProfileVerifications(),
   ]);
+  const communityProfile =
+    section === "community" ? await getMyCommunityProfile() : null;
+  const uid = section === "community" ? await getMyUserId() : null;
+  const communityMember =
+    section === "community" && uid && communityProfile
+      ? await getMemberProfile(uid)
+      : null;
 
   if (isSupabaseConfigured && !user) redirect("/login?redirect=/app/profile");
 
@@ -101,7 +119,35 @@ export default async function ProfilePage() {
         )}
       </section>
 
-      {managedPages.length > 0 && (
+      <nav
+        aria-label="You sections"
+        className="mt-7 grid grid-cols-2 gap-1 rounded-card border border-line bg-soft p-1"
+      >
+        <Link
+          href="/app/profile"
+          aria-current={section === "passport" ? "page" : undefined}
+          className={`rounded-chip px-3 py-2.5 text-center text-sm font-bold transition ${
+            section === "passport"
+              ? "bg-white text-blue-deep shadow-sm"
+              : "text-charcoal-soft hover:bg-white/70 hover:text-charcoal"
+          }`}
+        >
+          Phapano Passport
+        </Link>
+        <Link
+          href="/app/profile?section=community"
+          aria-current={section === "community" ? "page" : undefined}
+          className={`rounded-chip px-3 py-2.5 text-center text-sm font-bold transition ${
+            section === "community"
+              ? "bg-white text-blue-deep shadow-sm"
+              : "text-charcoal-soft hover:bg-white/70 hover:text-charcoal"
+          }`}
+        >
+          Community profile
+        </Link>
+      </nav>
+
+      {section === "passport" && managedPages.length > 0 && (
         <section className="mt-8">
           <h2 className="font-sora text-lg font-bold tracking-tight">
             Pages you manage
@@ -124,12 +170,15 @@ export default async function ProfilePage() {
       )}
 
       {/* saved content summary */}
+      {section === "passport" && (
       <section className="mt-8 grid grid-cols-2 gap-3">
         <SummaryTile label="Programmes saved" value={counts.programmes} href="/app/apply" />
         <SummaryTile label="Funding saved" value={counts.funding} href="/app/funding" />
       </section>
+      )}
 
       {/* edit profile */}
+      {section === "passport" ? (
       <section className="mt-9">
         <div className="mb-3 flex items-center gap-2">
           <IconProfile className="h-6 w-6" />
@@ -145,6 +194,52 @@ export default async function ProfilePage() {
           </p>
         )}
       </section>
+      ) : (
+        <>
+          <section id="community-settings" className="mt-9 scroll-mt-6">
+            <h2 className="font-sora text-lg font-bold tracking-tight">
+              Community profile &amp; privacy
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
+              Control your Community identity, profile visibility and which
+              Passport fields other members can see.
+            </p>
+            <div className="card mt-4 p-6">
+              <CommunityProfileForm
+                existing={communityProfile}
+                passport={profile}
+              />
+            </div>
+          </section>
+
+          {communityMember?.profile && uid && (
+            <section className="mt-9">
+              <h2 className="font-sora text-lg font-bold tracking-tight">
+                Public profile preview
+              </h2>
+              <p className="mt-1 text-sm text-charcoal-soft">
+                This is how your Community profile and posts appear to members.
+              </p>
+              <CommunityProfileView
+                profile={communityMember.profile}
+                followers={communityMember.followers}
+                following={communityMember.following}
+                connections={communityMember.connections}
+                followedByMe={false}
+                blockedByMe={false}
+                connectionId={null}
+                connectionState="none"
+                connectionNote={null}
+                canConnect={false}
+                posts={communityMember.posts}
+                viewerId={uid}
+                isOwnProfile
+                verificationBadges={communityMember.verificationBadges}
+              />
+            </section>
+          )}
+        </>
+      )}
 
       <section className="mt-9">
         <Link href="/app/settings" className="btn-secondary w-full">
