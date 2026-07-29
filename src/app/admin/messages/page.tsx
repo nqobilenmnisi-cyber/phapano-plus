@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/admin";
 import { MessagesList } from "@/components/AdminMessages";
 import type { ContactMessage } from "@/types/database";
 
-export const metadata = { title: "Messages — Phapano+ Admin" };
+export const metadata = { title: "Messages | Phapano+ Admin" };
 
 export default async function AdminMessagesPage({
   searchParams,

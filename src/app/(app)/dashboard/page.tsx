@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppTopBar, SupportLine } from "@/components/AppChrome";
 import { BottomNav } from "@/components/BottomNav";
-import { OpportunityRadar, type RadarItem } from "@/components/OpportunityRadar";
+import { MyPathway, type PathwayItem } from "@/components/MyPathway";
 import { Compass, Star, IconApplication, IconNotes } from "@/components/illustrations";
 import { redirect } from "next/navigation";
 import {
@@ -9,16 +9,17 @@ import {
   getProfile,
   getSavedFunding,
   getNotifications,
+  getJournalEntries,
   getDatedNotes,
   getSavedProgrammes,
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isApplicationStarted } from "@/lib/application-plan-status";
-import { greeting, firstName } from "@/lib/utils";
-import { demoRadar, DEMO_NOTICE } from "@/lib/demo";
+import { daysUntil, formatDateShort, greeting, firstName } from "@/lib/utils";
+import { demoPathway, DEMO_NOTICE } from "@/lib/demo";
 import type { CareerStage } from "@/types/database";
 
-export const metadata = { title: "Today — Phapano+" };
+export const metadata = { title: "Today | Phapano+" };
 
 // Curated, pathway-focused daily encouragement. Easy to edit. Rotates by date.
 const AFFIRMATIONS = [
@@ -37,6 +38,24 @@ function affirmationForToday(): string {
   return AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
 }
 
+function noteStatus(dueDate: string | null): string | null {
+  const days = daysUntil(dueDate);
+  if (days === null) return null;
+  if (days < 0) {
+    const overdue = Math.abs(days);
+    return `Overdue by ${overdue} ${overdue === 1 ? "day" : "days"}`;
+  }
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due tomorrow";
+  if (days <= 7) return `Due soon · ${formatDateShort(dueDate)}`;
+  return `Upcoming · ${formatDateShort(dueDate)}`;
+}
+
+function priorityLabel(priority: string | null): string | null {
+  if (!priority) return null;
+  return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
+}
+
 export default async function DashboardPage() {
   // A signed-in user who hasn't finished onboarding belongs in onboarding,
   // not here. (Middleware already guarantees only authed users reach this
@@ -47,21 +66,29 @@ export default async function DashboardPage() {
     if (authed && !onboarded) redirect("/onboarding");
   }
 
-  const [profile, savedFunding, notifications, datedNotes, savedProgrammes] =
+  const [
+    profile,
+    savedFunding,
+    notifications,
+    recentNotes,
+    datedNotes,
+    savedProgrammes,
+  ] =
     await Promise.all([
       getProfile(),
       getSavedFunding(),
       getNotifications(),
+      getJournalEntries(),
       getDatedNotes(),
       getSavedProgrammes(),
     ]);
 
-  // Build radar items from the user's real saved data + application deadlines.
-  let radarItems: RadarItem[] = [];
+  // Build My Pathway from the user's real saved data and application deadlines.
+  let pathwayItems: PathwayItem[] = [];
 
   if (isSupabaseConfigured) {
     for (const f of savedFunding) {
-      radarItems.push({
+      pathwayItems.push({
         id: `fund-${f.id}`,
         kind: "Funding you saved",
         title: f.title,
@@ -72,10 +99,10 @@ export default async function DashboardPage() {
       });
     }
   } else {
-    radarItems = demoRadar();
+    pathwayItems = demoPathway();
   }
 
-  // Saved Apply programmes appear on the radar (by closing date) and count
+  // Saved Apply programmes appear in My Pathway (by closing date) and count
   // toward progress. Only SAVED programmes surface here — never the whole list.
   if (isSupabaseConfigured) {
     for (const sp of savedProgrammes) {
@@ -87,7 +114,7 @@ export default async function DashboardPage() {
         prog.qualification === "masters"
           ? `${prog.institution} · Master's`
           : `${prog.institution} · Honours`;
-      radarItems.push({
+      pathwayItems.push({
         id: `saved-prog-${prog.id}`,
         kind: sp.is_saved ? "Programme deadline" : "Application plan",
         title: label,
@@ -99,10 +126,10 @@ export default async function DashboardPage() {
     }
   }
 
-  // Notes that have a due date become dated reminders on the radar.
+  // Notes that have a due date become dated reminders in My Pathway.
   if (isSupabaseConfigured) {
     for (const n of datedNotes) {
-      radarItems.push({
+      pathwayItems.push({
         id: `note-${n.id}`,
         kind: n.approach ? `Note · ${n.approach}` : "Your note",
         title: n.content.length > 60 ? `${n.content.slice(0, 60)}…` : n.content,
@@ -184,7 +211,7 @@ export default async function DashboardPage() {
                 Finish setting up your profile
               </p>
               <p className="text-sm text-charcoal-soft">
-                A few details help us show what matters most to you.
+                A few details help us suggest more relevant next steps.
               </p>
             </div>
             <span className="text-blue-action">→</span>
@@ -223,9 +250,9 @@ export default async function DashboardPage() {
           goals={profile?.goals ?? null}
         />
 
-        {/* radar */}
+        {/* My Pathway */}
         <div className="mt-5">
-          <OpportunityRadar items={radarItems} />
+          <MyPathway items={pathwayItems} />
         </div>
 
         {/* progress — driven entirely by real data; empty when nothing done */}
@@ -259,25 +286,67 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* notes nudge — practical planning, not wellness */}
+        {/* My Notes summary. The complete editor remains on the Notes page. */}
         <div className="mt-10 flex items-center gap-3 px-1 text-[0.74rem] font-extrabold uppercase tracking-[0.16em] text-charcoal-soft">
-          Your pathway notes
+          My Notes
           <span className="h-px flex-1 bg-divider opacity-60" />
         </div>
-        <div className="relative mt-3.5 overflow-hidden rounded-card border border-dashed border-[#E0D3C6] bg-gradient-to-b from-[#FBF8F4] to-white px-6 py-5 shadow-card">
-          <div className="flex items-center gap-2 text-[0.72rem] font-extrabold uppercase tracking-wider text-bronze">
-            <IconNotes className="h-4 w-4" />
-            Private notes &amp; reminders
+        <div className="relative mt-3.5 overflow-hidden rounded-card border border-[#E0D3C6] bg-gradient-to-b from-[#FBF8F4] to-white px-5 py-5 shadow-card sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-[0.72rem] font-extrabold uppercase tracking-wider text-bronze">
+                <IconNotes className="h-4 w-4" />
+                Private planning notes
+              </div>
+              <h3 className="mt-2 font-sora text-lg font-semibold tracking-tight">
+                Recent notes and reminders
+              </h3>
+            </div>
+            <Link href="/app/journal#new-note" className="btn-bronze !px-4 !py-2 text-sm">
+              New note
+            </Link>
           </div>
-          <h3 className="mt-2 font-sora text-lg font-semibold tracking-tight">
-            Keep application notes, funding leads and next steps in one place.
-          </h3>
-          <p className="mt-1 text-sm text-charcoal-soft">
-            Private to you. Never used to profile you.
-          </p>
-          <Link href="/app/journal" className="btn-bronze mt-4">
-            <IconNotes className="h-[15px] w-[15px]" />
-            Open your notes
+
+          {recentNotes.length === 0 ? (
+            <div className="mt-4 rounded-card border border-dashed border-line bg-white/70 px-4 py-5 text-sm text-charcoal-soft">
+              Add a note to keep a question, reminder or next step close by.
+            </div>
+          ) : (
+            <ul className="mt-4 space-y-2">
+              {recentNotes.slice(0, 3).map((note) => {
+                const status = noteStatus(note.due_date);
+                const priority = priorityLabel(note.priority);
+                return (
+                  <li
+                    key={note.id}
+                    className="rounded-card border border-line bg-white px-4 py-3"
+                  >
+                    <p className="line-clamp-2 text-sm font-semibold leading-relaxed text-charcoal">
+                      {note.content}
+                    </p>
+                    {(status || priority) && (
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                        {status && (
+                          <span className={status.startsWith("Overdue") ? "text-bronze-deep" : "text-blue-deep"}>
+                            {status}
+                          </span>
+                        )}
+                        {priority && (
+                          <span className="text-charcoal-soft">{priority}</span>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <Link
+            href="/app/journal"
+            className="mt-4 inline-flex text-sm font-bold text-blue-action hover:underline"
+          >
+            View all notes
           </Link>
         </div>
 
@@ -307,7 +376,7 @@ function focusStepsFor(
 ): FocusStep[] {
   const steps: FocusStep[] = [];
 
-  // If the user set a current focus/goal, surface it first — it's theirs.
+  // If the user set a current focus/goal, surface it first because it is theirs.
   if (goals && goals.trim()) {
     steps.push({
       pill: "Your focus",
@@ -376,7 +445,7 @@ function focusStepsFor(
         pill: "Prepare",
         tone: "blue",
         title: "Prepare for your internship milestones",
-        body: "Keep board exam dates and internship requirements on your radar.",
+        body: "Keep board exam dates and internship requirements in My Pathway.",
         href: "/app/funding",
       });
       break;
@@ -450,8 +519,8 @@ function focusStepsFor(
     title: savedCount > 0 ? "You've saved a programme" : "Save a programme to begin",
     body:
       savedCount > 0
-        ? "It now appears on your radar, with its deadline tracked."
-        : "Saving a programme starts your radar and tracks its deadline.",
+        ? "It now appears in My Pathway with its deadline."
+        : "Saving a programme adds its deadline to My Pathway.",
     href: "/app/apply",
     done: savedCount > 0,
   });

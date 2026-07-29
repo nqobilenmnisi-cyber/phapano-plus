@@ -2,33 +2,32 @@ import Link from "next/link";
 import {
   IconApplication,
   IconFunding,
-  IconRadar,
   IconDashboard,
   Compass,
 } from "@/components/illustrations";
+import { Logo } from "@/components/Logo";
 import { getAuthState } from "@/lib/queries";
 
 export default async function LandingPage() {
   const { authed } = await getAuthState();
   const ctaHref = authed ? "/dashboard" : "/signup";
-  const ctaLabel = authed ? "Open Phapano+" : "Create your free account";
+  const ctaLabel = authed ? "Open Phapano+" : "Create Account";
 
   return (
     <>
       {/* HERO */}
       <section className="relative overflow-hidden">
         <Compass className="pointer-events-none absolute right-2 top-6 hidden w-64 opacity-80 sm:block" />
-        <div className="mx-auto max-w-6xl px-6 pb-16 pt-20">
+        <div className="mx-auto max-w-6xl px-5 pb-12 pt-14 sm:px-6 sm:pb-16 sm:pt-20">
           <p className="eyebrow">Psychology pathway support for South African students</p>
-          <h1 className="mt-4 max-w-3xl font-sora text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
+          <h1 className="mt-4 max-w-3xl break-words font-sora text-3xl font-bold leading-[1.12] tracking-tight sm:text-6xl">
             Navigate your psychology pathway{" "}
             <span className="text-blue-action">with confidence.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal-soft">
-            Phapano+ brings Honours and Master&apos;s applications, funding
-            opportunities and pathway guidance together, helping South African
-            psychology students find verified information, track next steps and
-            plan with clarity.
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-charcoal-soft sm:mt-6 sm:text-lg">
+            Finding reliable psychology pathway information can feel
+            overwhelming. Phapano+ helps you organise your journey, explore
+            guidance and keep track of your next steps.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href={ctaHref} className="btn-primary">
@@ -60,38 +59,36 @@ export default async function LandingPage() {
         <div className="grid gap-6 md:grid-cols-3">
           <ValueCard
             icon={<IconApplication className="h-8 w-8" />}
-            title="Apply with confidence"
-            body="Explore psychology programmes across South Africa, with verified deadlines, requirements and referee guidance. Track every Honours and Master's application in one place."
+            title="Plan your applications"
+            body="Explore psychology programmes, review application requirements and keep track of the programmes you are considering."
           />
           <ValueCard
             icon={<IconFunding className="h-8 w-8" />}
-            title="Find funding that fits"
-            body="Keep track of verified bursaries, scholarships and relevant opportunities, with deadline reminders so you don't miss the ones that matter."
+            title="Explore funding"
+            body="Browse relevant bursaries, scholarships and funding opportunities, and save the ones you want to revisit."
           />
           <ValueCard
-            icon={<IconRadar className="h-8 w-8" />}
-            title="Stay ahead of deadlines"
-            body="Your Opportunity Radar surfaces what's closing soon and what to do next, ordered by what's most urgent, so nothing slips past you."
+            icon={<IconDashboard className="h-8 w-8" />}
+            title="Manage upcoming dates"
+            body="Keep your application deadlines, funding dates and pathway milestones together so they are easier to follow."
           />
         </div>
       </section>
 
-      {/* OPPORTUNITY RADAR FEATURE */}
+      {/* MY PATHWAY FEATURE */}
       <section className="border-y border-line bg-gradient-to-br from-[#EAF3FC] to-[#F4F9FF]">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 md:grid-cols-2">
           <div>
             <div className="flex items-center gap-2.5 text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-blue-action">
-              <IconRadar className="h-6 w-6" />
-              The Opportunity Radar
+              <IconDashboard className="h-6 w-6" />
+              My Pathway
             </div>
             <h2 className="mt-3 font-sora text-3xl font-bold tracking-tight">
-              You should never wonder what to do next.
+              Keep your next steps in view.
             </h2>
             <p className="mt-4 text-charcoal-soft">
-              Phapano&apos;s defining feature surfaces what matters right now:
-              the deadlines approaching, the funding you&apos;ve saved, the next
-              step in an application you&apos;ve started, ordered by what&apos;s
-              closest.
+              View upcoming application dates, funding deadlines, saved items
+              and pathway milestones in one planning space.
             </p>
             <Link href={ctaHref} className="btn-primary mt-7">
               {ctaLabel}
@@ -100,22 +97,24 @@ export default async function LandingPage() {
           <div className="card overflow-hidden p-0">
             <div className="border-b border-line bg-white px-6 py-4">
               <p className="text-[0.68rem] font-extrabold uppercase tracking-wider text-blue-action">
-                Your radar · today
+                Coming up
               </p>
               <p className="mt-1 font-sora text-lg font-bold">
-                Everything that matters, today
+                Keep track of upcoming dates
               </p>
             </div>
-            <PreviewRow days={6} kind="Application closes" title="Wits, MA Clinical" colour="#C2693F" />
-            <PreviewRow days={12} kind="Funding you saved" title="NRF Master's bursary" colour="#2E6FB0" />
-            <PreviewRow days={23} kind="Selection week" title="UJ Counselling interviews" colour="#5C5C5E" />
+            <PreviewRow status="Closes in 6 days" kind="Application" title="Wits, MA Clinical" colour="#C2693F" />
+            <PreviewRow status="Due in 12 days" kind="Funding you saved" title="NRF Master's bursary" colour="#2E6FB0" />
+            <PreviewRow status="Starts in 23 days" kind="Selection week" title="UJ Counselling interviews" colour="#5C5C5E" />
           </div>
         </div>
       </section>
 
       {/* JOURNEY */}
       <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-        <IconDashboard className="mx-auto h-12 w-12" />
+        <div className="mx-auto flex justify-center">
+          <Logo href={null} size={52} />
+        </div>
         <h2 className="mt-4 font-sora text-2xl font-bold tracking-tight sm:text-3xl">
           Built for every stage, not just one season
         </h2>
@@ -139,7 +138,7 @@ export default async function LandingPage() {
           <p className="mx-auto mt-3 max-w-xl text-white/70">
             {authed
               ? "Pick up where you left off and keep your applications on track."
-              : "Create your free account and see your whole application picture come together in minutes."}
+              : "Begin organising your psychology pathway with a Phapano+ account."}
           </p>
           <Link
             href={ctaHref}
@@ -174,28 +173,26 @@ function ValueCard({
 }
 
 function PreviewRow({
-  days,
+  status,
   kind,
   title,
   colour,
 }: {
-  days: number;
+  status: string;
   kind: string;
   title: string;
   colour: string;
 }) {
   return (
     <div className="flex items-center gap-4 border-b border-line-soft bg-white px-6 py-4 last:border-0">
-      <div className="grid h-12 w-12 flex-none place-items-center rounded-full border-[3px]" style={{ borderColor: colour }}>
-        <span className="font-sora text-lg font-extrabold tabular-nums" style={{ color: colour }}>
-          {days}
-        </span>
-      </div>
       <div>
         <div className="text-[0.68rem] font-extrabold uppercase tracking-wider text-charcoal-soft">
           {kind}
         </div>
         <div className="font-sora font-semibold">{title}</div>
+        <div className="mt-0.5 text-xs font-bold" style={{ color: colour }}>
+          {status}
+        </div>
       </div>
     </div>
   );

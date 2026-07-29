@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { verificationLabels } from "@/lib/utils";
 import type { VerificationStatus } from "@/types/database";
 
-export const metadata = { title: "Articles — Admin" };
+export const metadata = { title: "Articles | Admin" };
 
 const statusOptions = (
   Object.keys(verificationLabels) as VerificationStatus[]
@@ -17,7 +17,7 @@ const statusOptions = (
 
 const fields: FieldDef[] = [
   { name: "title", label: "Title", type: "text", full: true },
-  { name: "slug", label: "Slug (optional)", type: "text", placeholder: "auto-generated if blank" },
+  { name: "slug", label: "Slug", type: "text", placeholder: "Leave blank to generate automatically" },
   { name: "category", label: "Category", type: "text", placeholder: "Applications" },
   { name: "reading_minutes", label: "Reading minutes", type: "number" },
   { name: "excerpt", label: "Excerpt", type: "textarea", full: true },

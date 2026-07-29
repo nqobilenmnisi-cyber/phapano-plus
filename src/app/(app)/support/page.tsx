@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 
-export const metadata = { title: "Support — Phapano+" };
+export const metadata = { title: "Support | Phapano+" };
 
 const resources = [
   {

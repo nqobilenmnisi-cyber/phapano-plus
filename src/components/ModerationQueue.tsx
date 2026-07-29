@@ -46,7 +46,7 @@ export function ModerationQueue({ rows }: { rows: ModerationRow[] }) {
   if (rows.length === 0) {
     return (
       <p className="text-sm text-charcoal-soft">
-        Nothing here — the queue is clear.
+        Nothing here. The queue is clear.
       </p>
     );
   }
@@ -163,7 +163,7 @@ function ReportCard({ report }: { report: ModerationRow }) {
                 {timeAgo(a.created_at)}
                 {" · "}
                 {a.by_me ? "by you" : "by another moderator"}
-                {a.notes ? ` — ${a.notes}` : ""}
+                {a.notes ? `: ${a.notes}` : ""}
               </li>
             ))}
           </ul>
@@ -274,7 +274,7 @@ function ReportCard({ report }: { report: ModerationRow }) {
           {report.moderator_notes ? (
             <>
               {" "}
-              — <span className="font-semibold">Notes:</span>{" "}
+              <span className="font-semibold">Notes:</span>{" "}
               {report.moderator_notes}
             </>
           ) : null}

@@ -4,9 +4,6 @@ import { Logo } from "@/components/Logo";
 const navLinks = [
   { href: "/about", label: "About" },
   { href: "/features", label: "Features" },
-  { href: "/apply", label: "Apply" },
-  { href: "/funding", label: "Funding" },
-  { href: "/learn", label: "Learn" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -41,7 +38,7 @@ export function SiteHeader({ authed = false }: { authed?: boolean }) {
                 Log in
               </Link>
               <Link href="/signup" className="btn-primary !px-4 !py-2 text-sm">
-                Join Phapano+
+                Create Account
               </Link>
             </>
           )}
@@ -59,30 +56,25 @@ export function SiteFooter({ authed = false }: { authed?: boolean }) {
           <div className="md:col-span-2">
             <Logo href={authed ? "/dashboard" : "/"} />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-charcoal-soft">
-              Psychology pathway support for South African students. Honours and
-              Master&apos;s applications, funding opportunities and verified
-              guidance, together in one place.
+              Psychology pathway support for South African students.
             </p>
           </div>
           <div>
             <h4 className="font-sora text-sm font-bold">Explore</h4>
             <ul className="mt-3 space-y-2 text-sm text-charcoal-soft">
               <li><Link href="/features" className="hover:text-charcoal">Features</Link></li>
-              <li><Link href="/apply" className="hover:text-charcoal">Apply</Link></li>
-              <li><Link href="/funding" className="hover:text-charcoal">Funding</Link></li>
-              <li><Link href="/learn" className="hover:text-charcoal">Learn</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-sora text-sm font-bold">Phapano</h4>
             <ul className="mt-3 space-y-2 text-sm text-charcoal-soft">
-              <li><Link href="/about" className="hover:text-charcoal">Our story</Link></li>
+              <li><Link href="/about" className="hover:text-charcoal">About</Link></li>
               <li><Link href="/contact" className="hover:text-charcoal">Contact</Link></li>
               <li><Link href="/support" className="hover:text-charcoal">Support resources</Link></li>
               {authed ? (
                 <li><Link href="/dashboard" className="hover:text-charcoal">Open Phapano+</Link></li>
               ) : (
-                <li><Link href="/signup" className="hover:text-charcoal">Create an account</Link></li>
+                <li><Link href="/signup" className="hover:text-charcoal">Create Account</Link></li>
               )}
             </ul>
             <h4 className="mt-6 font-sora text-sm font-bold">Legal</h4>

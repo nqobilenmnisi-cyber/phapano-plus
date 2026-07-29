@@ -252,7 +252,7 @@ export function JournalEntries({
   return (
     <div>
       {/* composer */}
-      <div className="card mt-6 p-6">
+      <div id="new-note" className="card mt-6 scroll-mt-24 p-6">
         <label className="label" htmlFor="note_text">Add a note</label>
         <textarea
           id="note_text"
@@ -264,7 +264,8 @@ export function JournalEntries({
         />
 
         {/* tag */}
-        <p className="mt-4 text-sm font-semibold text-charcoal-soft">Tag it (optional)</p>
+        <p className="mt-4 text-sm font-semibold text-charcoal-soft">Tag it</p>
+        <p className="mt-1 text-xs text-charcoal-soft">Choose a tag if it helps you organise the note.</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {TAGS.map((t) => {
             const on = tag === t;
@@ -297,7 +298,8 @@ export function JournalEntries({
         {/* urgency + due date */}
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-sm font-semibold text-charcoal-soft">Priority (optional)</p>
+            <p className="text-sm font-semibold text-charcoal-soft">Priority</p>
+            <p className="mt-1 text-xs text-charcoal-soft">Add a priority when the note needs one.</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {PRIORITIES.map((p) => {
                 const on = priority === p.value;
@@ -323,8 +325,9 @@ export function JournalEntries({
           </div>
           <div>
             <label className="text-sm font-semibold text-charcoal-soft" htmlFor="due_input">
-              Due date (optional)
+              Due date
             </label>
+            <p className="mt-1 text-xs text-charcoal-soft">Leave this blank for a general note.</p>
             <input
               id="due_input"
               type="date"

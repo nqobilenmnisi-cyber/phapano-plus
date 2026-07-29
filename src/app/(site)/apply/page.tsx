@@ -1,7 +1,7 @@
 import { PageHero, MarketingCTA } from "@/components/Marketing";
 import { getAuthState } from "@/lib/queries";
 
-export const metadata = { title: "Applications — Phapano+" };
+export const metadata = { title: "Applications | Phapano+" };
 
 export default async function Page() {
   const { authed } = await getAuthState();
@@ -14,11 +14,9 @@ export default async function Page() {
       />
       <section className="mx-auto max-w-3xl px-6 py-16">
         <p className="text-charcoal-soft">
-          When you create a free account, this section becomes personalised:
-          explore programmes at universities and private institutions, check
-          verified requirements and referee guidance, save the institutions
-          you&apos;re considering, and track each application with its deadlines
-          in one place.
+          With an account, you can explore programmes at universities and
+          private institutions, review available requirements and guidance,
+          save institutions you are considering and organise application dates.
         </p>
         <MarketingCTA authed={authed} />
       </section>

@@ -70,7 +70,7 @@ export function CountdownRing({
           className="font-sora text-[1.18rem] font-extrabold leading-none tabular-nums tracking-tight"
           style={{ color: numColour[urgency] }}
         >
-          {days === null ? "—" : days < 0 ? "—" : days}
+          {days === null ? "TBC" : days < 0 ? "Past" : days}
         </span>
         <span className="mt-0.5 text-[0.55rem] font-bold uppercase tracking-wider text-charcoal-soft">
           {days !== null && days >= 0 ? "days" : "soon"}

@@ -13,14 +13,14 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Phapano+ — Your psychology journey, in one place",
+  title: "Phapano+ | Psychology pathway support",
   description:
-    "Phapano+ helps psychology students in South Africa explore programmes, track Honours and Master's applications, find funding, and navigate every next step with verified, trusted information.",
+    "Phapano+ helps psychology students organise their pathway, explore programmes and funding, and participate in a focused community.",
   metadataBase: new URL("https://phapano.com"),
   openGraph: {
-    title: "Phapano+ — Your psychology journey, in one place",
+    title: "Phapano+ | Psychology pathway support",
     description:
-      "Explore programmes, track Honours and Master's applications, find funding, and plan your next steps with verified guidance.",
+      "Organise your psychology pathway, explore programmes and funding, and participate in a focused community.",
     type: "website",
   },
 };

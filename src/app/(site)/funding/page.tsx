@@ -1,7 +1,7 @@
 import { PageHero, MarketingCTA } from "@/components/Marketing";
 import { getAuthState } from "@/lib/queries";
 
-export const metadata = { title: "Funding — Phapano+" };
+export const metadata = { title: "Funding | Phapano+" };
 
 export default async function Page() {
   const { authed } = await getAuthState();
@@ -9,15 +9,14 @@ export default async function Page() {
     <>
       <PageHero
         eyebrow="Funding"
-        title="Find funding that fits you"
-        intro="Funding opportunities for psychology students are limited and often hard to track. Phapano+ helps you find verified opportunities, save what is relevant and stay aware of important deadlines."
+        title="Explore psychology funding"
+        intro="Browse bursaries, scholarships and other funding opportunities that may be relevant to different stages of the psychology pathway."
       />
       <section className="mx-auto max-w-3xl px-6 py-16">
         <p className="text-charcoal-soft">
-          When you create a free account, this section becomes personalised:
-          saved opportunities, deadline reminders and your own funding tracker,
-          so a bursary or scholarship that&apos;s relevant to you is easier to
-          catch when it becomes available.
+          With an account, you can save opportunities you want to revisit and
+          keep their available closing dates alongside your other pathway
+          planning.
         </p>
         <MarketingCTA authed={authed} />
       </section>

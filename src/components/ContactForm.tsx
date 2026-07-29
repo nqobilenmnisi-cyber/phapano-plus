@@ -66,7 +66,7 @@ export function ContactForm() {
           Message sent
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
-          Thank you — we&apos;ve received your message and will reply to{" "}
+          Thank you. We&apos;ve received your message and will reply to{" "}
           <b>{email}</b> as soon as we can.
         </p>
       </div>

@@ -2,7 +2,7 @@ import { PageHero, Prose } from "@/components/Marketing";
 import Link from "next/link";
 import { getAuthState } from "@/lib/queries";
 
-export const metadata = { title: "About — Phapano+" };
+export const metadata = { title: "About | Phapano+" };
 
 
 export default async function AboutPage() {
@@ -12,7 +12,7 @@ export default async function AboutPage() {
       <PageHero
         eyebrow="About Phapano+"
         title="Built for the psychology journey"
-        intro="Phapano+ brings psychology applications, funding, planning, reminders and trusted guidance into one place, so you can navigate each step with clarity."
+        intro="Phapano+ supports people navigating psychology pathways with planning tools, programme information, funding opportunities and community."
       />
       <Prose>
         <p>
@@ -27,16 +27,15 @@ export default async function AboutPage() {
           university websites, group chats, PDFs and social media just to answer
           simple questions. Where can I apply? When do applications open? What
           are the requirements? How do I find funding? The information exists,
-          but it is scattered. Phapano+ exists to bring it together into one
-          trusted place.
+          but it is scattered. Phapano+ exists to make that journey easier to
+          organise and understand.
         </p>
         <h2>What Phapano+ does</h2>
         <p>
-          Phapano+ helps you explore psychology programmes across South Africa,
-          track your Honours and Master&apos;s applications, discover funding you
-          qualify for, and stay ahead of deadlines, all alongside guidance
-          written for where you are in your pathway. It is a practical academic
-          and career companion, not another inbox to manage.
+          Phapano+ helps you explore psychology programmes, organise the
+          applications you are considering, browse funding opportunities and
+          keep relevant dates and notes together. Community features also make
+          it possible to learn from people at different stages of the pathway.
         </p>
         <h2>How we treat information</h2>
         <p>
@@ -52,7 +51,7 @@ export default async function AboutPage() {
         </p>
         <p>
           <Link href={authed ? "/dashboard" : "/signup"} className="font-semibold text-blue-action hover:underline">
-            {authed ? "Open Phapano+ →" : "Create your free account →"}
+            {authed ? "Open Phapano+ →" : "Create Account →"}
           </Link>
         </p>
       </Prose>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAdminStats } from "@/lib/admin";
 
-export const metadata = { title: "Admin — Phapano+" };
+export const metadata = { title: "Admin | Phapano+" };
 
 export default async function AdminHome() {
   const stats = await getAdminStats();

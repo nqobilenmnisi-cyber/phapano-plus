@@ -35,26 +35,17 @@ const items = [
     href: "/app/funding",
     label: "Funding",
     icon: (
-      <>
-        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" />
-        <path
-          d="M12 8v8M9.5 9.8c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.5-2.5 1.7-2.5.7-2.5 1.7 1 1.6 2.5 1.6 2.5-.6 2.5-1.6"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </>
-    ),
-  },
-  {
-    href: "/app/journal",
-    label: "Notes",
-    icon: (
-      <>
-        <rect x="5.5" y="4" width="13" height="16" rx="2" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M5.5 8h13" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M9 12h6M9 15.5h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fill="currentColor"
+        fontSize="14"
+        fontWeight="800"
+        fontFamily="Arial, sans-serif"
+      >
+        R
+      </text>
     ),
   },
   {
@@ -88,7 +79,7 @@ export function BottomNav() {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 backdrop-blur-md"
     >
-      <div className="mx-auto flex max-w-3xl justify-around px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
+      <div className="mx-auto grid max-w-3xl grid-cols-5 px-1 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
         {items.map((it) => {
           const active =
             it.href === "/dashboard"
@@ -99,11 +90,16 @@ export function BottomNav() {
               key={it.href}
               href={it.href}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 rounded-chip px-2 py-1.5 text-[0.66rem] font-bold transition ${
+              className={`min-w-0 flex flex-col items-center gap-0.5 rounded-chip px-1 py-1.5 text-[0.62rem] font-bold transition sm:text-[0.66rem] ${
                 active ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
               }`}
             >
-              <svg viewBox="0 0 24 24" fill="none" className="h-[22px] w-[22px]">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="h-[22px] w-[22px]"
+              >
                 {it.icon}
               </svg>
               {it.label}

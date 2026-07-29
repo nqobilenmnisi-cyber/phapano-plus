@@ -96,7 +96,7 @@ export function ResendVerification({ email }: { email?: string }) {
         {pending
           ? "Sending…"
           : cooldown > 0
-            ? `Sent — resend available in ${cooldown}s`
+            ? `Sent. Resend available in ${cooldown}s`
             : "Resend verification email"}
       </button>
 

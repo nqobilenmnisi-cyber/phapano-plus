@@ -1,7 +1,7 @@
 import { PageHero } from "@/components/Marketing";
 import { ContactForm } from "@/components/ContactForm";
 
-export const metadata = { title: "Contact — Phapano+" };
+export const metadata = { title: "Contact | Phapano+" };
 
 export default function ContactPage() {
   return (

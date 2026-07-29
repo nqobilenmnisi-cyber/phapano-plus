@@ -113,8 +113,11 @@ export function ReportDialog({
               ))}
             </select>
             <label className="label mt-3" htmlFor="report-details">
-              Add context (optional)
+              Add context
             </label>
+            <p className="mb-1 text-xs text-charcoal-soft">
+              Include details if they will help the review.
+            </p>
             <textarea
               id="report-details"
               className="input min-h-20"

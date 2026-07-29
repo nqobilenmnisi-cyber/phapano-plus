@@ -11,7 +11,7 @@ import {
 } from "@/lib/community";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "Post — Phapano+" };
+export const metadata = { title: "Post | Phapano+" };
 
 export default async function CommunityPostPage({
   params,

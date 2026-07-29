@@ -1,7 +1,7 @@
 import { Prose } from "@/components/Marketing";
 import Link from "next/link";
 
-export const metadata = { title: "Privacy Policy — Phapano+" };
+export const metadata = { title: "Privacy Policy | Phapano+" };
 
 // Note: this policy still requires legal review before public launch (internal).
 export default function PrivacyPage() {
@@ -21,9 +21,9 @@ export default function PrivacyPage() {
         <p>
           Phapano+ collects what it needs to run your account and its features:
           your account details (such as email), the profile information you
-          provide, and the pathway data you choose to save — saved
+          provide, and the pathway data you choose to save, including saved
           institutions, applications, funding opportunities, notes, reminders
-          and preferences — along with basic technical information needed to
+          and preferences, along with basic technical information needed to
           operate and secure the service.
         </p>
         <p>
@@ -47,8 +47,8 @@ export default function PrivacyPage() {
 
         <h2>3. What the community can and cannot see</h2>
         <p>
-          Your private Phapano Passport — applications, saved programmes,
-          funding records, notes, deadlines, documents and account settings —
+          Your private Phapano Passport, including applications, saved programmes,
+          funding records, notes, deadlines, documents and account settings,
           is never shown in the community. Only the community profile you
           create, and the posts and comments you publish, are visible to other
           members, according to the visibility setting you choose. Reports and
@@ -78,8 +78,8 @@ export default function PrivacyPage() {
         </p>
         <p>
           For the safety and integrity of the community, reports and moderation
-          records may be kept in <b>anonymised</b> form after deletion — with
-          your identity removed — so that a record of safety decisions remains.
+          records may be kept in <b>anonymised</b> form after deletion, with
+          your identity removed, so that a record of safety decisions remains.
           These retained records no longer identify you.
         </p>
 

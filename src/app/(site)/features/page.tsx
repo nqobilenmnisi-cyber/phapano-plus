@@ -2,23 +2,22 @@ import { PageHero } from "@/components/Marketing";
 import {
   IconApplication,
   IconFunding,
-  IconRadar,
   IconDashboard,
-  IconLearn,
+  IconProfile,
   IconNotes,
 } from "@/components/illustrations";
 import { getAuthState } from "@/lib/queries";
 import Link from "next/link";
 
-export const metadata = { title: "Features — Phapano+" };
+export const metadata = { title: "Features | Phapano+" };
 
 const features = [
-  { icon: <IconApplication className="h-7 w-7" />, title: "Apply", body: "Explore psychology programmes across South Africa, with verified deadlines, requirements, referee guidance and application tracking, for both Honours and Master's applicants." },
-  { icon: <IconFunding className="h-7 w-7" />, title: "Funding", body: "Keep track of verified bursaries, scholarships and relevant opportunities, with deadline reminders so nothing is missed." },
-  { icon: <IconRadar className="h-7 w-7" />, title: "Opportunity Radar", body: "Your personalised view of what matters now: closing application deadlines, saved funding and your next step, ordered by what's most urgent." },
-  { icon: <IconDashboard className="h-7 w-7" />, title: "A dashboard that orients you", body: "Open Phapano+ and see exactly where you are and what to do next, adapted to your stage. Every screen answers one question: what is the next useful step?" },
-  { icon: <IconLearn className="h-7 w-7" />, title: "Learning resources", body: "Practical videos, guides and workshop resources from Phapano on applications, requirements, interviews and selection, for the South African psychology pathway." },
-  { icon: <IconNotes className="h-7 w-7" />, title: "Private planning notes", body: "A private space to record application notes, goals, decisions and next steps. Your notes stay private and are never used to profile you." },
+  { icon: <IconApplication className="h-7 w-7" />, title: "Apply", body: "Explore psychology programmes, review application requirements and keep track of the programmes you are considering." },
+  { icon: <IconFunding className="h-7 w-7" />, title: "Funding", body: "Browse available bursaries, scholarships and other relevant funding opportunities, and save the ones you want to revisit." },
+  { icon: <IconDashboard className="h-7 w-7" />, title: "My Pathway", body: "View upcoming application dates, funding deadlines, saved items and pathway milestones in one planning space." },
+  { icon: <IconDashboard className="h-7 w-7" />, title: "Today", body: "See practical next steps based on the information you have added, including saved programmes, deadlines, goals and notes." },
+  { icon: <IconProfile className="h-7 w-7" />, title: "Community", body: "Connect with psychology students and professionals, share questions and resources, and take part in pathway-focused discussions." },
+  { icon: <IconNotes className="h-7 w-7" />, title: "Notes", body: "Keep private planning notes, reminders, questions and next steps linked to your psychology journey." },
 ];
 
 export default async function FeaturesPage() {
@@ -27,8 +26,8 @@ export default async function FeaturesPage() {
     <>
       <PageHero
         eyebrow="Features"
-        title="Everything you need, nothing that overwhelms"
-        intro="Phapano+ is not a collection of tools. It is a companion designed around the psychology pathway, from first application to professional practice."
+        title="Support for your psychology pathway"
+        intro="Explore the current Phapano+ tools for planning, finding opportunities and participating in the psychology community."
       />
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="grid gap-6 md:grid-cols-3">
@@ -42,7 +41,7 @@ export default async function FeaturesPage() {
         </div>
         <div className="mt-12 text-center">
           <Link href={authed ? "/dashboard" : "/signup"} className="btn-primary">
-            {authed ? "Open Phapano+" : "Create your free account"}
+            {authed ? "Open Phapano+" : "Create Account"}
           </Link>
         </div>
       </section>

@@ -10,7 +10,7 @@ import type {
   CommunityReport,
 } from "@/types/database";
 
-export const metadata = { title: "Community moderation — Phapano+ Admin" };
+export const metadata = { title: "Community moderation | Phapano+ Admin" };
 
 export default async function AdminCommunityPage({
   searchParams,

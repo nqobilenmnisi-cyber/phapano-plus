@@ -110,8 +110,8 @@ export function CommunityProfileForm({
           disabled={pending}
         />
         <p className="mt-1 text-xs text-charcoal-soft">
-          This is the only name shown in the community — your Passport stays
-          private.
+          This is the name shown in the community. Your private Passport data
+          stays private unless you choose to share it.
         </p>
       </div>
 

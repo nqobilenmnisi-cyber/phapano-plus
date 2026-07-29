@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/AuthForm";
 import { signUp } from "@/app/(auth)/actions";
 import { getAuthState } from "@/lib/queries";
 
-export const metadata = { title: "Create your account — Phapano+" };
+export const metadata = { title: "Create your account | Phapano+" };
 
 export default async function SignupPage() {
   // A returning, signed-in user should never see sign-up/onboarding again.

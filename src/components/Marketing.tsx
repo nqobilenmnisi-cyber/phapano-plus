@@ -9,13 +9,15 @@ export function PageHero({
   intro: string;
 }) {
   return (
-    <section className="border-b border-line bg-soft">
-      <div className="mx-auto max-w-4xl px-6 py-16">
+    <section className="overflow-hidden border-b border-line bg-soft">
+      <div className="mx-auto max-w-4xl px-5 py-11 sm:px-6 sm:py-16">
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-3 font-sora text-4xl font-bold tracking-tight">
+        <h1 className="mt-3 break-words font-sora text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
           {title}
         </h1>
-        <p className="mt-4 max-w-2xl text-lg text-charcoal-soft">{intro}</p>
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-charcoal-soft sm:text-lg">
+          {intro}
+        </p>
       </div>
     </section>
   );
@@ -33,7 +35,7 @@ export function Prose({ children }: { children: React.ReactNode }) {
 /** Auth-aware marketing CTA: signed-in users get "Open Phapano+". */
 export function MarketingCTA({
   authed,
-  signedOutLabel = "Create your free account",
+  signedOutLabel = "Create Account",
   secondaryHref = "/features",
   secondaryLabel = "See all features",
 }: {

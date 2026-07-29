@@ -3,7 +3,7 @@ import { getNotifications } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { Notification } from "@/types/database";
 
-export const metadata = { title: "Notifications — Phapano+" };
+export const metadata = { title: "Notifications | Phapano+" };
 
 function demoNotifications(): Notification[] {
   const ago = (d: number) => {
@@ -37,7 +37,7 @@ function demoNotifications(): Notification[] {
       user_id: "demo",
       type: "system",
       title: "Welcome to Phapano+",
-      body: "Your journey starts here. Save a university to begin your radar.",
+      body: "Your journey starts here. Save a university to begin My Pathway.",
       link: "/app/apply",
       read: true,
       created_at: ago(3),
@@ -56,7 +56,8 @@ export default async function NotificationsPage() {
           Notifications
         </h1>
         <p className="mt-2 text-sm text-charcoal-soft">
-          Only what matters, when it matters. Nothing noisy.
+          Updates from your saved opportunities and Community activity appear
+          here.
         </p>
       </section>
 

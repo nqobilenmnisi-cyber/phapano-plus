@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ResendVerification } from "@/components/ResendVerification";
 import { Compass } from "@/components/illustrations";
 
-export const metadata = { title: "Verification link unavailable — Phapano+" };
+export const metadata = { title: "Verification link unavailable | Phapano+" };
 
 /**
  * Shown when a verification link is invalid, expired or already used and the
@@ -38,7 +38,7 @@ export default function AuthErrorPage() {
           href="/signup"
           className="font-semibold text-blue-action hover:underline"
         >
-          Create an account
+          Create Account
         </Link>
       </p>
     </div>

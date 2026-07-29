@@ -136,7 +136,7 @@ export async function getJournalEntries(): Promise<JournalEntry[]> {
   return data ?? [];
 }
 
-/** Notes that have a due date, for the dashboard radar / next steps. */
+/** Notes that have a due date, for My Pathway and dashboard next steps. */
 export async function getDatedNotes(): Promise<JournalEntry[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();

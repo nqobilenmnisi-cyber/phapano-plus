@@ -9,7 +9,7 @@ import { getBlockedAccounts } from "@/lib/community";
 import { CommunityBlockedList } from "@/components/CommunityBlockedList";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "Settings — Phapano+" };
+export const metadata = { title: "Settings | Phapano+" };
 
 export default async function SettingsPage() {
   const [user, profile, blockedAccounts] = await Promise.all([
@@ -18,7 +18,7 @@ export default async function SettingsPage() {
     getBlockedAccounts(),
   ]);
   // Real Supabase Auth email for the signed-in user. Never a demo value.
-  const email = user?.email ?? profile?.email ?? "—";
+  const email = user?.email ?? profile?.email ?? "Not provided";
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-10">

@@ -13,7 +13,7 @@ import {
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { careerStageLabels, firstName } from "@/lib/utils";
 
-export const metadata = { title: "You — Phapano+" };
+export const metadata = { title: "You | Phapano+" };
 
 export default async function ProfilePage() {
   // Authenticated user's own data only. getProfile self-heals (creates the row

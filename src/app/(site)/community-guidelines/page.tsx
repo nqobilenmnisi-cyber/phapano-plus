@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Community Guidelines — Phapano+",
+  title: "Community Guidelines | Phapano+",
   description:
     "The standards that keep the Phapano+ community safe, honest and useful for South African psychology students and professionals.",
 };
@@ -86,7 +86,7 @@ export default function CommunityGuidelinesPage() {
         <p className="mt-3 text-sm leading-relaxed text-charcoal-soft">
           The Phapano+ community exists so that South African psychology
           students and professionals can support one another along the pathway
-          — honestly, generously and safely. These guidelines protect that
+          honestly, generously and safely. These guidelines protect that
           purpose. By posting or commenting, you agree to follow them together
           with our Terms of Use.
         </p>
@@ -100,7 +100,7 @@ export default function CommunityGuidelinesPage() {
           Be accurate about your experience and qualifications. Be kind in
           disagreement. Share opportunities and information you believe to be
           true, and say so when you are unsure. Remember that many members are
-          navigating stressful application seasons — write the kind of post you
+          navigating stressful application seasons. Write the kind of post you
           would want to receive.
         </p>
       </section>
