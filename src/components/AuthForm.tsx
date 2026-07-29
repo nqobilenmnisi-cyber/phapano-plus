@@ -269,7 +269,7 @@ export function AuthForm({
           <>
             New to Phapano?{" "}
             <Link href="/signup" className="font-semibold text-blue-action hover:underline">
-              Create an account
+              Create Account
             </Link>
           </>
         )}

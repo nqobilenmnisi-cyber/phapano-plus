@@ -3,7 +3,7 @@ import { CommunityPeople } from "@/components/CommunityPeople";
 import { getFollowLists, searchMembers } from "@/lib/community";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "People — Phapano+" };
+export const metadata = { title: "People | Phapano+" };
 
 export default async function CommunityPeoplePage() {
   const [initialMembers, lists] = isSupabaseConfigured

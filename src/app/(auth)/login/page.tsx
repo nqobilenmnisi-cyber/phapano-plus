@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/AuthForm";
 import { signIn } from "@/app/(auth)/actions";
 import { getAuthState } from "@/lib/queries";
 
-export const metadata = { title: "Log in — Phapano+" };
+export const metadata = { title: "Log in | Phapano+" };
 
 export default async function LoginPage() {
   // Already signed in? Go where they belong, don't show login again.

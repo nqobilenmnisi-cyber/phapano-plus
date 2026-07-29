@@ -32,7 +32,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
 
   const total = 3;
 
-  // Neutral wording — Phapano+ supports Honours applicants and earlier stages,
+  // Neutral wording | Phapano+ supports Honours applicants and earlier stages,
   // not only Master's applicants.
   const streamQuestion = "Which psychology stream are you interested in?";
 
@@ -95,7 +95,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
             Where are you in your psychology pathway?
           </h2>
           <p className="mt-1 text-sm text-charcoal-soft">
-            This helps us show what matters most to you.
+            This helps us suggest more relevant next steps.
           </p>
           <div className="mt-5 grid gap-2">
             {ONBOARDING_STAGES.map((s) => {
@@ -154,7 +154,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
         </div>
       )}
 
-      {/* STEP 3 — university + intended stream (both optional) */}
+      {/* STEP 3: university and intended stream */}
       {step === 2 && (
         <form
           action={async (formData) => {
@@ -164,7 +164,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
         >
           <Star className="mb-3 h-6 w-6" />
           <h2 className="font-sora text-xl font-bold tracking-tight">
-            A little more (optional)
+            A little more
           </h2>
           <p className="mt-1 text-sm text-charcoal-soft">
             Skip anything you&apos;re unsure of. You can add it later.

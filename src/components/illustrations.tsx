@@ -89,7 +89,7 @@ export function Compass({ className = "" }: { className?: string }) {
   );
 }
 
-/** Connected opportunity markers — a small "radar / pathway" motif. */
+/** Connected opportunity markers for a pathway view. */
 export function PathwayDots({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 190 150" fill="none" aria-hidden className={className}>
@@ -131,24 +131,13 @@ export function IconApplication({ className = "" }: { className?: string }) {
 }
 
 export function IconFunding({ className = "" }: { className?: string }) {
-  // Wallet with a coin — funding / bursaries.
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <rect x="3.5" y="6.5" width="17" height="12" rx="2.5" stroke="#2E6FB0" strokeWidth="1.6" />
-      <path d="M3.5 10h17" stroke="#2E6FB0" strokeWidth="1.6" />
-      <circle cx="16.5" cy="14" r="1.6" fill="#AD795B" />
-    </svg>
-  );
-}
-
-export function IconRadar({ className = "" }: { className?: string }) {
-  // Bell with alert dot — deadlines / opportunity radar.
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path d="M6.5 17.5c1-.8 1.5-2 1.5-3.6V11a4 4 0 0 1 8 0v2.9c0 1.6.5 2.8 1.5 3.6h-11Z" stroke="#2E6FB0" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M10.5 20a1.7 1.7 0 0 0 3 0" stroke="#2E6FB0" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="17" cy="7" r="2.3" fill="#AD795B" />
-    </svg>
+    <span
+      className={`inline-flex items-center justify-center rounded-full border border-blue/50 bg-blue-tint/50 font-sora font-extrabold text-blue-deep ${className}`}
+      aria-hidden="true"
+    >
+      R
+    </span>
   );
 }
 

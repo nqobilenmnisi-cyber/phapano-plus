@@ -213,7 +213,7 @@ export function DangerZone({ disabled }: { disabled: boolean }) {
         notes, reminders, and your community posts, comments, reactions and
         follows and connections. For community safety, any reports and
         moderation records may be kept in anonymised form with your identity
-        removed — see our{" "}
+        removed. See our{" "}
         <a href="/privacy" className="font-semibold text-blue-action hover:underline">
           Privacy Policy
         </a>

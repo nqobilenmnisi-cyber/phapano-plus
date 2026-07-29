@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { DEMO_FUNDING } from "@/lib/demo-content";
 import { DEMO_NOTICE } from "@/lib/demo";
 
-export const metadata = { title: "Funding — Phapano+" };
+export const metadata = { title: "Funding | Phapano+" };
 
 export default async function FundingPage() {
   const [funding, sets] = await Promise.all([getFunding(), getSavedIdSets()]);

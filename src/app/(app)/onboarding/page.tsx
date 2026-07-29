@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { Logo } from "@/components/Logo";
 import { firstName } from "@/lib/utils";
 
-export const metadata = { title: "Welcome — Phapano+" };
+export const metadata = { title: "Welcome | Phapano+" };
 
 export default async function OnboardingPage() {
   // Guard: must be signed in, and must not have already completed onboarding.

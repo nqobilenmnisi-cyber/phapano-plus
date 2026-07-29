@@ -3,7 +3,7 @@ import { CommunityProfileForm } from "@/components/CommunityProfileForm";
 import { getMyCommunityProfile } from "@/lib/community";
 import { getProfile } from "@/lib/queries";
 
-export const metadata = { title: "Edit Community profile — Phapano+" };
+export const metadata = { title: "Edit Community profile | Phapano+" };
 
 export default async function CommunityProfileEditPage() {
   const [existing, passport] = await Promise.all([

@@ -4,7 +4,7 @@ import { CommunityProfileView } from "@/components/CommunityProfileView";
 import { getMemberProfile, getMyUserId } from "@/lib/community";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "Community profile — Phapano+" };
+export const metadata = { title: "Community profile | Phapano+" };
 
 export default async function CommunityMemberPage({
   params,

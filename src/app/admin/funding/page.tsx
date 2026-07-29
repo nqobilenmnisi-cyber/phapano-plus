@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { verificationLabels, formatDate } from "@/lib/utils";
 import type { VerificationStatus } from "@/types/database";
 
-export const metadata = { title: "Funding — Admin" };
+export const metadata = { title: "Funding | Admin" };
 
 const statusOptions = (
   Object.keys(verificationLabels) as VerificationStatus[]

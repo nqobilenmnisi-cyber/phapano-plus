@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Star } from "@/components/illustrations";
 
-export const metadata = { title: "Email verified — Phapano+" };
+export const metadata = { title: "Email verified | Phapano+" };
 
 /**
  * Shown only after /auth/callback confirms the outcome with Supabase.

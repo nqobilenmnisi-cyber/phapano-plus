@@ -3,7 +3,7 @@ import { CommunityConnections } from "@/components/CommunityConnections";
 import { getConnectionHub } from "@/lib/community";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "Connections — Phapano+" };
+export const metadata = { title: "Connections | Phapano+" };
 
 export default async function CommunityConnectionsPage() {
   const hub = isSupabaseConfigured

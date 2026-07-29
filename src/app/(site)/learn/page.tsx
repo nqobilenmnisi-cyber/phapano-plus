@@ -1,7 +1,7 @@
 import { PageHero, MarketingCTA } from "@/components/Marketing";
 import { getAuthState } from "@/lib/queries";
 
-export const metadata = { title: "Learn — Phapano+" };
+export const metadata = { title: "Learn | Phapano+" };
 
 export default async function Page() {
   const { authed } = await getAuthState();

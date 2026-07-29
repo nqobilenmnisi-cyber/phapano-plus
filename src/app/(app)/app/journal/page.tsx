@@ -3,7 +3,7 @@ import { SupportLine } from "@/components/AppChrome";
 import { getJournalEntries } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "My Notes — Phapano+" };
+export const metadata = { title: "My Notes | Phapano+" };
 
 export default async function JournalPage() {
   const entries = await getJournalEntries();

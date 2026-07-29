@@ -7,7 +7,7 @@ import { SaveProgrammeButton } from "@/components/ApplyDirectory";
 import { ApplicationPlanTracker } from "@/components/ApplicationPlan";
 import { UniversityBadge } from "@/components/UniversityBadge";
 
-export const metadata = { title: "Programme — Phapano+" };
+export const metadata = { title: "Programme | Phapano+" };
 
 // Official quick links in priority order. Only links that exist are shown;
 // the general homepage is the last resort.
@@ -81,7 +81,7 @@ export default async function ProgrammeDetailPage({
       <section className="card mt-6 p-6">
         <h2 className="font-sora text-lg font-bold tracking-tight">Official links</h2>
         <p className="mt-1 text-sm text-charcoal-soft">
-          Go straight to the university&apos;s own psychology pages — the source
+          Go straight to the university&apos;s own psychology pages, the source
           of truth for dates, fees and requirements.
         </p>
         {links.length > 0 ? (
@@ -119,7 +119,7 @@ export default async function ProgrammeDetailPage({
 
       <p className="mt-4 text-xs text-charcoal-soft">
         Phapano+ helps you discover, organise and track your applications. The
-        universities remain the authoritative source — always confirm details on
+        universities remain the authoritative source. Always confirm details on
         their official pages before applying.
       </p>
     </main>

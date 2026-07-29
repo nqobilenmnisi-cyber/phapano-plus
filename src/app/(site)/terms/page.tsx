@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Terms of Use — Phapano+",
+  title: "Terms of Use | Phapano+",
   description:
     "The terms that govern your use of Phapano+, the psychology pathway platform for South African students and professionals.",
 };
@@ -32,7 +32,7 @@ export default function TermsPage() {
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-charcoal-soft">
           Version 2026-07-v2. These terms are written in plain language on
-          purpose — they are the agreement between you and Phapano, the
+          purpose. They are the agreement between you and Phapano, the
           non-profit organisation behind Phapano+ (&quot;we&quot;,
           &quot;us&quot;), for your use of the Phapano+ platform.
         </p>
@@ -62,7 +62,7 @@ export default function TermsPage() {
         <p>
           You may use Phapano+ to plan your psychology pathway, explore
           programmes and funding, keep notes, and take part in the community.
-          You agree not to misuse the platform — including attempting to
+          You agree not to misuse the platform, including attempting to
           access other people&apos;s data, disrupting the service, scraping
           content at scale, misrepresenting who you are, or using Phapano+
           for anything unlawful.
@@ -116,7 +116,7 @@ export default function TermsPage() {
       <Section title="7. Pathway, programme and funding information">
         <p>
           We work to keep programme, funding and pathway information accurate
-          and we show verification dates where available — but requirements,
+          and we show checking dates where available. However, requirements,
           dates and eligibility change and mistakes are possible. Always
           confirm details on the official university or funder website before
           acting. Phapano+ does not guarantee admission to any programme,
@@ -148,7 +148,7 @@ export default function TermsPage() {
           You can delete your account at any time from Settings. Deletion is
           permanent: your profile, applications, saved items, notes and
           community content are removed. Reports and moderation records may
-          be retained in anonymised form — with your identity removed — where
+          be retained in anonymised form, with your identity removed, where
           this is needed for the safety and integrity of the platform. We may
           suspend or terminate accounts that seriously or repeatedly violate
           these terms or the Community Guidelines.
@@ -161,7 +161,7 @@ export default function TermsPage() {
           &quot;as available&quot; basis. We do not promise uninterrupted or
           error-free operation. To the extent permitted by South African law,
           Phapano is not liable for indirect losses arising from your use of
-          the platform — including decisions made in reliance on programme,
+          the platform, including decisions made in reliance on programme,
           funding or community information. Nothing in these terms limits
           rights you have under the Consumer Protection Act or other laws
           that cannot be excluded.

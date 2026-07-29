@@ -12,7 +12,7 @@ import {
 import { getProfile } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "Community — Phapano+" };
+export const metadata = { title: "Community | Phapano+" };
 
 export default async function CommunityPage({
   searchParams,
@@ -49,8 +49,7 @@ export default async function CommunityPage({
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
             Choose what fellow psychology students and professionals see about
-            you. Your Phapano Passport — applications, notes, funding and
-            documents — always stays private.
+            you. Your applications, notes, funding and documents stay private.
           </p>
         </section>
         <div className="card mt-4 p-6">
@@ -127,7 +126,7 @@ export default async function CommunityPage({
             {mode === "following" ? (
               <>
                 Your feed is quiet for now. Posts from people you follow will
-                appear here —{" "}
+                appear here.{" "}
                 <Link
                   href="/app/community/people"
                   className="font-semibold text-blue-action hover:underline"

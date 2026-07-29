@@ -3,7 +3,7 @@ import { ApplyDirectory } from "@/components/ApplyDirectory";
 import { getProgrammes, getSavedProgrammeIds } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export const metadata = { title: "Apply — Phapano+" };
+export const metadata = { title: "Apply | Phapano+" };
 
 export default async function ApplyPage() {
   const [programmes, savedIds] = await Promise.all([
