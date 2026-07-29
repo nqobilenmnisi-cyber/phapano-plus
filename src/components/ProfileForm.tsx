@@ -252,21 +252,21 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="linkedin_url">LinkedIn</label>
-            <input id="linkedin_url" name="linkedin_url" defaultValue={profile.linkedin_url ?? ""} className="input" placeholder="linkedin.com/in/…" />
+            <input id="linkedin_url" name="linkedin_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.linkedin_url ?? ""} className="input" placeholder="linkedin.com/in/…" />
           </div>
           <div>
             <label className="label" htmlFor="website_url">Personal website</label>
-            <input id="website_url" name="website_url" defaultValue={profile.website_url ?? ""} className="input" placeholder="yoursite.com" />
+            <input id="website_url" name="website_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.website_url ?? ""} className="input" placeholder="yoursite.com" />
           </div>
           {senior && (
             <>
               <div>
                 <label className="label" htmlFor="scholar_url">Google Scholar</label>
-                <input id="scholar_url" name="scholar_url" defaultValue={profile.scholar_url ?? ""} className="input" placeholder="scholar.google.com/…" />
+                <input id="scholar_url" name="scholar_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.scholar_url ?? ""} className="input" placeholder="scholar.google.com/…" />
               </div>
               <div>
                 <label className="label" htmlFor="researchgate_url">ResearchGate</label>
-                <input id="researchgate_url" name="researchgate_url" defaultValue={profile.researchgate_url ?? ""} className="input" placeholder="researchgate.net/profile/…" />
+                <input id="researchgate_url" name="researchgate_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.researchgate_url ?? ""} className="input" placeholder="researchgate.net/profile/…" />
               </div>
               <div>
                 <label className="label" htmlFor="orcid">ORCID</label>

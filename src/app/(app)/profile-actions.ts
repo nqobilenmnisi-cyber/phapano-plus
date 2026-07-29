@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { safeExternalProfileUrl } from "@/lib/community-profile-fields";
 import type { CareerStage, PsychologyStream } from "@/types/database";
 
 export async function completeOnboarding(formData: FormData) {
@@ -63,6 +64,30 @@ export async function updateProfile(formData: FormData) {
   const interests = formData.getAll("interests").map(String) as PsychologyStream[];
   const stage = (String(formData.get("career_stage") ?? "") || null) as CareerStage | null;
   const stageOther = String(formData.get("career_stage_other") ?? "").trim();
+  const profileLinks = [
+    ["linkedin_url", "LinkedIn"],
+    ["website_url", "website"],
+    ["scholar_url", "Google Scholar"],
+    ["researchgate_url", "ResearchGate"],
+  ] as const;
+  const normalisedLinks: Record<(typeof profileLinks)[number][0], string | null> = {
+    linkedin_url: null,
+    website_url: null,
+    scholar_url: null,
+    researchgate_url: null,
+  };
+
+  for (const [field, label] of profileLinks) {
+    const submitted = String(formData.get(field) ?? "").trim();
+    if (!submitted) continue;
+    const safeUrl = safeExternalProfileUrl(submitted);
+    if (!safeUrl) {
+      return {
+        error: `Please enter a valid ${label} address using http or https.`,
+      };
+    }
+    normalisedLinks[field] = safeUrl;
+  }
 
   // UPSERT so editing works even if the row was never created.
   const { error } = await supabase.from("profiles").upsert(
@@ -84,11 +109,10 @@ export async function updateProfile(formData: FormData) {
       skills: String(formData.get("skills") ?? "").trim() || null,
       volunteering: String(formData.get("volunteering") ?? "").trim() || null,
       workshops: String(formData.get("workshops") ?? "").trim() || null,
-      linkedin_url: String(formData.get("linkedin_url") ?? "").trim() || null,
-      website_url: String(formData.get("website_url") ?? "").trim() || null,
-      scholar_url: String(formData.get("scholar_url") ?? "").trim() || null,
-      researchgate_url:
-        String(formData.get("researchgate_url") ?? "").trim() || null,
+      linkedin_url: normalisedLinks.linkedin_url,
+      website_url: normalisedLinks.website_url,
+      scholar_url: normalisedLinks.scholar_url,
+      researchgate_url: normalisedLinks.researchgate_url,
       orcid: String(formData.get("orcid") ?? "").trim() || null,
       interests,
       onboarding_complete: true,

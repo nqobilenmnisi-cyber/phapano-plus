@@ -108,11 +108,10 @@ export async function markRead(id: string) {
 }
 
 /**
- * Real account deletion (POPIA, doc 11). We delete the user's data rows; the
- * auth user is removed via an RPC that runs with elevated privileges
- * (see supabase/schema.sql -> delete_own_account). Cascading FKs remove the
- * rest. Journal entries are included — when a user leaves, their most private
- * data leaves with them.
+ * Real account deletion (POPIA, doc 11). Migration 0020 installs a
+ * caller-scoped RPC that removes the auth user. Cascading FKs remove owned
+ * private/community data, while reports and moderation records are retained
+ * without the deleted user's identity as defined by migration 0014.
  */
 export async function deleteAccount(formData: FormData) {
   if (!isSupabaseConfigured) return { ok: false, demo: true };
@@ -126,7 +125,13 @@ export async function deleteAccount(formData: FormData) {
   // Calls a SECURITY DEFINER function that deletes the calling auth user.
   // ON DELETE CASCADE then removes every owned row.
   const { error } = await supabase.rpc("delete_own_account");
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    return {
+      ok: false,
+      error:
+        "We couldn't delete your account. Please sign out, log in again, and retry. If the problem continues, contact Phapano support.",
+    };
+  }
 
   await supabase.auth.signOut();
   redirect("/?goodbye=1");
