@@ -613,6 +613,7 @@ export async function getMemberProfile(id: string): Promise<{
 
 export async function getOrganisationProfile(id: string): Promise<{
   page: OrganisationPage;
+  parentPage: Pick<OrganisationPage, "id" | "name"> | null;
   followers: number;
   following: number;
   followedByMe: boolean;
@@ -638,6 +639,7 @@ export async function getOrganisationProfile(id: string): Promise<{
     { data: followRow },
     { data: blockRow },
     { data: adminRow },
+    parentPageRes,
     postRes,
   ] = await Promise.all([
     (supabase as unknown as RpcClient).rpc("community_follow_counts", {
@@ -661,6 +663,14 @@ export async function getOrganisationProfile(id: string): Promise<{
       .eq("page_id", id)
       .eq("user_id", uid)
       .maybeSingle(),
+    page.parent_page_id
+      ? supabase
+          .from("organisation_pages")
+          .select("id, name")
+          .eq("id", page.parent_page_id)
+          .eq("status", "active")
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
     supabase
       .from("community_posts")
       .select(POST_SELECT)
@@ -679,6 +689,9 @@ export async function getOrganisationProfile(id: string): Promise<{
 
   return {
     page: page as OrganisationPage,
+    parentPage:
+      (parentPageRes.data as Pick<OrganisationPage, "id" | "name"> | null) ??
+      null,
     followers: Number(countRow?.followers ?? 0),
     following: Number(countRow?.following ?? 0),
     followedByMe: !!followRow,
@@ -708,6 +721,20 @@ export async function getManagedOrganisationPages(): Promise<
     .eq("status", "active")
     .order("name");
   return (data ?? []) as OrganisationPage[];
+}
+
+export async function getMyProfileVerifications(): Promise<
+  ProfileVerificationBadge[]
+> {
+  if (!isSupabaseConfigured) return [];
+  const uid = await getMyUserId();
+  if (!uid) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profile_verifications")
+    .select("badge")
+    .eq("user_id", uid);
+  return (data ?? []).map((row) => row.badge as ProfileVerificationBadge);
 }
 
 export async function getBlockedAccounts(): Promise<CommunityMemberCard[]> {

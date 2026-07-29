@@ -41,6 +41,7 @@ describe("official organisation identity conversion", () => {
     expect(actions).toContain("Organisation pages are follow-only");
     expect(profile).toContain("allowConnection={false}");
     expect(profile).toContain("identityLabel=\"page\"");
+    expect(profile).toContain("Parent organisation");
     expect(migration).toContain("community_reject_organisation_connection");
   });
 

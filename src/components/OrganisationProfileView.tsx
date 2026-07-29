@@ -11,6 +11,7 @@ import type {
 
 export function OrganisationProfileView({
   page,
+  parentPage,
   followers,
   following,
   followedByMe,
@@ -20,6 +21,7 @@ export function OrganisationProfileView({
   canManage,
 }: {
   page: OrganisationPage;
+  parentPage: Pick<OrganisationPage, "id" | "name"> | null;
   followers: number;
   following: number;
   followedByMe: boolean;
@@ -101,7 +103,8 @@ export function OrganisationProfileView({
             />
           </div>
 
-          {(page.location ||
+          {(page.parent_page_id ||
+            page.location ||
             page.contact_email ||
             website ||
             page.focus_areas.length > 0 ||
@@ -111,6 +114,21 @@ export function OrganisationProfileView({
                 Organisation details
               </h2>
               <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                <OrganisationDetail
+                  label="Page type"
+                  value={
+                    page.page_type === "initiative"
+                      ? "Organisation initiative"
+                      : "Organisation"
+                  }
+                />
+                {parentPage && (
+                  <OrganisationDetail
+                    label="Parent organisation"
+                    value={parentPage.name}
+                    href={`/app/community/member/${parentPage.id}`}
+                  />
+                )}
                 {page.location && (
                   <OrganisationDetail label="Location" value={page.location} />
                 )}

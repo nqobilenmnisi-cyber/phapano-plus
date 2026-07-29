@@ -5,7 +5,10 @@ import { AvatarUploader } from "@/components/AvatarUploader";
 import { SupportLine } from "@/components/AppChrome";
 import { Star, IconProfile } from "@/components/illustrations";
 import { VerificationBadges } from "@/components/VerificationBadges";
-import { getManagedOrganisationPages, getMemberProfile } from "@/lib/community";
+import {
+  getManagedOrganisationPages,
+  getMyProfileVerifications,
+} from "@/lib/community";
 import {
   getProfile,
   getCurrentUser,
@@ -27,9 +30,9 @@ export default async function ProfilePage() {
       getSavedProgrammes(),
       getSavedFunding(),
     ]);
-  const [managedPages, communityIdentity] = await Promise.all([
+  const [managedPages, verificationBadges] = await Promise.all([
     getManagedOrganisationPages(),
-    user ? getMemberProfile(user.id) : Promise.resolve(null),
+    getMyProfileVerifications(),
   ]);
 
   if (isSupabaseConfigured && !user) redirect("/login?redirect=/app/profile");
@@ -64,11 +67,9 @@ export default async function ProfilePage() {
             {email && (
               <p className="mt-0.5 truncate text-sm text-charcoal-soft">{email}</p>
             )}
-            {communityIdentity?.verificationBadges.length ? (
+            {verificationBadges.length ? (
               <span className="mt-2 block">
-                <VerificationBadges
-                  badges={communityIdentity.verificationBadges}
-                />
+                <VerificationBadges badges={verificationBadges} />
               </span>
             ) : null}
           </div>

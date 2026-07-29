@@ -39,6 +39,7 @@ export default async function CommunityMemberPage({
         </section>
         <OrganisationProfileView
           page={organisation.page}
+          parentPage={organisation.parentPage}
           followers={organisation.followers}
           following={organisation.following}
           followedByMe={organisation.followedByMe}
