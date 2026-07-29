@@ -45,11 +45,13 @@ describe("official organisation identity conversion", () => {
     expect(migration).toContain("community_reject_organisation_connection");
   });
 
-  it("separates official and personal verification badges", () => {
+  it("uses one standard inline mark for verified people and pages", () => {
     const badges = read("src/components/VerificationBadges.tsx");
-    expect(badges).toContain("Verified person");
-    expect(badges).toContain("Founder");
-    expect(badges).toContain("Official organisation");
+    expect(badges).toContain("VerifiedIcon");
+    expect(badges).toContain("inline-flex");
+    expect(badges).toContain("Verified founder");
+    expect(badges).toContain("Verified organisation");
+    expect(badges).not.toContain("rounded-chip");
     expect(migration).toContain("(founder, 'verified_person')");
     expect(migration).toContain("(founder, 'founder')");
   });

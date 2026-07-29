@@ -13,7 +13,7 @@ export default async function FundingPage() {
   const savedIds = Array.from(sets.fundingIds);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 pb-12">
+    <main className="mx-auto max-w-3xl px-4 pb-12 sm:px-6">
       <section className="pb-2 pt-7">
         <div className="flex items-center gap-2.5">
           <IconFunding className="h-7 w-7 flex-none" />

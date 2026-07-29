@@ -169,16 +169,20 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen pb-24">
-      <AppTopBar unread={unread} />
+      <AppTopBar
+        unread={unread}
+        profileName={profile?.full_name}
+        avatarUrl={profile?.avatar_url}
+      />
 
-      <main className="mx-auto max-w-3xl px-6">
+      <main className="mx-auto max-w-3xl px-4 sm:px-6">
         {!isSupabaseConfigured && (
           <p className="mt-3 rounded-chip border border-bronze-soft bg-bronze-soft/30 px-4 py-2.5 text-center text-xs font-semibold text-bronze-deep">
             {DEMO_NOTICE}
           </p>
         )}
 
-        {/* greeting + compass (date lives only in the top badge) */}
+        {/* Personalised greeting remains on Today; redundant date chrome was removed. */}
         <section className="relative overflow-hidden px-1 pb-1.5 pt-7">
           <Compass className="pointer-events-none absolute -top-1.5 right-0 w-44 opacity-90" />
           <h1 className="mt-1 font-sora text-[2.15rem] font-bold leading-tight tracking-tight">

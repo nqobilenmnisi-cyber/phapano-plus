@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PostIcon } from "@/components/PhapanoIcons";
 
 const items = [
   {
@@ -29,6 +30,13 @@ const items = [
         />
         <path d="M13 3v5h5M9 13h6M9 16h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       </>
+    ),
+  },
+  {
+    href: "/app/community/new",
+    label: "Post",
+    icon: (
+      <PostIcon className="h-6 w-6" />
     ),
   },
   {
@@ -60,16 +68,6 @@ const items = [
       </>
     ),
   },
-  {
-    href: "/app/profile",
-    label: "You",
-    icon: (
-      <>
-        <circle cx="12" cy="9" r="3.4" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-      </>
-    ),
-  },
 ];
 
 export function BottomNav() {
@@ -84,6 +82,9 @@ export function BottomNav() {
           const active =
             it.href === "/dashboard"
               ? pathname === "/dashboard"
+              : it.href === "/app/community"
+                ? pathname.startsWith("/app/community") &&
+                  !pathname.startsWith("/app/community/new")
               : pathname.startsWith(it.href);
           return (
             <Link
@@ -94,14 +95,20 @@ export function BottomNav() {
                 active ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
               }`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="h-[22px] w-[22px]"
-              >
-                {it.icon}
-              </svg>
+              {it.href === "/app/community/new" ? (
+                <span className="grid h-8 w-11 place-items-center rounded-full bg-blue-action text-white shadow-sm">
+                  {it.icon}
+                </span>
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className="h-[22px] w-[22px]"
+                >
+                  {it.icon}
+                </svg>
+              )}
               {it.label}
             </Link>
           );

@@ -8,8 +8,14 @@ import {
   deleteComment,
   editComment,
 } from "@/app/(app)/app/community/actions";
+import { CommunityRichText } from "@/components/CommunityRichText";
 import { MemberAvatar, timeAgo } from "@/components/CommunityShared";
+import {
+  MentionTextarea,
+  type MentionSelection,
+} from "@/components/MentionTextarea";
 import { ReportDialog } from "@/components/ReportDialog";
+import { VerificationBadges } from "@/components/VerificationBadges";
 import { COMMENT_MAX_LENGTH } from "@/lib/community-constants";
 import type { CommunityCommentView } from "@/types/database";
 
@@ -34,6 +40,7 @@ export function CommunityComments({
   const [agree, setAgree] = useState(false);
   const [accepted, setAccepted] = useState(acceptedGuidelines);
   const [authorId, setAuthorId] = useState(viewerId);
+  const [mentions, setMentions] = useState<MentionSelection[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -55,9 +62,12 @@ export function CommunityComments({
         }
         setAccepted(true);
       }
-      const result = await addComment(postId, draft, authorId);
+      const result = await addComment(postId, draft, authorId, mentions);
       if ("error" in result) setError(result.error);
-      else setDraft("");
+      else {
+        setDraft("");
+        setMentions([]);
+      }
     });
   }
 
@@ -102,13 +112,15 @@ export function CommunityComments({
           <label className="sr-only" htmlFor="comment-box">
             Write a comment
           </label>
-          <textarea
+          <MentionTextarea
             id="comment-box"
             className="input min-h-20"
             placeholder="Write a comment…"
             maxLength={COMMENT_MAX_LENGTH}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={setDraft}
+            mentions={mentions}
+            onMentionsChange={setMentions}
             disabled={pending}
           />
 
@@ -189,7 +201,13 @@ function CommentRow({
           avatarUrl={comment.author?.avatar_url ?? null}
           size={28}
         />
-        <span className="min-w-0 truncate text-sm font-semibold text-charcoal">{name}</span>
+        <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-charcoal">
+          <span className="truncate">{name}</span>
+          <VerificationBadges
+            badges={comment.verification_badges}
+            officialOrganisation={comment.is_official}
+          />
+        </span>
         <time
           dateTime={comment.created_at}
           className="text-xs text-charcoal-soft"
@@ -284,8 +302,8 @@ function CommentRow({
           </div>
         </div>
       ) : (
-        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-charcoal">
-          {comment.body}
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-charcoal [overflow-wrap:anywhere]">
+          <CommunityRichText text={comment.body} mentions={comment.mentions} />
         </p>
       )}
 

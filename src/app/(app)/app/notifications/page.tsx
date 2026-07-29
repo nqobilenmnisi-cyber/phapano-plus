@@ -50,7 +50,7 @@ export default async function NotificationsPage() {
   const items = isSupabaseConfigured ? live : demoNotifications();
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-10">
+    <main className="mx-auto max-w-2xl px-4 pb-10 sm:px-6">
       <section className="pt-7">
         <h1 className="font-sora text-3xl font-bold tracking-tight">
           Notifications

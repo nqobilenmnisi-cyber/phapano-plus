@@ -11,6 +11,13 @@
     background-image:
       radial-gradient(1100px 460px at 50% -280px, rgba(118, 185, 240, 0.16), transparent 62%);
     background-attachment: fixed;
+    overflow-x: clip;
+  }
+  main, section, article, form, .card {
+    min-width: 0;
+  }
+  img, video, canvas, svg {
+    max-width: 100%;
   }
   h1, h2, h3, h4 {
     @apply font-sora;
@@ -26,20 +33,23 @@
       px-5 py-3 font-semibold text-white transition
       hover:bg-blue-deep focus-visible:outline focus-visible:outline-[3px]
       focus-visible:outline-blue focus-visible:outline-offset-2 disabled:opacity-60;
+    @apply min-h-11 max-w-full whitespace-nowrap px-4 sm:px-5;
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-chip border border-blue
       bg-white px-5 py-3 font-semibold text-blue-action transition
       hover:bg-blue-tint focus-visible:outline focus-visible:outline-[3px]
       focus-visible:outline-blue focus-visible:outline-offset-2;
+    @apply min-h-11 max-w-full whitespace-nowrap px-4 sm:px-5;
   }
   .btn-bronze {
     @apply inline-flex items-center justify-center gap-2 rounded-chip border border-bronze
       bg-white px-5 py-3 font-semibold text-bronze-deep transition
       hover:bg-bronze hover:text-white;
+    @apply min-h-11 max-w-full whitespace-nowrap px-4 sm:px-5;
   }
   .card {
-    @apply rounded-card border border-line bg-white shadow-card;
+    @apply min-w-0 rounded-card border border-line bg-white shadow-card;
   }
   .input {
     @apply w-full rounded-chip border border-line bg-white px-4 py-3 text-charcoal

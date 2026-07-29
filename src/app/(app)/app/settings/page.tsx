@@ -21,7 +21,7 @@ export default async function SettingsPage() {
   const email = user?.email ?? profile?.email ?? "Not provided";
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-10">
+    <main className="mx-auto max-w-2xl px-4 pb-10 sm:px-6">
       <section className="pt-7">
         <Link
           href="/app/profile"

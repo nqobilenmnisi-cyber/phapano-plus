@@ -125,18 +125,15 @@ export function CommunityProfileView({
 
           <div className="mt-4">
             {isOwnProfile ? (
-              <h2 className="break-words font-sora text-2xl font-bold tracking-tight sm:text-3xl">
-                {profile.display_name}
+              <h2 className="flex min-w-0 items-center gap-1.5 font-sora text-2xl font-bold tracking-tight sm:text-3xl">
+                <span className="min-w-0 break-words">{profile.display_name}</span>
+                <VerificationBadges badges={verificationBadges} />
               </h2>
             ) : (
-              <h1 className="break-words font-sora text-2xl font-bold tracking-tight sm:text-3xl">
-                {profile.display_name}
-              </h1>
-            )}
-            {verificationBadges.length > 0 && (
-              <div className="mt-2">
+              <h1 className="flex min-w-0 items-center gap-1.5 font-sora text-2xl font-bold tracking-tight sm:text-3xl">
+                <span className="min-w-0 break-words">{profile.display_name}</span>
                 <VerificationBadges badges={verificationBadges} />
-              </div>
+              </h1>
             )}
             {pathwayStage && (
               <p className="mt-1 break-words text-sm font-bold text-blue-deep">

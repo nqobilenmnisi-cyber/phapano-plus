@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CommunityComposer } from "@/components/CommunityComposer";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import {
   getFeed,
-  getManagedOrganisationPages,
   getMyCommunityProfile,
   getMyModerationState,
   getMyUserId,
-  hasAcceptedGuidelines,
 } from "@/lib/community";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -24,7 +21,7 @@ export default async function CommunityPage({
 
   if (!isSupabaseConfigured) {
     return (
-      <main className="mx-auto max-w-2xl px-6 pb-12">
+      <main className="mx-auto max-w-2xl px-4 pb-12 sm:px-6">
         <Header mode={mode} />
         <p className="mt-6 text-sm text-charcoal-soft">
           The community opens once Phapano+ is connected to a live account.
@@ -43,20 +40,16 @@ export default async function CommunityPage({
     redirect("/app/profile?section=community");
   }
 
-  const [{ posts, hasMore }, accepted, moderation, managedPages] = await Promise.all([
+  const [{ posts, hasMore }, moderation] = await Promise.all([
     getFeed({ mode, before: query.before }),
-    hasAcceptedGuidelines(),
     getMyModerationState(),
-    getManagedOrganisationPages(),
   ]);
-  const canCompose =
-    !moderation.community_suspended && !moderation.posting_restricted;
 
   const olderCursor =
     hasMore && posts.length ? posts[posts.length - 1].created_at : null;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-12">
+    <main className="mx-auto max-w-2xl px-4 pb-12 sm:px-6">
       <Header mode={mode} />
 
       {moderation.community_suspended ? (
@@ -81,28 +74,7 @@ export default async function CommunityPage({
         </div>
       ) : null}
 
-      {canCompose && (
-        <div className="mt-4">
-          <CommunityComposer
-            acceptedGuidelines={accepted}
-            viewerId={uid ?? ""}
-            personalIdentity={{
-              id: uid ?? "",
-              name: communityProfile?.display_name ?? "Your profile",
-              avatarUrl: communityProfile?.avatar_url ?? null,
-              official: false,
-            }}
-            managedPages={managedPages.map((page) => ({
-              id: page.id,
-              name: page.name,
-              avatarUrl: page.avatar_url,
-              official: page.is_official,
-            }))}
-          />
-        </div>
-      )}
-
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-3">
         {posts.length === 0 && (
           <div className="card p-6 text-sm text-charcoal-soft">
             {mode === "following" ? (

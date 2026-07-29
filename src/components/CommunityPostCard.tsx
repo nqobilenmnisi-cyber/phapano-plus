@@ -9,11 +9,20 @@ import {
   updatePost,
 } from "@/app/(app)/app/community/actions";
 import { MemberAvatar, timeAgo } from "@/components/CommunityShared";
+import { CommunityRichText } from "@/components/CommunityRichText";
+import {
+  CelebrateIcon,
+  CommentIcon,
+  HeartIcon,
+  LightbulbIcon,
+  PassOnIcon,
+  SendIcon,
+} from "@/components/PhapanoIcons";
 import { ReportDialog } from "@/components/ReportDialog";
+import { VerificationBadges } from "@/components/VerificationBadges";
 import { POST_MAX_LENGTH } from "@/lib/community-constants";
 import {
   COMMUNITY_REACTIONS,
-  splitPostText,
 } from "@/lib/community-posts";
 import type {
   CommunityEmbeddedPost,
@@ -21,26 +30,16 @@ import type {
   CommunityReactionType,
 } from "@/types/database";
 
-function PostText({ body }: { body: string }) {
-  return (
-    <>
-      {splitPostText(body).map((part, index) =>
-        part.url ? (
-          <a
-            key={`${part.text}-${index}`}
-            href={part.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-blue-action underline decoration-blue-action/30 underline-offset-2"
-          >
-            {part.text}
-          </a>
-        ) : (
-          <span key={`${part.text}-${index}`}>{part.text}</span>
-        )
-      )}
-    </>
-  );
+function ReactionIcon({
+  type,
+  className = "h-5 w-5",
+}: {
+  type: CommunityReactionType;
+  className?: string;
+}) {
+  if (type === "celebrate") return <CelebrateIcon className={className} />;
+  if (type === "insightful") return <LightbulbIcon className={className} />;
+  return <HeartIcon className={className} />;
 }
 
 function EmbeddedPost({ post }: { post: CommunityEmbeddedPost }) {
@@ -53,19 +52,20 @@ function EmbeddedPost({ post }: { post: CommunityEmbeddedPost }) {
           avatarUrl={post.author?.avatar_url ?? null}
           size={30}
         />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-charcoal">{name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="flex min-w-0 items-center gap-1 text-sm font-bold text-charcoal">
+            <span className="truncate">{name}</span>
+            <VerificationBadges
+              badges={post.verification_badges}
+              officialOrganisation={post.is_official}
+            />
+          </p>
           <p className="text-xs text-charcoal-soft">{timeAgo(post.created_at)}</p>
         </div>
-        {post.is_official && (
-          <span className="ml-auto rounded-chip bg-blue-action/10 px-2 py-0.5 text-[0.65rem] font-bold text-blue-action">
-            Official page
-          </span>
-        )}
       </div>
       {post.body && (
-        <p className="whitespace-pre-wrap break-words px-3 pb-3 text-sm leading-relaxed text-charcoal">
-          <PostText body={post.body} />
+        <p className="whitespace-pre-wrap break-words px-3 pb-3 text-sm leading-relaxed text-charcoal [overflow-wrap:anywhere]">
+          <CommunityRichText text={post.body} mentions={post.mentions} />
         </p>
       )}
       {post.image_url && (
@@ -182,11 +182,8 @@ export function CommunityPostCard({
   }
 
   return (
-    <article className="card overflow-visible border-line/90">
-      {post.is_official && (
-        <div className="h-1 rounded-t-card bg-gradient-to-r from-blue-action to-blue" />
-      )}
-      <div className="p-5">
+    <article className="card overflow-hidden border-line/90 bg-paper shadow-[0_8px_28px_rgba(29,45,64,0.06)]">
+      <div className="p-4 sm:p-5">
         <header className="flex items-start gap-3">
           <Link
             href={`/app/community/member/${post.author_id}`}
@@ -196,17 +193,18 @@ export function CommunityPostCard({
           </Link>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2">
-              <Link
-                href={`/app/community/member/${post.author_id}`}
-                className="max-w-full truncate font-semibold text-charcoal hover:underline"
-              >
-                {name}
-              </Link>
-              {post.is_official && (
-                <span className="rounded-chip bg-blue-action/10 px-2 py-0.5 text-[0.65rem] font-bold text-blue-action">
-                  Official page
-                </span>
-              )}
+              <span className="flex min-w-0 max-w-full items-center gap-1">
+                <Link
+                  href={`/app/community/member/${post.author_id}`}
+                  className="truncate font-semibold text-charcoal hover:underline"
+                >
+                  {name}
+                </Link>
+                <VerificationBadges
+                  badges={post.verification_badges}
+                  officialOrganisation={post.is_official}
+                />
+              </span>
             </div>
             <p className="text-xs text-charcoal-soft">
               {post.reshared_post_id ? "Passed on · " : ""}
@@ -309,8 +307,8 @@ export function CommunityPostCard({
           </div>
         ) : (
           post.body && (
-            <p className="mt-3 whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-charcoal">
-              <PostText body={post.body} />
+            <p className="mt-3 whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-charcoal [overflow-wrap:anywhere]">
+              <CommunityRichText text={post.body} mentions={post.mentions} />
             </p>
           )
         )}
@@ -322,7 +320,7 @@ export function CommunityPostCard({
           <img
             src={post.image_url}
             alt={post.image_alt_text ?? ""}
-            className="-mx-5 mt-4 max-h-[42rem] w-[calc(100%+2.5rem)] bg-soft object-contain"
+            className="-mx-4 mt-4 max-h-[42rem] w-[calc(100%+2rem)] bg-soft object-contain sm:-mx-5 sm:w-[calc(100%+2.5rem)]"
           />
         )}
         {mine && post.media_status === "pending" && (
@@ -342,14 +340,14 @@ export function CommunityPostCard({
             href={post.link_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 flex overflow-hidden rounded-card border border-line bg-soft/50 transition hover:border-blue/30"
+            className="mt-3 flex min-w-0 flex-col overflow-hidden rounded-card border border-line bg-soft/50 transition hover:border-blue/30 sm:flex-row"
           >
             {post.link_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={post.link_image_url}
                 alt=""
-                className="h-24 w-28 shrink-0 object-cover"
+                className="h-36 w-full shrink-0 object-cover sm:h-24 sm:w-28"
               />
             )}
             <span className="min-w-0 p-3">
@@ -397,20 +395,30 @@ export function CommunityPostCard({
           </div>
         )}
 
-        <footer className="mt-5 grid grid-cols-4 border-t border-line pt-3 text-xs sm:text-sm">
+        <footer className="mt-5 grid grid-cols-4 border-t border-line pt-2 text-xs sm:text-sm">
           <div className="relative">
             <button
               type="button"
               onClick={() => setReactionOpen((open) => !open)}
               aria-pressed={Boolean(reaction)}
-              className={`flex w-full items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold transition ${
+              title={activeReaction?.label ?? "React"}
+              aria-label={
+                totalReactions
+                  ? `${activeReaction?.label ?? "React"}, ${totalReactions} reactions`
+                  : activeReaction?.label ?? "React"
+              }
+              className={`flex min-h-11 w-full items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold transition ${
                 reaction
                   ? "text-blue-action"
                   : "text-charcoal-soft hover:text-charcoal"
               }`}
             >
-              <span aria-hidden="true">{activeReaction?.symbol ?? "♡"}</span>
-              <span>{totalReactions || activeReaction?.label || "React"}</span>
+              {reaction ? (
+                <ReactionIcon type={reaction} />
+              ) : (
+                <HeartIcon className="h-5 w-5" />
+              )}
+              {totalReactions > 0 && <span>{totalReactions}</span>}
             </button>
             {reactionOpen && (
               <div className="absolute bottom-full left-0 z-20 mb-2 flex rounded-full border border-line bg-paper p-1 shadow-lg">
@@ -421,12 +429,12 @@ export function CommunityPostCard({
                     title={option.label}
                     aria-label={option.label}
                     aria-pressed={reaction === option.value}
-                    className={`grid h-10 w-10 place-items-center rounded-full text-lg hover:bg-soft ${
+                    className={`grid h-11 w-11 place-items-center rounded-full hover:bg-soft ${
                       reaction === option.value ? "bg-blue-tint" : ""
                     }`}
                     onClick={() => onReact(option.value)}
                   >
-                    {option.symbol}
+                    <ReactionIcon type={option.value} className="h-6 w-6" />
                   </button>
                 ))}
               </div>
@@ -434,15 +442,23 @@ export function CommunityPostCard({
           </div>
 
           {detail ? (
-            <span className="flex items-center justify-center rounded-chip px-1 py-2 font-semibold text-charcoal-soft">
-              {post.comment_count || "Comment"}
+            <span
+              className="flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold text-charcoal-soft"
+              aria-label={`${post.comment_count} comments`}
+              title="Comment"
+            >
+              <CommentIcon className="h-5 w-5" />
+              {post.comment_count > 0 && <span>{post.comment_count}</span>}
             </span>
           ) : (
             <Link
               href={`/app/community/post/${post.id}`}
-              className="flex items-center justify-center rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
+              className="flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
+              aria-label={`${post.comment_count} comments`}
+              title="Comment"
             >
-              {post.comment_count || "Comment"}
+              <CommentIcon className="h-5 w-5" />
+              {post.comment_count > 0 && <span>{post.comment_count}</span>}
             </Link>
           )}
 
@@ -451,18 +467,23 @@ export function CommunityPostCard({
             onClick={onPass}
             disabled={pending}
             aria-pressed={passed}
-            className={`rounded-chip px-1 py-2 font-semibold transition ${
+            className={`flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold transition ${
               passed ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
             }`}
+            aria-label={passCount ? `Pass on, ${passCount} passes` : "Pass on"}
+            title="Pass on"
           >
-            {passCount || "Pass on"}
+            <PassOnIcon className="h-5 w-5" />
+            {passCount > 0 && <span>{passCount}</span>}
           </button>
           <button
             type="button"
             onClick={() => void sharePost()}
-            className="rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
+            className="flex min-h-11 items-center justify-center rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
+            aria-label="Send post"
+            title="Send"
           >
-            Send
+            <SendIcon className="h-5 w-5" />
           </button>
         </footer>
 

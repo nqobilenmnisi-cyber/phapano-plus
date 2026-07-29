@@ -2,6 +2,7 @@ import type {
   OrganisationPageType,
   ProfileVerificationBadge,
 } from "@/types/database";
+import { VerifiedIcon } from "@/components/PhapanoIcons";
 
 export function VerificationBadges({
   badges = [],
@@ -12,48 +13,23 @@ export function VerificationBadges({
   organisationType?: OrganisationPageType;
   officialOrganisation?: boolean;
 }) {
-  return (
-    <span className="inline-flex flex-wrap items-center gap-1.5">
-      {badges.includes("verified_person") && (
-        <Badge label="Verified person" tone="blue" icon="✓" />
-      )}
-      {badges.includes("founder") && (
-        <Badge label="Founder" tone="bronze" icon="★" />
-      )}
-      {officialOrganisation && (
-        <Badge
-          label={
-            organisationType === "initiative"
-              ? "Official initiative"
-              : "Official organisation"
-          }
-          tone="blue"
-          icon="✓"
-        />
-      )}
-    </span>
-  );
-}
-
-function Badge({
-  label,
-  tone,
-  icon,
-}: {
-  label: string;
-  tone: "blue" | "bronze";
-  icon: string;
-}) {
+  const verified = badges.length > 0 || officialOrganisation;
+  if (!verified) return null;
+  const accessibleLabel = officialOrganisation
+    ? organisationType === "initiative"
+      ? "Verified Phapano initiative"
+      : "Verified organisation"
+    : badges.includes("founder")
+      ? "Verified founder"
+      : "Verified account";
   return (
     <span
-      className={
-        tone === "blue"
-          ? "inline-flex items-center gap-1 rounded-chip border border-blue/25 bg-blue-tint px-2 py-1 text-[0.68rem] font-extrabold text-blue-deep"
-          : "inline-flex items-center gap-1 rounded-chip border border-bronze-soft bg-[#FBF7F3] px-2 py-1 text-[0.68rem] font-extrabold text-bronze-deep"
-      }
+      className="inline-flex shrink-0 align-middle text-blue-action"
+      role="img"
+      aria-label={accessibleLabel}
+      title={accessibleLabel}
     >
-      <span aria-hidden="true">{icon}</span>
-      {label}
+      <VerifiedIcon className="h-[17px] w-[17px]" />
     </span>
   );
 }

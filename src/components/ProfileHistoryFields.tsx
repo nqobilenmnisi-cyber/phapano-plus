@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { InstitutionAutocomplete } from "@/components/InstitutionAutocomplete";
 import type { EducationEntry, ExperienceEntry } from "@/types/database";
 
 function newId() {
@@ -57,12 +58,17 @@ export function ProfileHistoryFields({
         {education.map((row) => (
           <div key={row.id} className="rounded-card border border-line bg-white p-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <HistoryInput
-                label="Institution"
-                value={row.institution}
-                placeholder="e.g. University of Johannesburg"
-                onChange={(institution) => updateEducation(row.id, { institution })}
-              />
+              <div>
+                <span className="label">Institution</span>
+                <InstitutionAutocomplete
+                  name={null}
+                  value={row.institution}
+                  placeholder="Start typing a university or institution"
+                  onChange={(institution) =>
+                    updateEducation(row.id, { institution })
+                  }
+                />
+              </div>
               <HistoryInput
                 label="Qualification"
                 value={row.qualification}
