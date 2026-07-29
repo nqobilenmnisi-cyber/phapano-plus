@@ -24,19 +24,14 @@ export default async function CommunityProfileEditPage() {
           Edit Community profile
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
-          This is what other members can see. Your Phapano Passport,
-          applications, notes and funding records are never shown here.
+          Choose what other members can see from your Phapano Passport. Your
+          private records remain private.
         </p>
       </section>
       <div className="card mt-5 p-6">
         <CommunityProfileForm
           existing={existing}
-          defaults={{
-            name: passport?.full_name ?? "",
-            stage: passport?.career_stage ?? "",
-            stageOther: passport?.career_stage_other ?? "",
-            institution: passport?.university ?? "",
-          }}
+          passport={passport}
         />
       </div>
     </main>

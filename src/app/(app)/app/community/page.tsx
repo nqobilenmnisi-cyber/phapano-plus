@@ -55,12 +55,7 @@ export default async function CommunityPage({
         <div className="card mt-4 p-6">
           <CommunityProfileForm
             existing={null}
-            defaults={{
-              name: passport?.full_name ?? "",
-              stage: passport?.career_stage ?? "",
-              stageOther: passport?.career_stage_other ?? "",
-              institution: passport?.university ?? "",
-            }}
+            passport={passport}
           />
         </div>
         <p className="mt-4 text-center text-xs text-charcoal-soft">

@@ -100,6 +100,7 @@ export async function updateProfile(formData: FormData) {
   if (error) return { error: error.message };
   revalidatePath("/app/profile");
   revalidatePath("/dashboard");
+  revalidatePath("/app/community", "layout");
   return { ok: true };
 }
 
@@ -122,5 +123,6 @@ export async function saveAvatarUrl(url: string) {
   if (error) return { error: error.message };
   revalidatePath("/app/profile");
   revalidatePath("/dashboard");
+  revalidatePath("/app/community", "layout");
   return { ok: true };
 }
