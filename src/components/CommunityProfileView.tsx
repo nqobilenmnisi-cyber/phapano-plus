@@ -4,7 +4,9 @@ import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { MemberAvatar } from "@/components/CommunityShared";
 import {
   communityChoiceLabel,
+  orcidProfileUrl,
   profileHeadline,
+  safeExternalProfileUrl,
   shouldShowBio,
 } from "@/lib/community-profile-fields";
 import type {
@@ -51,10 +53,35 @@ export function CommunityProfileView({
     profile.stage_other,
     careerStageLabels
   );
-  const psychologyStream = communityChoiceLabel(
-    profile.stream,
-    profile.stream_other,
-    streamLabels
+  const psychologyInterests = profile.interests.map(
+    (interest) =>
+      communityChoiceLabel(interest, null, streamLabels) ?? interest
+  );
+  const experience = [
+    { label: "Skills", value: profile.skills },
+    { label: "Volunteering", value: profile.volunteering },
+    { label: "Workshops", value: profile.workshops },
+  ].filter((item) => Boolean(item.value?.trim()));
+  const professionalLinks = [
+    {
+      label: "LinkedIn",
+      href: safeExternalProfileUrl(profile.linkedin_url),
+    },
+    {
+      label: "Website",
+      href: safeExternalProfileUrl(profile.website_url),
+    },
+    {
+      label: "Google Scholar",
+      href: safeExternalProfileUrl(profile.scholar_url),
+    },
+    {
+      label: "ResearchGate",
+      href: safeExternalProfileUrl(profile.researchgate_url),
+    },
+    { label: "ORCID", href: orcidProfileUrl(profile.orcid) },
+  ].filter((link): link is { label: string; href: string } =>
+    Boolean(link.href)
   );
 
   return (
@@ -143,40 +170,24 @@ export function CommunityProfileView({
             </div>
           )}
 
-          {(psychologyStream ||
-            profile.institution ||
-            profile.interests.length > 0) && (
+          {(profile.institution ||
+            profile.province ||
+            psychologyInterests.length > 0) && (
             <div className="mt-6 border-t border-line pt-5">
               <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-charcoal-soft">
                 About
               </h3>
-              {(psychologyStream || profile.institution) && (
-                <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                  {psychologyStream && (
-                    <div className="rounded-card bg-blue-tint/55 px-4 py-3">
-                      <dt className="text-xs font-semibold text-charcoal-soft">
-                        Psychology stream
-                      </dt>
-                      <dd className="mt-1 font-semibold text-charcoal">
-                        {psychologyStream}
-                      </dd>
-                    </div>
-                  )}
-                  {profile.institution && (
-                    <div className="rounded-card bg-soft px-4 py-3">
-                      <dt className="text-xs font-semibold text-charcoal-soft">
-                        Institution
-                      </dt>
-                      <dd className="mt-1 font-semibold text-charcoal">
-                        {profile.institution}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              )}
-              {profile.interests.length > 0 && (
+              <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                {profile.institution && (
+                  <ProfileDetail label="University" value={profile.institution} />
+                )}
+                {profile.province && (
+                  <ProfileDetail label="Province" value={profile.province} />
+                )}
+              </dl>
+              {psychologyInterests.length > 0 && (
                 <ul className="mt-4 flex flex-wrap gap-2">
-                  {profile.interests.map((interest) => (
+                  {psychologyInterests.map((interest) => (
                     <li
                       key={interest}
                       className="rounded-chip border border-blue/30 bg-white px-3 py-1.5 text-xs font-semibold text-blue-deep"
@@ -186,6 +197,45 @@ export function CommunityProfileView({
                   ))}
                 </ul>
               )}
+            </div>
+          )}
+
+          {experience.length > 0 && (
+            <div className="mt-6 border-t border-line pt-5">
+              <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-charcoal-soft">
+                Experience &amp; skills
+              </h3>
+              <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+                {experience.map((item) => (
+                  <ProfileDetail
+                    key={item.label}
+                    label={item.label}
+                    value={item.value!}
+                  />
+                ))}
+              </dl>
+            </div>
+          )}
+
+          {professionalLinks.length > 0 && (
+            <div className="mt-6 border-t border-line pt-5">
+              <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-charcoal-soft">
+                Professional links
+              </h3>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {professionalLinks.map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex rounded-chip border border-blue/30 bg-white px-3 py-1.5 text-xs font-bold text-blue-deep transition hover:border-blue-action"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
@@ -217,6 +267,17 @@ export function CommunityProfileView({
         </section>
       )}
     </>
+  );
+}
+
+function ProfileDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-card bg-soft px-4 py-3">
+      <dt className="text-xs font-semibold text-charcoal-soft">{label}</dt>
+      <dd className="mt-1 whitespace-pre-wrap text-sm font-semibold leading-relaxed text-charcoal">
+        {value}
+      </dd>
+    </div>
   );
 }
 

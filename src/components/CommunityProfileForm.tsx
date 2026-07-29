@@ -4,14 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveCommunityProfile } from "@/app/(app)/app/community/actions";
 import {
-  COMMUNITY_BIO_MAX_LENGTH,
   COMMUNITY_HEADLINE_MAX_LENGTH,
-  COMMUNITY_INSTITUTION_MAX_LENGTH,
-  COMMUNITY_OTHER_MAX_LENGTH,
-  otherFieldRequired,
+  type CommunityProfileSharingKey,
 } from "@/lib/community-profile-fields";
 import { careerStageLabels, streamLabels } from "@/lib/utils";
-import type { CommunityProfile } from "@/types/database";
+import type { CommunityProfile, Profile } from "@/types/database";
 
 const VISIBILITY_OPTIONS = [
   {
@@ -49,248 +46,183 @@ const CONNECTION_OPTIONS = [
   },
 ] as const;
 
+type SharingControl = {
+  key: CommunityProfileSharingKey;
+  label: string;
+  value: string | null;
+};
+
 export function CommunityProfileForm({
   existing,
-  defaults,
+  passport,
 }: {
   existing: CommunityProfile | null;
-  defaults: {
-    name: string;
-    stage: string;
-    stageOther: string;
-    institution: string;
-  };
+  passport: Profile | null;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [stage, setStage] = useState(existing?.stage ?? defaults.stage ?? "");
-  const [stageOther, setStageOther] = useState(
-    existing?.stage_other ?? defaults.stageOther
-  );
-  const [stream, setStream] = useState(existing?.stream ?? "");
-  const [streamOther, setStreamOther] = useState(
-    existing?.stream_other ?? ""
-  );
+
+  const fullName = [passport?.full_name, passport?.surname]
+    .filter(Boolean)
+    .join(" ");
+  const stage = passport?.career_stage
+    ? passport.career_stage === "other"
+      ? passport.career_stage_other || "Other"
+      : careerStageLabels[passport.career_stage]
+    : null;
+  const psychologyInterests =
+    passport?.interests
+      .map((interest) => streamLabels[interest] ?? interest)
+      .join(", ") || null;
+
+  const sharingControls: SharingControl[] = [
+    { key: "share_bio", label: "Professional bio", value: passport?.bio ?? null },
+    { key: "share_career_stage", label: "Career stage", value: stage },
+    { key: "share_university", label: "University", value: passport?.university ?? null },
+    { key: "share_province", label: "Province", value: passport?.province ?? null },
+    {
+      key: "share_psychology_interests",
+      label: "Psychology streams & interests",
+      value: psychologyInterests,
+    },
+    { key: "share_skills", label: "Skills", value: passport?.skills ?? null },
+    {
+      key: "share_volunteering",
+      label: "Volunteering",
+      value: passport?.volunteering ?? null,
+    },
+    { key: "share_workshops", label: "Workshops", value: passport?.workshops ?? null },
+    { key: "share_linkedin", label: "LinkedIn", value: passport?.linkedin_url ?? null },
+    { key: "share_website", label: "Website", value: passport?.website_url ?? null },
+    { key: "share_scholar", label: "Google Scholar", value: passport?.scholar_url ?? null },
+    {
+      key: "share_researchgate",
+      label: "ResearchGate",
+      value: passport?.researchgate_url ?? null,
+    },
+    { key: "share_orcid", label: "ORCID", value: passport?.orcid ?? null },
+  ];
 
   function submit(formData: FormData) {
     setError(null);
-    setSaved(false);
     startTransition(async () => {
       const result = await saveCommunityProfile(formData);
-      if (result && "error" in result) setError(result.error);
-      else {
-        setSaved(true);
-        router.push("/app/community/profile");
-        router.refresh();
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
       }
+      router.push("/app/community/profile");
+      router.refresh();
     });
   }
 
   return (
-    <form action={submit} className="space-y-4">
-      <p className="text-xs text-charcoal-soft">
-        Fields marked with <span aria-hidden="true">*</span>
-        <span className="sr-only">an asterisk</span> are required.
-      </p>
-
-      <div>
-        <label className="label" htmlFor="display_name">
-          Display name <RequiredMark />
-        </label>
-        <input
-          id="display_name"
-          name="display_name"
-          required
-          minLength={2}
-          maxLength={60}
-          className="input"
-          defaultValue={existing?.display_name ?? defaults.name}
-          disabled={pending}
-        />
-        <p className="mt-1 text-xs text-charcoal-soft">
-          This is the name shown in the community. Your private Passport data
-          stays private unless you choose to share it.
+    <form action={submit} className="space-y-6">
+      <section>
+        <h2 className="font-sora text-base font-bold tracking-tight">
+          Community identity
+        </h2>
+        <p className="mt-1 text-sm text-charcoal-soft">
+          These social details belong to Community and stay under your control.
         </p>
-      </div>
+        <div className="mt-4 space-y-4">
+          <div>
+            <label className="label" htmlFor="display_name">
+              Display name <RequiredMark />
+            </label>
+            <input
+              id="display_name"
+              name="display_name"
+              required
+              minLength={2}
+              maxLength={60}
+              className="input"
+              defaultValue={existing?.display_name ?? fullName}
+              disabled={pending}
+            />
+          </div>
 
-      <div>
-        <label className="label" htmlFor="headline">
-          Headline
-        </label>
-        <input
-          id="headline"
-          name="headline"
-          maxLength={COMMUNITY_HEADLINE_MAX_LENGTH}
-          className="input"
-          placeholder="e.g. Honours student · aspiring clinical psychologist"
-          defaultValue={existing?.headline ?? ""}
-          disabled={pending}
-        />
-        <p className="mt-1 text-xs text-charcoal-soft">
-          A short line displayed under your name. It is separate from your
-          pathway stage.
+          <div>
+            <label className="label" htmlFor="headline">
+              Headline
+            </label>
+            <input
+              id="headline"
+              name="headline"
+              maxLength={COMMUNITY_HEADLINE_MAX_LENGTH}
+              className="input"
+              placeholder="e.g. Honours student · aspiring clinical psychologist"
+              defaultValue={existing?.headline ?? ""}
+              disabled={pending}
+            />
+            <p className="mt-1 text-xs text-charcoal-soft">
+              A short Community introduction, separate from your Passport career stage.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <fieldset className="border-t border-line pt-6">
+        <legend className="font-sora text-base font-bold tracking-tight">
+          Share from your Phapano Passport
+        </legend>
+        <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
+          Every field is opt-in. Changes to shared Passport details and your
+          avatar stay synchronized automatically.
         </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label" htmlFor="stage">
-            Pathway stage
-          </label>
-          <select
-            id="stage"
-            name="stage"
-            className="input"
-            value={stage}
-            onChange={(event) => setStage(event.target.value)}
-            disabled={pending}
-          >
-            <option value="">Prefer not to say</option>
-            {Object.entries(careerStageLabels).map(([v, l]) => (
-              <option key={v} value={v}>
-                {l}
-              </option>
-            ))}
-          </select>
-          {otherFieldRequired(stage) && (
-            <div className="mt-2">
-              <label className="label" htmlFor="stage_other">
-                Your pathway stage <RequiredMark />
-              </label>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {sharingControls.map((control) => (
+            <label
+              key={control.key}
+              className="flex cursor-pointer items-start gap-3 rounded-card border border-line bg-paper px-4 py-3.5 transition hover:border-blue/50"
+            >
               <input
-                id="stage_other"
-                name="stage_other"
-                maxLength={COMMUNITY_OTHER_MAX_LENGTH}
-                required
-                className="input"
-                placeholder="Describe your pathway stage"
-                value={stageOther}
-                onChange={(event) => setStageOther(event.target.value)}
+                type="checkbox"
+                name="shared_fields"
+                value={control.key}
+                defaultChecked={Boolean(passport?.[control.key])}
+                className="mt-1 h-4 w-4 accent-blue-action"
                 disabled={pending}
               />
-            </div>
-          )}
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-charcoal">
+                  {control.label}
+                </span>
+                <span className="mt-0.5 block break-words text-xs leading-relaxed text-charcoal-soft">
+                  {control.value || "Not added to your Passport yet"}
+                </span>
+              </span>
+            </label>
+          ))}
         </div>
-        <div>
-          <label className="label" htmlFor="stream">
-            Stream or interest area
-          </label>
-          <select
-            id="stream"
-            name="stream"
-            className="input"
-            value={stream}
-            onChange={(event) => setStream(event.target.value)}
-            disabled={pending}
-          >
-            <option value="">Prefer not to say</option>
-            {Object.entries(streamLabels).map(([v, l]) => (
-              <option key={v} value={v}>
-                {l}
-              </option>
-            ))}
-          </select>
-          {otherFieldRequired(stream) && (
-            <div className="mt-2">
-              <label className="label" htmlFor="stream_other">
-                Your stream or interest area <RequiredMark />
-              </label>
-              <input
-                id="stream_other"
-                name="stream_other"
-                maxLength={COMMUNITY_OTHER_MAX_LENGTH}
-                required
-                className="input"
-                placeholder="Describe your stream or interest area"
-                value={streamOther}
-                onChange={(event) => setStreamOther(event.target.value)}
-                disabled={pending}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label className="label" htmlFor="institution">
-          Institution
-        </label>
-        <input
-          id="institution"
-          name="institution"
-          maxLength={COMMUNITY_INSTITUTION_MAX_LENGTH}
-          className="input"
-          defaultValue={existing?.institution ?? defaults.institution}
-          disabled={pending}
-        />
-      </div>
-
-      <div>
-        <label className="label" htmlFor="bio">
-          Short bio
-        </label>
-        <textarea
-          id="bio"
-          name="bio"
-          maxLength={COMMUNITY_BIO_MAX_LENGTH}
-          className="input min-h-20"
-          defaultValue={existing?.bio ?? ""}
-          disabled={pending}
-        />
-        <p className="mt-1 text-xs text-charcoal-soft">
-          Share a concise introduction to your psychology journey.
+        <p className="mt-3 text-xs leading-relaxed text-charcoal-soft">
+          Turning a field off removes its value from your public Community
+          profile immediately. Edit the source value from your main profile.
         </p>
-      </div>
+      </fieldset>
 
-      <div>
-        <label className="label" htmlFor="interests">
-          Interests
-        </label>
-        <input
-          id="interests"
-          name="interests"
-          className="input"
-          placeholder="e.g. neuropsychology, research methods, NSFAS advice"
-          defaultValue={(existing?.interests ?? []).join(", ")}
-          disabled={pending}
-        />
-        <p className="mt-1 text-xs text-charcoal-soft">
-          Separate interests with commas.
+      <section className="rounded-card border border-blue/25 bg-blue-tint/45 px-4 py-4">
+        <h2 className="text-sm font-bold text-charcoal">Always private</h2>
+        <p className="mt-1 text-xs leading-relaxed text-charcoal-soft">
+          Applications, funding records, notes, documents, email address, and
+          account or security information never have public-sharing controls.
         </p>
-      </div>
+      </section>
 
-      <fieldset>
+      <fieldset className="border-t border-line pt-6">
         <legend className="label">
           Who can find you <RequiredMark />
         </legend>
         <div className="space-y-2">
-          {VISIBILITY_OPTIONS.map((o) => (
-            <label
-              key={o.value}
-              className="flex cursor-pointer items-start gap-2.5 rounded-card border border-line bg-paper px-4 py-3"
-            >
-              <input
-                type="radio"
-                name="visibility"
-                value={o.value}
-                required
-                defaultChecked={
-                  (existing?.visibility ?? "visible") === o.value
-                }
-                className="mt-1"
-                disabled={pending}
-              />
-              <span>
-                <span className="block text-sm font-semibold text-charcoal">
-                  {o.label}
-                </span>
-                <span className="block text-xs text-charcoal-soft">
-                  {o.hint}
-                </span>
-              </span>
-            </label>
+          {VISIBILITY_OPTIONS.map((option) => (
+            <RadioOption
+              key={option.value}
+              name="visibility"
+              option={option}
+              selected={(existing?.visibility ?? "visible") === option.value}
+              pending={pending}
+            />
           ))}
         </div>
       </fieldset>
@@ -301,49 +233,22 @@ export function CommunityProfileForm({
         </legend>
         <div className="space-y-2">
           {CONNECTION_OPTIONS.map((option) => (
-            <label
+            <RadioOption
               key={option.value}
-              className="flex cursor-pointer items-start gap-2.5 rounded-card border border-line bg-paper px-4 py-3"
-            >
-              <input
-                type="radio"
-                name="connection_permission"
-                value={option.value}
-                required
-                defaultChecked={
-                  (existing?.connection_permission ?? "everyone") ===
-                  option.value
-                }
-                className="mt-1"
-                disabled={pending}
-              />
-              <span>
-                <span className="block text-sm font-semibold text-charcoal">
-                  {option.label}
-                </span>
-                <span className="block text-xs text-charcoal-soft">
-                  {option.hint}
-                </span>
-              </span>
-            </label>
+              name="connection_permission"
+              option={option}
+              selected={
+                (existing?.connection_permission ?? "everyone") === option.value
+              }
+              pending={pending}
+            />
           ))}
         </div>
       </fieldset>
 
       {error && (
-        <p
-          aria-live="polite"
-          className="rounded-chip border border-bronze-soft bg-bronze-soft/40 px-4 py-2.5 text-sm text-bronze-deep"
-        >
+        <p aria-live="polite" className="text-sm font-semibold text-bronze-deep">
           {error}
-        </p>
-      )}
-      {saved && (
-        <p
-          aria-live="polite"
-          className="rounded-chip border border-line bg-soft px-4 py-2.5 text-sm text-charcoal"
-        >
-          Community profile saved.
         </p>
       )}
 
@@ -356,6 +261,38 @@ export function CommunityProfileForm({
         {pending ? "Saving…" : existing ? "Save changes" : "Join the community"}
       </button>
     </form>
+  );
+}
+
+function RadioOption({
+  name,
+  option,
+  selected,
+  pending,
+}: {
+  name: string;
+  option: { value: string; label: string; hint: string };
+  selected: boolean;
+  pending: boolean;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5 rounded-card border border-line bg-paper px-4 py-3">
+      <input
+        type="radio"
+        name={name}
+        value={option.value}
+        required
+        defaultChecked={selected}
+        className="mt-1"
+        disabled={pending}
+      />
+      <span>
+        <span className="block text-sm font-semibold text-charcoal">
+          {option.label}
+        </span>
+        <span className="block text-xs text-charcoal-soft">{option.hint}</span>
+      </span>
+    </label>
   );
 }
 

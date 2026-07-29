@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
+  normalizeCommunitySharingSelection,
   normalizeCommunityProfileText,
   validateCommunityProfileText,
 } from "@/lib/community-profile-fields";
@@ -23,23 +24,12 @@ import {
   type MemberSearchParams,
 } from "@/lib/community";
 import type {
-  CareerStage,
   CommunityConnectionPermission,
   CommunityMemberCard,
   CommunityReportCategory,
   CommunityReportTargetType,
   CommunityVisibility,
-  PsychologyStream,
 } from "@/types/database";
-
-const CAREER_STAGES = [
-  "high_school","undergraduate","honours_applicant","honours","masters_applicant",
-  "masters_student","intern","community_service","professional","other",
-] as const;
-const PSYCH_STREAMS = [
-  "clinical","counselling","research","educational","industrial_organisational",
-  "neuropsychology","other",
-] as const;
 
 export type ActionResult = { ok: true } | { error: string };
 
@@ -120,35 +110,25 @@ export async function saveCommunityProfile(
   if ("error" in auth) return auth;
 
   const display_name = String(formData.get("display_name") ?? "").trim();
-  const stageRaw = String(formData.get("stage") ?? "");
-  const streamRaw = String(formData.get("stream") ?? "");
   const profileTextInput = {
     headline: String(formData.get("headline") ?? ""),
-    stage: stageRaw,
-    stageOther: String(formData.get("stage_other") ?? ""),
-    stream: streamRaw,
-    streamOther: String(formData.get("stream_other") ?? ""),
-    institution: String(formData.get("institution") ?? ""),
-    bio: String(formData.get("bio") ?? ""),
+    stage: "",
+    stageOther: "",
+    stream: "",
+    streamOther: "",
+    institution: "",
+    bio: "",
   };
   const profileText = normalizeCommunityProfileText(profileTextInput);
-  const stage = (CAREER_STAGES as readonly string[]).includes(stageRaw)
-    ? (stageRaw as CareerStage)
-    : null;
-  const stream = (PSYCH_STREAMS as readonly string[]).includes(streamRaw)
-    ? (streamRaw as PsychologyStream)
-    : null;
   const visibility = String(
     formData.get("visibility") ?? "visible"
   ) as CommunityVisibility;
   const connection_permission = String(
     formData.get("connection_permission") ?? "everyone"
   ) as CommunityConnectionPermission;
-  const interests = String(formData.get("interests") ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 8);
+  const sharing = normalizeCommunitySharingSelection(
+    formData.getAll("shared_fields").map(String)
+  );
 
   if (display_name.length < 2 || display_name.length > 60)
     return { error: "Please choose a display name of 2–60 characters." };
@@ -161,28 +141,21 @@ export async function saveCommunityProfile(
 
   const supabase = await createClient();
 
-  // Reuse the existing safe avatar from the Phapano Passport, if any.
-  const { data: passport } = await supabase
+  // Preferences live on the private Passport. Updating it first resyncs an
+  // existing public projection; a new Community row is projected on insert.
+  const { error: sharingError } = await supabase
     .from("profiles")
-    .select("avatar_url")
-    .eq("id", auth.uid)
-    .maybeSingle();
+    .update({ ...sharing, updated_at: new Date().toISOString() })
+    .eq("id", auth.uid);
+  if (sharingError) return { error: GENERIC_ERROR };
 
   const { error } = await supabase.from("community_profiles").upsert(
     {
       user_id: auth.uid,
       display_name,
       headline: profileText.headline,
-      stage,
-      stage_other: profileText.stageOther,
-      stream,
-      stream_other: profileText.streamOther,
-      institution: profileText.institution,
-      bio: profileText.bio,
-      interests,
       visibility,
       connection_permission,
-      avatar_url: passport?.avatar_url ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

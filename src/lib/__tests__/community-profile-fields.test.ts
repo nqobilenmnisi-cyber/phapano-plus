@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   communityChoiceLabel,
+  normalizeCommunitySharingSelection,
   normalizeCommunityProfileText,
+  orcidProfileUrl,
   otherFieldRequired,
   profileHeadline,
   resolveOtherValue,
+  safeExternalProfileUrl,
   shouldShowBio,
   validateCommunityProfileText,
 } from "@/lib/community-profile-fields";
@@ -102,5 +105,31 @@ describe("headline and bio presentation", () => {
         bio: "a".repeat(281),
       })
     ).toContain("bio");
+  });
+});
+
+describe("Passport sharing controls", () => {
+  it("accepts only the explicit professional-field whitelist", () => {
+    const preferences = normalizeCommunitySharingSelection([
+      "share_bio",
+      "share_linkedin",
+      "email",
+      "application_year",
+    ]);
+    expect(preferences.share_bio).toBe(true);
+    expect(preferences.share_linkedin).toBe(true);
+    expect(Object.keys(preferences)).not.toContain("email");
+    expect(Object.keys(preferences)).not.toContain("application_year");
+    expect(preferences.share_orcid).toBe(false);
+  });
+
+  it("permits only web links and normalises ORCID identifiers", () => {
+    expect(safeExternalProfileUrl("linkedin.com/in/member")).toBe(
+      "https://linkedin.com/in/member"
+    );
+    expect(safeExternalProfileUrl("javascript:alert(1)")).toBeNull();
+    expect(orcidProfileUrl("0000-0002-1825-0097")).toBe(
+      "https://orcid.org/0000-0002-1825-0097"
+    );
   });
 });

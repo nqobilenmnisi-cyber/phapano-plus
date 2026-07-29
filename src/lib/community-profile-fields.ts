@@ -7,6 +7,40 @@ export const COMMUNITY_OTHER_MAX_LENGTH = 80;
 export const COMMUNITY_BIO_MAX_LENGTH = 280;
 export const COMMUNITY_INSTITUTION_MAX_LENGTH = 120;
 
+export const COMMUNITY_PROFILE_SHARING_KEYS = [
+  "share_bio",
+  "share_career_stage",
+  "share_university",
+  "share_province",
+  "share_psychology_interests",
+  "share_skills",
+  "share_volunteering",
+  "share_workshops",
+  "share_linkedin",
+  "share_website",
+  "share_scholar",
+  "share_researchgate",
+  "share_orcid",
+] as const;
+
+export type CommunityProfileSharingKey =
+  (typeof COMMUNITY_PROFILE_SHARING_KEYS)[number];
+
+export type CommunityProfileSharingPreferences = Record<
+  CommunityProfileSharingKey,
+  boolean
+>;
+
+export function normalizeCommunitySharingSelection(
+  selected: Iterable<string>
+): CommunityProfileSharingPreferences {
+  const allowed = new Set<string>(COMMUNITY_PROFILE_SHARING_KEYS);
+  const chosen = new Set(Array.from(selected).filter((key) => allowed.has(key)));
+  return Object.fromEntries(
+    COMMUNITY_PROFILE_SHARING_KEYS.map((key) => [key, chosen.has(key)])
+  ) as CommunityProfileSharingPreferences;
+}
+
 export type CommunityProfileTextInput = {
   headline: string;
   stage: string;
@@ -100,6 +134,30 @@ export function profileHeadline(headline: string | null): string {
 
 export function shouldShowBio(bio: string | null): boolean {
   return Boolean(bio?.trim());
+}
+
+export function safeExternalProfileUrl(value: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(
+      /^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`
+    );
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function orcidProfileUrl(value: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/^\d{4}-\d{4}-\d{4}-[\dX]{4}$/i.test(trimmed)) {
+    return `https://orcid.org/${trimmed}`;
+  }
+  return safeExternalProfileUrl(trimmed);
 }
 
 export function communityChoiceLabel(
