@@ -9,6 +9,8 @@ import type {
   CommunityModerationAction,
   CommunityReport,
 } from "@/types/database";
+import { CommunityMediaQueue } from "@/components/CommunityMediaQueue";
+import { COMMUNITY_IMAGE_BUCKET } from "@/lib/community-posts";
 
 export const metadata = { title: "Community moderation | Phapano+ Admin" };
 
@@ -25,8 +27,55 @@ export default async function AdminCommunityPage({
       : "open";
 
   let rows: ModerationRow[] = [];
+  let mediaRows: {
+    id: string;
+    body: string;
+    imageUrl: string;
+    imageAltText: string | null;
+    authorName: string;
+    createdAt: string;
+  }[] = [];
 
   if (!ctx.demo) {
+    const { data: pendingMedia } = await ctx.supabase
+      .from("community_posts")
+      .select(
+        "id, body, image_path, image_alt_text, created_at, author:community_profiles(display_name)"
+      )
+      .eq("media_status", "pending")
+      .eq("status", "published")
+      .not("image_path", "is", null)
+      .order("created_at", { ascending: true })
+      .limit(50);
+    const mediaPaths = (pendingMedia ?? [])
+      .map((post) => post.image_path)
+      .filter((path): path is string => Boolean(path));
+    const { data: signedMedia } = mediaPaths.length
+      ? await ctx.supabase.storage
+          .from(COMMUNITY_IMAGE_BUCKET)
+          .createSignedUrls(mediaPaths, 30 * 60)
+      : { data: [] };
+    const mediaUrlByPath = new Map(
+      (signedMedia ?? [])
+        .filter((item) => item.path && item.signedUrl)
+        .map((item) => [item.path, item.signedUrl])
+    );
+    mediaRows = (pendingMedia ?? []).flatMap((post) => {
+      const imageUrl = post.image_path
+        ? mediaUrlByPath.get(post.image_path)
+        : null;
+      if (!imageUrl) return [];
+      const author = Array.isArray(post.author) ? post.author[0] : post.author;
+      return [{
+        id: post.id,
+        body: post.body,
+        imageUrl,
+        imageAltText: post.image_alt_text,
+        authorName: author?.display_name ?? "Phapano+ member",
+        createdAt: post.created_at,
+      }];
+    });
+
     const { data: reports } = await ctx.supabase
       .from("community_reports")
       .select("*")
@@ -215,6 +264,7 @@ export default async function AdminCommunityPage({
           <ModerationQueue rows={rows} />
         )}
       </div>
+      {!ctx.demo && <CommunityMediaQueue rows={mediaRows} />}
     </main>
   );
 }

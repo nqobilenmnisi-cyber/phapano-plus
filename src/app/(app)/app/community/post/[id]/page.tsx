@@ -4,6 +4,7 @@ import { CommunityComments } from "@/components/CommunityComments";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import {
   getComments,
+  getManagedOrganisationPages,
   getMyModerationState,
   getMyUserId,
   getPostView,
@@ -27,10 +28,11 @@ export default async function CommunityPostPage({
   ]);
   if (!post || !uid) notFound();
 
-  const [comments, accepted, moderation] = await Promise.all([
+  const [comments, accepted, moderation, managedPages] = await Promise.all([
     getComments(post.id),
     hasAcceptedGuidelines(),
     getMyModerationState(),
+    getManagedOrganisationPages(),
   ]);
   const canParticipate =
     !moderation.posting_restricted && !moderation.community_suspended;
@@ -54,6 +56,10 @@ export default async function CommunityPostPage({
         viewerId={uid}
         canParticipate={canParticipate}
         acceptedGuidelines={accepted}
+        postingIdentities={[
+          { id: uid, name: "Your profile" },
+          ...managedPages.map((page) => ({ id: page.id, name: page.name })),
+        ]}
       />
     </main>
   );

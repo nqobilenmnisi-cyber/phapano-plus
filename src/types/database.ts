@@ -430,7 +430,11 @@ export interface Database {
       };
       community_reactions: {
         Row: CommunityReaction;
-        Insert: { post_id: string; user_id: string };
+        Insert: {
+          post_id: string;
+          user_id: string;
+          reaction_type?: CommunityReactionType;
+        };
         Update: Partial<CommunityReaction>;
         Relationships: [];
       };
@@ -673,7 +677,10 @@ export type CommunityModerationActionType =
   | "suspend_community"
   | "unsuspend_community"
   | "note"
-  | "resolve";
+  | "resolve"
+  | "approve_media"
+  | "remove_media"
+  | "restore_media";
 
 export type CommunityProfile = {
   user_id: string;
@@ -729,8 +736,20 @@ export type CommunityConnection = {
 export type CommunityPost = {
   id: string;
   author_id: string;
+  created_by: string | null;
   body: string;
   is_official: boolean;
+  image_path: string | null;
+  image_alt_text: string | null;
+  image_mime_type: CommunityImageMimeType | null;
+  image_size_bytes: number | null;
+  media_status: CommunityMediaStatus;
+  link_url: string | null;
+  link_title: string | null;
+  link_site_name: string | null;
+  link_description: string | null;
+  link_image_url: string | null;
+  reshared_post_id: string | null;
   status: CommunityContentStatus;
   created_at: string;
   updated_at: string;
@@ -741,6 +760,7 @@ export type CommunityComment = {
   id: string;
   post_id: string;
   author_id: string;
+  created_by: string | null;
   body: string;
   status: CommunityContentStatus;
   created_at: string;
@@ -751,8 +771,16 @@ export type CommunityComment = {
 export type CommunityReaction = {
   post_id: string;
   user_id: string;
+  reaction_type: CommunityReactionType;
   created_at: string;
 };
+
+export type CommunityReactionType = "support" | "helpful" | "celebrate";
+export type CommunityMediaStatus = "none" | "pending" | "approved" | "removed";
+export type CommunityImageMimeType =
+  | "image/jpeg"
+  | "image/png"
+  | "image/webp";
 
 export type CommunityBlock = {
   blocker_id: string;
@@ -839,14 +867,27 @@ export type ProfileVerification = {
 };
 
 /** A post joined with its author card and viewer-relative state, for feeds. */
+export type CommunityPostAuthor = Pick<
+  CommunityProfile,
+  "user_id" | "display_name" | "headline" | "stage" | "avatar_url"
+>;
+
+export type CommunityEmbeddedPost = CommunityPost & {
+  author: CommunityPostAuthor | null;
+  image_url: string | null;
+};
+
 export type CommunityPostView = CommunityPost & {
-  author: Pick<
-    CommunityProfile,
-    "user_id" | "display_name" | "headline" | "stage" | "avatar_url"
-  > | null;
+  author: CommunityPostAuthor | null;
+  image_url: string | null;
+  reaction_counts: Record<CommunityReactionType, number>;
+  my_reaction: CommunityReactionType | null;
   like_count: number;
   comment_count: number;
-  liked_by_me: boolean;
+  pass_count: number;
+  passed_by_me: boolean;
+  can_manage: boolean;
+  reshared_post: CommunityEmbeddedPost | null;
 };
 
 export type CommunityCommentView = CommunityComment & {

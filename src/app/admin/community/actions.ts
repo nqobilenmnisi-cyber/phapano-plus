@@ -100,6 +100,30 @@ export async function setContentStatus(
   return { ok: true };
 }
 
+/** Approve or remove an image independently from its post caption. */
+export async function setPostMediaStatus(
+  postId: string,
+  status: "approved" | "removed"
+): Promise<AdminActionResult> {
+  const ctx = await requireAdmin();
+  if (ctx.demo) return { error: "Not available in demo mode." };
+  const { data: post, error } = await ctx.supabase
+    .from("community_posts")
+    .update({ media_status: status, updated_at: new Date().toISOString() })
+    .eq("id", postId)
+    .not("image_path", "is", null)
+    .select("created_by")
+    .maybeSingle();
+  if (error || !post) return { error: FAIL };
+  await logAction({
+    targetUserId: post.created_by,
+    action: status === "approved" ? "approve_media" : "remove_media",
+    notes: `Post image ${status}`,
+  });
+  revalidate();
+  return { ok: true };
+}
+
 /** Record an internal warning against the reported account. */
 export async function warnUser(
   reportId: string,
