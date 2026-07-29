@@ -26,6 +26,7 @@ import {
 } from "@/lib/community-posts";
 import type {
   CommunityEmbeddedPost,
+  CommunityPostAttachmentView,
   CommunityPostView,
   CommunityReactionType,
 } from "@/types/database";
@@ -76,6 +77,7 @@ function EmbeddedPost({ post }: { post: CommunityEmbeddedPost }) {
           className="max-h-[38rem] w-full object-contain bg-white"
         />
       )}
+      <PostAttachments attachments={post.attachments} caption={post.body} embedded />
     </div>
   );
 }
@@ -84,10 +86,12 @@ export function CommunityPostCard({
   post,
   viewerId,
   detail = false,
+  postingIdentities,
 }: {
   post: CommunityPostView;
   viewerId: string;
   detail?: boolean;
+  postingIdentities?: { id: string; name: string }[];
 }) {
   const mine = post.can_manage;
   const [editing, setEditing] = useState(false);
@@ -104,6 +108,14 @@ export function CommunityPostCard({
   const [passCount, setPassCount] = useState(post.pass_count);
   const [message, setMessage] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
+  const identities =
+    postingIdentities?.length
+      ? postingIdentities
+      : [{ id: viewerId, name: "Your profile" }];
+  const [actorId, setActorId] = useState(viewerId);
+  const [carryMenuOpen, setCarryMenuOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [quote, setQuote] = useState("");
   const [pending, startTransition] = useTransition();
 
   if (deleted) return null;
@@ -129,7 +141,7 @@ export function CommunityPostCard({
     });
     setReactionOpen(false);
     startTransition(async () => {
-      const result = await toggleReaction(post.id, next);
+      const result = await toggleReaction(post.id, next, actorId);
       if ("error" in result) setMessage(result.error);
     });
   }
@@ -150,19 +162,23 @@ export function CommunityPostCard({
     });
   }
 
-  function onPass() {
+  function onCarry(thoughts = "") {
     if (passed) {
-      setMessage("You have already passed this post on.");
+      setMessage("This identity has already carried the post forward.");
       return;
     }
     setPassed(true);
     setPassCount((count) => count + 1);
     startTransition(async () => {
-      const result = await passOnPost(post.id);
+      const result = await passOnPost(post.id, actorId, thoughts);
       if ("error" in result) {
         setPassed(false);
         setPassCount((count) => Math.max(0, count - 1));
         setMessage(result.error);
+      } else {
+        setQuote("");
+        setQuoteOpen(false);
+        setCarryMenuOpen(false);
       }
     });
   }
@@ -207,7 +223,7 @@ export function CommunityPostCard({
               </span>
             </div>
             <p className="text-xs text-charcoal-soft">
-              {post.reshared_post_id ? "Passed on · " : ""}
+              {post.reshared_post_id ? "Carried forward · " : ""}
               {post.author?.headline ? `${post.author.headline} · ` : ""}
               <time dateTime={post.created_at}>{timeAgo(post.created_at)}</time>
               {post.edited_at ? " · edited" : ""}
@@ -323,6 +339,7 @@ export function CommunityPostCard({
             className="-mx-4 mt-4 max-h-[42rem] w-[calc(100%+2rem)] bg-soft object-contain sm:-mx-5 sm:w-[calc(100%+2.5rem)]"
           />
         )}
+        <PostAttachments attachments={post.attachments} caption={post.body} />
         {mine && post.media_status === "pending" && (
           <p className="mt-3 rounded-card bg-blue-tint px-3 py-2 text-xs font-semibold text-blue-deep">
             Your image is private while it completes moderator review. The
@@ -395,6 +412,63 @@ export function CommunityPostCard({
           </div>
         )}
 
+        {identities.length > 1 && (
+          <label className="mt-4 flex items-center justify-end gap-2 text-xs font-semibold text-charcoal-soft">
+            Interacting as
+            <select
+              className="max-w-[12rem] rounded-chip border border-line bg-paper px-2 py-1.5 font-bold text-charcoal"
+              value={actorId}
+              onChange={(event) => {
+                setActorId(event.target.value);
+                setReaction(null);
+                setPassed(false);
+              }}
+              disabled={pending}
+            >
+              {identities.map((identity) => (
+                <option key={identity.id} value={identity.id}>
+                  {identity.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {quoteOpen && (
+          <div className="mt-3 rounded-card border border-line bg-soft p-3">
+            <label className="label" htmlFor={`carry-thoughts-${post.id}`}>
+              Add your thoughts
+            </label>
+            <textarea
+              id={`carry-thoughts-${post.id}`}
+              className="input mt-1 min-h-20"
+              value={quote}
+              maxLength={POST_MAX_LENGTH}
+              onChange={(event) => setQuote(event.target.value)}
+              placeholder="Why are you carrying this forward?"
+              disabled={pending}
+            />
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn-secondary !py-2 text-sm"
+                onClick={() => setQuoteOpen(false)}
+                disabled={pending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary !py-2 text-sm"
+                onClick={() => onCarry(quote)}
+                disabled={pending || !quote.trim()}
+              >
+                Carry forward
+              </button>
+            </div>
+          </div>
+        )}
+
         <footer className="mt-5 grid grid-cols-4 border-t border-line pt-2 text-xs sm:text-sm">
           <div className="relative">
             <button
@@ -462,20 +536,50 @@ export function CommunityPostCard({
             </Link>
           )}
 
-          <button
-            type="button"
-            onClick={onPass}
-            disabled={pending}
-            aria-pressed={passed}
-            className={`flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold transition ${
-              passed ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
-            }`}
-            aria-label={passCount ? `Pass on, ${passCount} passes` : "Pass on"}
-            title="Pass on"
-          >
-            <PassOnIcon className="h-5 w-5" />
-            {passCount > 0 && <span>{passCount}</span>}
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setCarryMenuOpen((open) => !open)}
+              disabled={pending}
+              aria-pressed={passed}
+              className={`flex min-h-11 w-full items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold transition ${
+                passed ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
+              }`}
+              aria-label={
+                passCount
+                  ? `Carry forward, ${passCount} carried forwards`
+                  : "Carry forward"
+              }
+              title="Carry forward"
+            >
+              <PassOnIcon className="h-5 w-5" />
+              {passCount > 0 && <span>{passCount}</span>}
+            </button>
+            {carryMenuOpen && (
+              <div className="absolute bottom-full right-0 z-20 mb-2 w-56 rounded-card border border-line bg-paper p-1 shadow-lg">
+                <button
+                  type="button"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-soft"
+                  onClick={() => onCarry()}
+                >
+                  Carry forward
+                  <span className="mt-0.5 block text-xs font-normal text-charcoal-soft">
+                    Share the original post as it is
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-soft"
+                  onClick={() => {
+                    setQuoteOpen(true);
+                    setCarryMenuOpen(false);
+                  }}
+                >
+                  Carry forward with thoughts
+                </button>
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => void sharePost()}
@@ -510,5 +614,68 @@ export function CommunityPostCard({
         )}
       </div>
     </article>
+  );
+}
+
+function PostAttachments({
+  attachments,
+  caption,
+  embedded = false,
+}: {
+  attachments: CommunityPostAttachmentView[];
+  caption: string;
+  embedded?: boolean;
+}) {
+  if (!attachments.length) return null;
+  const images = attachments.filter((attachment) => attachment.kind === "image");
+  const pdf = attachments.find((attachment) => attachment.kind === "pdf");
+  return (
+    <div
+      className={`mt-4 ${embedded ? "" : "-mx-4 sm:-mx-5"}`}
+      aria-label="Post attachments"
+    >
+      {images.length > 0 && (
+        <div
+          className={`grid gap-0.5 bg-line ${
+            images.length === 1 ? "grid-cols-1" : "grid-cols-2"
+          }`}
+        >
+          {images.map((attachment, index) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={attachment.id}
+              src={attachment.url}
+              alt={caption || `Image ${index + 1} attached to this post`}
+              className={`w-full bg-soft object-cover ${
+                images.length === 1
+                  ? "max-h-[42rem] object-contain"
+                  : images.length === 3 && index === 0
+                    ? "row-span-2 h-full min-h-80"
+                    : "h-52"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+      {pdf && (
+        <a
+          href={pdf.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 border-y border-line bg-soft p-4 transition hover:bg-blue-tint/40"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-paper text-xs font-extrabold text-blue-deep shadow-sm">
+            PDF
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-charcoal">Open PDF attachment</span>
+            <span className="text-xs text-charcoal-soft">
+              {(pdf.size_bytes / 1024 / 1024).toFixed(1)} MB · opens securely
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-blue-action">↗</span>
+        </a>
+      )}
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import { timeAgo } from "@/components/CommunityShared";
 
 export type CommunityMediaQueueRow = {
   id: string;
+  target: "post" | "attachment";
+  kind: "image" | "pdf";
   body: string;
   imageUrl: string;
   imageAltText: string | null;
@@ -23,10 +25,14 @@ export function CommunityMediaQueue({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function decide(postId: string, status: "approved" | "removed") {
+  function decide(
+    id: string,
+    target: "post" | "attachment",
+    status: "approved" | "removed"
+  ) {
     setMessage(null);
     startTransition(async () => {
-      const result = await setPostMediaStatus(postId, status);
+      const result = await setPostMediaStatus(id, status, target);
       if ("error" in result) setMessage(result.error);
       else router.refresh();
     });
@@ -49,12 +55,23 @@ export function CommunityMediaQueue({
         <ul className="mt-5 grid gap-4 sm:grid-cols-2">
           {rows.map((row) => (
             <li key={row.id} className="card overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={row.imageUrl}
-                alt={row.imageAltText ?? ""}
-                className="h-64 w-full bg-soft object-contain"
-              />
+              {row.kind === "image" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={row.imageUrl}
+                  alt={row.imageAltText ?? ""}
+                  className="h-64 w-full bg-soft object-contain"
+                />
+              ) : (
+                <a
+                  href={row.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="grid h-40 place-items-center bg-soft font-sora text-lg font-bold text-blue-deep"
+                >
+                  Open PDF ↗
+                </a>
+              )}
               <div className="p-4">
                 <p className="text-xs font-bold text-charcoal-soft">
                   {row.authorName} · {timeAgo(row.createdAt)}
@@ -66,16 +83,16 @@ export function CommunityMediaQueue({
                   <button
                     className="btn-primary flex-1 !py-2 text-sm"
                     disabled={pending}
-                    onClick={() => decide(row.id, "approved")}
+                    onClick={() => decide(row.id, row.target, "approved")}
                   >
-                    Approve image
+                    Approve {row.kind}
                   </button>
                   <button
                     className="btn-secondary flex-1 !py-2 text-sm"
                     disabled={pending}
-                    onClick={() => decide(row.id, "removed")}
+                    onClick={() => decide(row.id, row.target, "removed")}
                   >
-                    Remove image
+                    Remove {row.kind}
                   </button>
                 </div>
               </div>

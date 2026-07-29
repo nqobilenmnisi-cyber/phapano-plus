@@ -1,33 +1,73 @@
+"use client";
+
 import { NotificationBell } from "@/components/NotificationBell";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { MemberAvatar } from "@/components/CommunityShared";
+import {
+  ProfileDrawer,
+  type DrawerIdentity,
+} from "@/components/ProfileDrawer";
+import type { ProfileVerificationBadge } from "@/types/database";
 import Link from "next/link";
+import { useState } from "react";
 
 export function AppTopBar({
   unread,
+  personalIdentity,
+  managedPages = [],
+  verificationBadges = [],
   profileName,
   avatarUrl,
 }: {
   unread?: number;
+  personalIdentity?: DrawerIdentity;
+  managedPages?: DrawerIdentity[];
+  verificationBadges?: ProfileVerificationBadge[];
   profileName?: string | null;
   avatarUrl?: string | null;
 }) {
-  const name = profileName?.trim() || "Your profile";
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const identity =
+    personalIdentity ??
+    ({
+      id: "personal",
+      name: profileName?.trim() || "Your profile",
+      avatarUrl: avatarUrl ?? null,
+      headline: null,
+      institution: null,
+      href: "/app/profile?section=community",
+      manageHref: "/app/profile",
+    } satisfies DrawerIdentity);
   return (
-    <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/95 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-3 sm:gap-3 sm:px-6">
-        <Link
-          href="/app/profile"
-          aria-label="Open your profile"
-          title="Your profile"
+    <>
+      <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-3 py-3 sm:gap-3 sm:px-6">
+          <button
+          type="button"
+          aria-label="Open your profile menu"
+          aria-expanded={drawerOpen}
+          title="Your profile menu"
           className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue focus-visible:outline-offset-2"
+          onClick={() => setDrawerOpen(true)}
         >
-          <MemberAvatar name={name} avatarUrl={avatarUrl ?? null} size={40} />
-        </Link>
-        <GlobalSearch />
-        <NotificationBell unread={unread ?? 0} />
-      </div>
-    </header>
+            <MemberAvatar
+              name={identity.name}
+              avatarUrl={identity.avatarUrl}
+              size={40}
+            />
+          </button>
+          <GlobalSearch />
+          <NotificationBell unread={unread ?? 0} />
+        </div>
+      </header>
+      <ProfileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        personalIdentity={identity}
+        managedPages={managedPages}
+        verificationBadges={verificationBadges}
+      />
+    </>
   );
 }
 

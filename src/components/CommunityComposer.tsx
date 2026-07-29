@@ -16,7 +16,8 @@ import {
 import { POST_MAX_LENGTH } from "@/lib/community-constants";
 import {
   COMMUNITY_IMAGE_BUCKET,
-  COMMUNITY_IMAGE_MAX_BYTES,
+  COMMUNITY_MAX_IMAGES,
+  COMMUNITY_MEDIA_MAX_BYTES,
   COMMUNITY_IMAGE_MIME_TYPES,
   extractFirstHttpUrl,
   type LinkPreview,
@@ -30,11 +31,14 @@ type PostingIdentity = {
   official: boolean;
 };
 
-type UploadedImage = {
+type UploadedMedia = {
+  id: string;
   path: string;
   mimeType: string;
   size: number;
-  previewUrl: string;
+  previewUrl: string | null;
+  kind: "image" | "pdf";
+  name: string;
 };
 
 const DRAFT_KEY = "phapano:community-post-draft";
@@ -73,15 +77,15 @@ export function CommunityComposer({
   const [accepted, setAccepted] = useState(acceptedGuidelines);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [image, setImage] = useState<UploadedImage | null>(null);
-  const [altText, setAltText] = useState("");
+  const [media, setMedia] = useState<UploadedMedia[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
   const [includePreview, setIncludePreview] = useState(true);
   const [mentions, setMentions] = useState<MentionSelection[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
-  const uploadedPathRef = useRef<string | null>(null);
+  const uploadedPathsRef = useRef<string[]>([]);
   const publishedRef = useRef(false);
   const router = useRouter();
   const identities = [personalIdentity, ...managedPages];
@@ -115,20 +119,20 @@ export function CommunityComposer({
 
   useEffect(() => {
     function warnBeforeLeaving(event: BeforeUnloadEvent) {
-      if (!body.trim() && !image) return;
+      if (!body.trim() && media.length === 0) return;
       event.preventDefault();
     }
     window.addEventListener("beforeunload", warnBeforeLeaving);
     return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
-  }, [body, image]);
+  }, [body, media]);
 
   useEffect(
     () => () => {
-      const abandonedPath = uploadedPathRef.current;
-      if (!abandonedPath || publishedRef.current) return;
+      const abandonedPaths = uploadedPathsRef.current;
+      if (!abandonedPaths.length || publishedRef.current) return;
       void createClient().storage
         .from(COMMUNITY_IMAGE_BUCKET)
-        .remove([abandonedPath]);
+        .remove(abandonedPaths);
     },
     []
   );
@@ -154,55 +158,87 @@ export function CommunityComposer({
     };
   }, [body, includePreview]);
 
-  async function removeImage() {
-    if (image) {
+  async function removeMedia(id: string) {
+    const item = media.find((candidate) => candidate.id === id);
+    if (item) {
       const supabase = createClient();
-      await supabase.storage.from(COMMUNITY_IMAGE_BUCKET).remove([image.path]);
-      URL.revokeObjectURL(image.previewUrl);
+      await supabase.storage.from(COMMUNITY_IMAGE_BUCKET).remove([item.path]);
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
     }
-    uploadedPathRef.current = null;
-    setImage(null);
-    setAltText("");
-    if (fileRef.current) fileRef.current.value = "";
+    uploadedPathsRef.current = uploadedPathsRef.current.filter(
+      (path) => path !== item?.path
+    );
+    setMedia((current) => current.filter((candidate) => candidate.id !== id));
   }
 
   async function onPick(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
     setError(null);
-    if (!COMMUNITY_IMAGE_MIME_TYPES.includes(file.type as never)) {
-      setError("Choose a JPEG, PNG or WebP image.");
+    const hasPdf = files.some((file) => file.type === "application/pdf");
+    const hasImage = files.some((file) =>
+      COMMUNITY_IMAGE_MIME_TYPES.includes(file.type as never)
+    );
+    if (
+      files.some(
+        (file) =>
+          file.type !== "application/pdf" &&
+          !COMMUNITY_IMAGE_MIME_TYPES.includes(file.type as never)
+      )
+    ) {
+      setError("Choose JPEG, PNG or WebP images, or one PDF.");
       event.target.value = "";
       return;
     }
-    if (file.size > COMMUNITY_IMAGE_MAX_BYTES) {
-      setError("Images can be up to 5 MB.");
+    if (hasPdf && (hasImage || files.length > 1 || media.length > 0)) {
+      setError("A PDF must be the only attachment on a post.");
+      event.target.value = "";
+      return;
+    }
+    if (
+      !hasPdf &&
+      (media.some((item) => item.kind === "pdf") ||
+        media.length + files.length > COMMUNITY_MAX_IMAGES)
+    ) {
+      setError(`Add up to ${COMMUNITY_MAX_IMAGES} images per post.`);
       event.target.value = "";
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
-      if (image) await removeImage();
-      const prepared = await removeMetadata(file);
-      if (prepared.size > COMMUNITY_IMAGE_MAX_BYTES)
-        throw new Error("The prepared image is larger than 5 MB.");
-      const path = `${viewerId}/pending/${crypto.randomUUID()}.webp`;
       const supabase = createClient();
-      const { error: uploadError } = await supabase.storage
-        .from(COMMUNITY_IMAGE_BUCKET)
-        .upload(path, prepared, {
-          contentType: "image/webp",
-          cacheControl: "3600",
-          upsert: false,
+      const uploaded: UploadedMedia[] = [];
+      for (const [index, file] of files.entries()) {
+        const isPdf = file.type === "application/pdf";
+        const prepared = isPdf ? file : await removeMetadata(file);
+        if (prepared.size > COMMUNITY_MEDIA_MAX_BYTES)
+          throw new Error(`${file.name} is larger than 20 MB after preparation.`);
+        const mimeType = isPdf ? "application/pdf" : "image/webp";
+        const extension = isPdf ? "pdf" : "webp";
+        const path = `${viewerId}/pending/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from(COMMUNITY_IMAGE_BUCKET)
+          .upload(path, prepared, {
+            contentType: mimeType,
+            cacheControl: "3600",
+            upsert: false,
+          });
+        if (uploadError)
+          throw new Error(`${file.name} could not be uploaded. Please retry.`);
+        uploadedPathsRef.current.push(path);
+        uploaded.push({
+          id: crypto.randomUUID(),
+          path,
+          mimeType,
+          size: prepared.size,
+          previewUrl: isPdf ? null : URL.createObjectURL(prepared),
+          kind: isPdf ? "pdf" : "image",
+          name: file.name,
         });
-      if (uploadError) throw new Error("The image could not be uploaded.");
-      setImage({
-        path,
-        mimeType: "image/webp",
-        size: prepared.size,
-        previewUrl: URL.createObjectURL(prepared),
-      });
-      uploadedPathRef.current = path;
+        setUploadProgress(Math.round(((index + 1) / files.length) * 100));
+      }
+      setMedia((current) => [...current, ...uploaded]);
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -211,6 +247,8 @@ export function CommunityComposer({
       );
     } finally {
       setUploading(false);
+      setUploadProgress(0);
+      event.target.value = "";
     }
   }
 
@@ -236,23 +274,30 @@ export function CommunityComposer({
       formData.set("author_id", authorId);
       formData.set("include_link_preview", String(includePreview));
       formData.set("mentions", JSON.stringify(mentions));
-      if (image) {
-        formData.set("image_path", image.path);
-        formData.set("image_mime_type", image.mimeType);
-        formData.set("image_size_bytes", String(image.size));
-        formData.set("image_alt_text", altText);
-      }
+      formData.set(
+        "attachments",
+        JSON.stringify(
+          media.map((item, position) => ({
+            path: item.path,
+            mimeType: item.mimeType,
+            size: item.size,
+            kind: item.kind,
+            position,
+          }))
+        )
+      );
       const result = await createPost(formData);
       if ("error" in result) {
         setError(result.error);
       } else {
         publishedRef.current = true;
-        uploadedPathRef.current = null;
-        if (image) URL.revokeObjectURL(image.previewUrl);
+        uploadedPathsRef.current = [];
+        media.forEach((item) => {
+          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        });
         window.localStorage.removeItem(DRAFT_KEY);
         setBody("");
-        setImage(null);
-        setAltText("");
+        setMedia([]);
         setLinkPreview(null);
         setIncludePreview(true);
         setMentions([]);
@@ -317,7 +362,8 @@ export function CommunityComposer({
           <input
             ref={fileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            multiple
             className="hidden"
             onChange={onPick}
           />
@@ -327,46 +373,63 @@ export function CommunityComposer({
             onClick={() => fileRef.current?.click()}
             disabled={pending || uploading}
           >
-            {uploading ? "Preparing image…" : image ? "Replace image" : "Add image"}
+            {uploading
+              ? `Uploading ${uploadProgress}%`
+              : media.length
+                ? "Add more"
+                : "Add images or PDF"}
           </button>
           <span className="ml-auto text-xs text-charcoal-soft">
             {body.length}/{POST_MAX_LENGTH}
           </span>
         </div>
 
-        {image && (
-          <div className="mt-3 overflow-hidden rounded-card border border-line bg-soft">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={image.previewUrl}
-              alt=""
-              className="max-h-[32rem] w-full object-contain"
-            />
-            <div className="space-y-2 p-3">
-              <label className="label" htmlFor="image-alt">
-                Image description (recommended)
-              </label>
-              <input
-                id="image-alt"
-                className="input"
-                value={altText}
-                maxLength={300}
-                onChange={(event) => setAltText(event.target.value)}
-                placeholder="Describe the poster or image for screen-reader users"
-              />
-              <div className="flex items-center justify-between text-xs text-charcoal-soft">
-                <span>Ready for safety review when published</span>
+        {media.length > 0 && (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {media.map((item) => (
+              <div
+                key={item.id}
+                className="relative overflow-hidden rounded-card border border-line bg-soft"
+              >
+                {item.kind === "image" && item.previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.previewUrl}
+                    alt=""
+                    className="h-52 w-full object-contain"
+                  />
+                ) : (
+                  <div className="flex h-32 items-center gap-3 p-4">
+                    <span className="grid h-12 w-12 place-items-center rounded-card bg-white text-xs font-extrabold text-blue-deep">
+                      PDF
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold">
+                        {item.name}
+                      </span>
+                      <span className="text-xs text-charcoal-soft">
+                        {(item.size / 1024 / 1024).toFixed(1)} MB
+                      </span>
+                    </span>
+                  </div>
+                )}
                 <button
                   type="button"
-                  className="font-bold text-bronze-deep"
-                  onClick={removeImage}
+                  className="absolute right-2 top-2 rounded-chip bg-paper/95 px-3 py-1.5 text-xs font-bold text-bronze-deep shadow-sm"
+                  onClick={() => void removeMedia(item.id)}
                   disabled={pending}
                 >
                   Remove
                 </button>
               </div>
-            </div>
+            ))}
           </div>
+        )}
+        {media.length > 0 && (
+          <p className="mt-2 text-xs text-charcoal-soft">
+            Your caption is used as the accessible description. Media completes
+            a safety review after publishing.
+          </p>
         )}
 
         {(previewLoading || linkPreview) && includePreview && (
@@ -446,7 +509,7 @@ export function CommunityComposer({
         <button
           className="btn-primary mt-3 w-full sm:w-auto"
           onClick={publish}
-          disabled={pending || uploading || !body.trim()}
+          disabled={pending || uploading || (!body.trim() && media.length === 0)}
           aria-busy={pending}
         >
           {pending ? "Publishing…" : "Post"}

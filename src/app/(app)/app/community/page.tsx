@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import {
   getFeed,
+  getManagedOrganisationPages,
   getMyCommunityProfile,
   getMyModerationState,
   getMyUserId,
@@ -40,10 +41,15 @@ export default async function CommunityPage({
     redirect("/app/profile?section=community");
   }
 
-  const [{ posts, hasMore }, moderation] = await Promise.all([
+  const [{ posts, hasMore }, moderation, managedPages] = await Promise.all([
     getFeed({ mode, before: query.before }),
     getMyModerationState(),
+    getManagedOrganisationPages(),
   ]);
+  const postingIdentities = [
+    { id: uid ?? "", name: communityProfile?.display_name ?? "Your profile" },
+    ...managedPages.map((page) => ({ id: page.id, name: page.name })),
+  ];
 
   const olderCursor =
     hasMore && posts.length ? posts[posts.length - 1].created_at : null;
@@ -95,7 +101,12 @@ export default async function CommunityPage({
           </div>
         )}
         {posts.map((p) => (
-          <CommunityPostCard key={p.id} post={p} viewerId={uid ?? ""} />
+          <CommunityPostCard
+            key={p.id}
+            post={p}
+            viewerId={uid ?? ""}
+            postingIdentities={postingIdentities}
+          />
         ))}
       </div>
 

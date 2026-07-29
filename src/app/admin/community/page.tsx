@@ -29,6 +29,8 @@ export default async function AdminCommunityPage({
   let rows: ModerationRow[] = [];
   let mediaRows: {
     id: string;
+    target: "post" | "attachment";
+    kind: "image" | "pdf";
     body: string;
     imageUrl: string;
     imageAltText: string | null;
@@ -68,6 +70,8 @@ export default async function AdminCommunityPage({
       const author = Array.isArray(post.author) ? post.author[0] : post.author;
       return [{
         id: post.id,
+        target: "post" as const,
+        kind: "image" as const,
         body: post.body,
         imageUrl,
         imageAltText: post.image_alt_text,
@@ -75,6 +79,67 @@ export default async function AdminCommunityPage({
         createdAt: post.created_at,
       }];
     });
+
+    const { data: pendingAttachments } = await ctx.supabase
+      .from("community_post_attachments")
+      .select("id, post_id, storage_path, kind, created_at, post:community_posts(body, author_id)")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(50);
+    const attachmentPaths = (pendingAttachments ?? []).map(
+      (attachment) => attachment.storage_path
+    );
+    const { data: signedAttachments } = attachmentPaths.length
+      ? await ctx.supabase.storage
+          .from(COMMUNITY_IMAGE_BUCKET)
+          .createSignedUrls(attachmentPaths, 30 * 60)
+      : { data: [] };
+    const attachmentUrlByPath = new Map(
+      (signedAttachments ?? [])
+        .filter((item) => item.path && item.signedUrl)
+        .map((item) => [item.path, item.signedUrl])
+    );
+    const attachmentAuthorIds = (pendingAttachments ?? [])
+      .map((attachment) => {
+        const post = Array.isArray(attachment.post)
+          ? attachment.post[0]
+          : attachment.post;
+        return post?.author_id;
+      })
+      .filter((id): id is string => Boolean(id));
+    const { data: attachmentAuthors } = attachmentAuthorIds.length
+      ? await ctx.supabase
+          .from("community_profiles")
+          .select("user_id, display_name")
+          .in("user_id", attachmentAuthorIds)
+      : { data: [] };
+    const attachmentAuthorNames = new Map(
+      (attachmentAuthors ?? []).map((author) => [
+        author.user_id,
+        author.display_name,
+      ])
+    );
+    mediaRows.push(
+      ...(pendingAttachments ?? []).flatMap((attachment) => {
+        const imageUrl = attachmentUrlByPath.get(attachment.storage_path);
+        if (!imageUrl) return [];
+        const post = Array.isArray(attachment.post)
+          ? attachment.post[0]
+          : attachment.post;
+        return [{
+          id: attachment.id,
+          target: "attachment" as const,
+          kind: attachment.kind as "image" | "pdf",
+          body: post?.body ?? "",
+          imageUrl,
+          imageAltText: post?.body || null,
+          authorName:
+            attachmentAuthorNames.get(post?.author_id ?? "") ??
+            "Phapano+ member or page",
+          createdAt: attachment.created_at,
+        }];
+      })
+    );
 
     const { data: reports } = await ctx.supabase
       .from("community_reports")
