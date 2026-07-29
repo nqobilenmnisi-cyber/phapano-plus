@@ -5,12 +5,15 @@ import type {
   CommunityConnection,
   CommunityConnectionItem,
   CommunityConnectionState,
+  CommunityEmbeddedPost,
   CommunityMemberCard,
   CommunityPostView,
   CommunityProfile,
   OrganisationPage,
   ProfileVerificationBadge,
+  CommunityReactionType,
 } from "@/types/database";
+import { COMMUNITY_IMAGE_BUCKET } from "@/lib/community-posts";
 import {
   canRequestConnection,
   connectionStateFor,
@@ -111,11 +114,10 @@ async function getMyBlockedIds(uid: string): Promise<string[]> {
 /* ─── Feeds ──────────────────────────────────────────────────────────── */
 
 const POST_SELECT =
-  "*, author:community_profiles(user_id, display_name, headline, stage, avatar_url), community_reactions(count), community_comments(count)";
+  "*, author:community_profiles(user_id, display_name, headline, stage, avatar_url), community_comments(count)";
 
 type RawPost = Record<string, unknown> & {
   author: CommunityPostView["author"];
-  community_reactions: { count: number }[] | null;
   community_comments: { count: number }[] | null;
 };
 
@@ -125,21 +127,129 @@ async function attachViewerState(
 ): Promise<CommunityPostView[]> {
   const supabase = await createClient();
   const ids = rows.map((r) => r.id as string);
-  let liked = new Set<string>();
+  const reactionCounts = new Map<
+    string,
+    Record<CommunityReactionType, number>
+  >();
+  const myReactions = new Map<string, CommunityReactionType>();
+  const passCounts = new Map<string, number>();
+  const passedByMe = new Set<string>();
+  const managedIds = new Set<string>([uid]);
+  const imagePaths = rows
+    .filter((row) => row.media_status === "approved" && row.image_path)
+    .map((row) => row.image_path as string);
+  const signedUrls = new Map<string, string>();
+  const resharedIds = Array.from(
+    new Set(
+      rows
+        .map((row) => row.reshared_post_id as string | null)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
   if (ids.length) {
-    const { data } = await supabase
-      .from("community_reactions")
-      .select("post_id")
-      .eq("user_id", uid)
-      .in("post_id", ids);
-    liked = new Set((data ?? []).map((r) => r.post_id as string));
+    const [{ data: reactions }, { data: passes }, { data: admins }] =
+      await Promise.all([
+        supabase
+          .from("community_reactions")
+          .select("post_id, user_id, reaction_type")
+          .in("post_id", ids),
+        supabase
+          .from("community_posts")
+          .select("reshared_post_id, created_by")
+          .in("reshared_post_id", ids)
+          .eq("status", "published"),
+        supabase
+          .from("organisation_page_admins")
+          .select("page_id")
+          .eq("user_id", uid),
+      ]);
+    for (const row of reactions ?? []) {
+      const postId = row.post_id as string;
+      const type = row.reaction_type as CommunityReactionType;
+      const counts = reactionCounts.get(postId) ?? {
+        support: 0,
+        helpful: 0,
+        celebrate: 0,
+      };
+      counts[type] += 1;
+      reactionCounts.set(postId, counts);
+      if (row.user_id === uid) myReactions.set(postId, type);
+    }
+    for (const row of passes ?? []) {
+      const originalId = row.reshared_post_id as string;
+      passCounts.set(originalId, (passCounts.get(originalId) ?? 0) + 1);
+      if (row.created_by === uid) passedByMe.add(originalId);
+    }
+    for (const row of admins ?? []) managedIds.add(row.page_id as string);
   }
+
+  if (imagePaths.length) {
+    const { data } = await supabase.storage
+      .from(COMMUNITY_IMAGE_BUCKET)
+      .createSignedUrls(imagePaths, 60 * 60);
+    for (const row of data ?? []) {
+      if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
+    }
+  }
+
+  const embedded = new Map<string, CommunityEmbeddedPost>();
+  if (resharedIds.length) {
+    const { data } = await supabase
+      .from("community_posts")
+      .select(POST_SELECT)
+      .in("id", resharedIds)
+      .eq("status", "published");
+    const originals = (data ?? []) as unknown as RawPost[];
+    const originalPaths = originals
+      .filter((row) => row.media_status === "approved" && row.image_path)
+      .map((row) => row.image_path as string);
+    if (originalPaths.length) {
+      const { data: originalUrls } = await supabase.storage
+        .from(COMMUNITY_IMAGE_BUCKET)
+        .createSignedUrls(originalPaths, 60 * 60);
+      for (const row of originalUrls ?? []) {
+        if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
+      }
+    }
+    for (const row of originals) {
+      const post = row as unknown as CommunityEmbeddedPost;
+      embedded.set(post.id, {
+        ...post,
+        author: row.author ?? null,
+        image_url:
+          post.image_path && post.media_status === "approved"
+            ? signedUrls.get(post.image_path) ?? null
+            : null,
+      });
+    }
+  }
+
   return rows.map((r) => ({
     ...(r as unknown as CommunityPostView),
     author: r.author ?? null,
-    like_count: r.community_reactions?.[0]?.count ?? 0,
+    image_url:
+      r.image_path && r.media_status === "approved"
+        ? signedUrls.get(r.image_path as string) ?? null
+        : null,
+    reaction_counts: reactionCounts.get(r.id as string) ?? {
+      support: 0,
+      helpful: 0,
+      celebrate: 0,
+    },
+    my_reaction: myReactions.get(r.id as string) ?? null,
+    like_count: Object.values(reactionCounts.get(r.id as string) ?? {}).reduce(
+      (sum, value) => sum + value,
+      0
+    ),
     comment_count: r.community_comments?.[0]?.count ?? 0,
-    liked_by_me: liked.has(r.id as string),
+    pass_count: passCounts.get(r.id as string) ?? 0,
+    passed_by_me: passedByMe.has(r.id as string),
+    can_manage:
+      r.created_by === uid || managedIds.has(r.author_id as string),
+    reshared_post: r.reshared_post_id
+      ? embedded.get(r.reshared_post_id as string) ?? null
+      : null,
   }));
 }
 

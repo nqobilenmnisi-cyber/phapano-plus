@@ -1,16 +1,84 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, useOptimistic } from "react";
+import { useState, useTransition } from "react";
 import {
   deletePost,
+  passOnPost,
   toggleReaction,
   updatePost,
 } from "@/app/(app)/app/community/actions";
 import { MemberAvatar, timeAgo } from "@/components/CommunityShared";
 import { ReportDialog } from "@/components/ReportDialog";
 import { POST_MAX_LENGTH } from "@/lib/community-constants";
-import type { CommunityPostView } from "@/types/database";
+import {
+  COMMUNITY_REACTIONS,
+  splitPostText,
+} from "@/lib/community-posts";
+import type {
+  CommunityEmbeddedPost,
+  CommunityPostView,
+  CommunityReactionType,
+} from "@/types/database";
+
+function PostText({ body }: { body: string }) {
+  return (
+    <>
+      {splitPostText(body).map((part, index) =>
+        part.url ? (
+          <a
+            key={`${part.text}-${index}`}
+            href={part.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-blue-action underline decoration-blue-action/30 underline-offset-2"
+          >
+            {part.text}
+          </a>
+        ) : (
+          <span key={`${part.text}-${index}`}>{part.text}</span>
+        )
+      )}
+    </>
+  );
+}
+
+function EmbeddedPost({ post }: { post: CommunityEmbeddedPost }) {
+  const name = post.author?.display_name ?? "Phapano+ member";
+  return (
+    <div className="mt-3 overflow-hidden rounded-card border border-line bg-soft/50">
+      <div className="flex items-center gap-2.5 p-3">
+        <MemberAvatar
+          name={name}
+          avatarUrl={post.author?.avatar_url ?? null}
+          size={30}
+        />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold text-charcoal">{name}</p>
+          <p className="text-xs text-charcoal-soft">{timeAgo(post.created_at)}</p>
+        </div>
+        {post.is_official && (
+          <span className="ml-auto rounded-chip bg-blue-action/10 px-2 py-0.5 text-[0.65rem] font-bold text-blue-action">
+            Official page
+          </span>
+        )}
+      </div>
+      {post.body && (
+        <p className="whitespace-pre-wrap break-words px-3 pb-3 text-sm leading-relaxed text-charcoal">
+          <PostText body={post.body} />
+        </p>
+      )}
+      {post.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={post.image_url}
+          alt={post.image_alt_text ?? ""}
+          className="max-h-[38rem] w-full object-contain bg-white"
+        />
+      )}
+    </div>
+  );
+}
 
 export function CommunityPostCard({
   post,
@@ -21,39 +89,55 @@ export function CommunityPostCard({
   viewerId: string;
   detail?: boolean;
 }) {
-  const mine = post.author_id === viewerId;
+  const mine = post.can_manage;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(post.body);
   const [reporting, setReporting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reactionOpen, setReactionOpen] = useState(false);
+  const [reaction, setReaction] = useState<CommunityReactionType | null>(
+    post.my_reaction
+  );
+  const [reactionCounts, setReactionCounts] = useState(post.reaction_counts);
+  const [passed, setPassed] = useState(post.passed_by_me);
+  const [passCount, setPassCount] = useState(post.pass_count);
+  const [message, setMessage] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [liked, setLikedOptimistic] = useOptimistic(
-    { on: post.liked_by_me, count: post.like_count },
-    (_state, next: { on: boolean; count: number }) => next
-  );
 
   if (deleted) return null;
 
   const name = post.author?.display_name ?? "Phapano+ member";
+  const totalReactions = Object.values(reactionCounts).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+  const activeReaction = COMMUNITY_REACTIONS.find(
+    (option) => option.value === reaction
+  );
 
-  function onLike() {
-    const next = {
-      on: !liked.on,
-      count: liked.count + (liked.on ? -1 : 1),
-    };
+  function onReact(nextType: CommunityReactionType) {
+    const next = reaction === nextType ? null : nextType;
+    const previous = reaction;
+    setReaction(next);
+    setReactionCounts((counts) => {
+      const updated = { ...counts };
+      if (previous) updated[previous] = Math.max(0, updated[previous] - 1);
+      if (next) updated[next] += 1;
+      return updated;
+    });
+    setReactionOpen(false);
     startTransition(async () => {
-      setLikedOptimistic(next);
-      const result = await toggleReaction(post.id, next.on);
-      if ("error" in result) setError(result.error);
+      const result = await toggleReaction(post.id, next);
+      if ("error" in result) setMessage(result.error);
     });
   }
 
   function saveEdit() {
     startTransition(async () => {
       const result = await updatePost(post.id, draft);
-      if ("error" in result) setError(result.error);
+      if ("error" in result) setMessage(result.error);
       else setEditing(false);
     });
   }
@@ -61,187 +145,348 @@ export function CommunityPostCard({
   function onDelete() {
     startTransition(async () => {
       const result = await deletePost(post.id);
-      if ("error" in result) setError(result.error);
+      if ("error" in result) setMessage(result.error);
       else setDeleted(true);
     });
   }
 
+  function onPass() {
+    if (passed) {
+      setMessage("You have already passed this post on.");
+      return;
+    }
+    setPassed(true);
+    setPassCount((count) => count + 1);
+    startTransition(async () => {
+      const result = await passOnPost(post.id);
+      if ("error" in result) {
+        setPassed(false);
+        setPassCount((count) => Math.max(0, count - 1));
+        setMessage(result.error);
+      }
+    });
+  }
+
+  async function sharePost() {
+    const url = `${window.location.origin}/app/community/post/${post.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${name} on Phapano+`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setMessage("Post link copied.");
+      }
+    } catch {
+      // Closing the native share sheet is not an error for the user.
+    }
+  }
+
   return (
-    <article className="card overflow-hidden border-line/90">
+    <article className="card overflow-visible border-line/90">
       {post.is_official && (
-        <div className="h-1 bg-gradient-to-r from-blue-action to-blue" />
+        <div className="h-1 rounded-t-card bg-gradient-to-r from-blue-action to-blue" />
       )}
       <div className="p-5">
-      <header className="flex items-start gap-3">
-        <Link
-          href={`/app/community/member/${post.author_id}`}
-          aria-label={`View ${name}'s profile`}
-        >
-          <MemberAvatar name={name} avatarUrl={post.author?.avatar_url ?? null} />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2">
-            <Link
-              href={`/app/community/member/${post.author_id}`}
-              className="max-w-full truncate font-semibold text-charcoal hover:underline"
+        <header className="flex items-start gap-3">
+          <Link
+            href={`/app/community/member/${post.author_id}`}
+            aria-label={`View ${name}'s profile`}
+          >
+            <MemberAvatar name={name} avatarUrl={post.author?.avatar_url ?? null} />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2">
+              <Link
+                href={`/app/community/member/${post.author_id}`}
+                className="max-w-full truncate font-semibold text-charcoal hover:underline"
+              >
+                {name}
+              </Link>
+              {post.is_official && (
+                <span className="rounded-chip bg-blue-action/10 px-2 py-0.5 text-[0.65rem] font-bold text-blue-action">
+                  Official page
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-charcoal-soft">
+              {post.reshared_post_id ? "Passed on · " : ""}
+              {post.author?.headline ? `${post.author.headline} · ` : ""}
+              <time dateTime={post.created_at}>{timeAgo(post.created_at)}</time>
+              {post.edited_at ? " · edited" : ""}
+            </p>
+          </div>
+
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Post options"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+              className="grid h-9 w-9 place-items-center rounded-full text-lg font-bold text-charcoal-soft hover:bg-soft hover:text-charcoal"
             >
-              {name}
-            </Link>
-            {post.is_official && (
-              <span className="rounded-chip bg-blue-action/10 px-2 py-0.5 text-[0.65rem] font-bold text-blue-action">
-                Official page
-              </span>
+              ···
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 z-20 mt-1 w-40 rounded-card border border-line bg-paper p-1 shadow-lg">
+                <button
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-soft"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    void sharePost();
+                  }}
+                >
+                  Copy or share link
+                </button>
+                {mine ? (
+                  <>
+                    <button
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-soft"
+                      onClick={() => {
+                        setEditing(true);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      Edit post
+                    </button>
+                    <button
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-bronze-deep hover:bg-soft"
+                      onClick={() => {
+                        setConfirmingDelete(true);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      Delete post
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-soft"
+                    onClick={() => {
+                      setReporting(true);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Report post
+                  </button>
+                )}
+              </div>
             )}
           </div>
-          <p className="text-xs text-charcoal-soft">
-            {post.author?.headline ? `${post.author.headline} · ` : ""}
-            <time dateTime={post.created_at}>{timeAgo(post.created_at)}</time>
-            {post.edited_at ? " · edited" : ""}
-          </p>
-        </div>
-      </header>
+        </header>
 
-      {editing ? (
-        <div className="mt-3">
-          <label className="sr-only" htmlFor={`edit-${post.id}`}>
-            Edit post
-          </label>
-          <textarea
-            id={`edit-${post.id}`}
-            className="input min-h-24"
-            value={draft}
-            maxLength={POST_MAX_LENGTH}
-            onChange={(e) => setDraft(e.target.value)}
-            disabled={pending}
-          />
-          <div className="mt-2 flex gap-2">
-            <button
-              className="btn-secondary"
+        {editing ? (
+          <div className="mt-3">
+            <label className="sr-only" htmlFor={`edit-${post.id}`}>
+              Edit post
+            </label>
+            <textarea
+              id={`edit-${post.id}`}
+              className="input min-h-24"
+              value={draft}
+              maxLength={POST_MAX_LENGTH}
+              onChange={(event) => setDraft(event.target.value)}
               disabled={pending}
-              onClick={() => {
-                setEditing(false);
-                setDraft(post.body);
-              }}
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                className="btn-secondary"
+                disabled={pending}
+                onClick={() => {
+                  setEditing(false);
+                  setDraft(post.body);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                disabled={pending || !draft.trim()}
+                onClick={saveEdit}
+              >
+                {pending ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          post.body && (
+            <p className="mt-3 whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-charcoal">
+              <PostText body={post.body} />
+            </p>
+          )
+        )}
+
+        {post.reshared_post && <EmbeddedPost post={post.reshared_post} />}
+
+        {post.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={post.image_url}
+            alt={post.image_alt_text ?? ""}
+            className="-mx-5 mt-4 max-h-[42rem] w-[calc(100%+2.5rem)] bg-soft object-contain"
+          />
+        )}
+        {mine && post.media_status === "pending" && (
+          <p className="mt-3 rounded-card bg-blue-tint px-3 py-2 text-xs font-semibold text-blue-deep">
+            Your image is private while it completes moderator review. The
+            caption is already published.
+          </p>
+        )}
+        {mine && post.media_status === "removed" && (
+          <p className="mt-3 rounded-card bg-bronze-soft/40 px-3 py-2 text-xs font-semibold text-bronze-deep">
+            The image was removed by moderation. Your caption remains visible.
+          </p>
+        )}
+
+        {post.link_url && (
+          <a
+            href={post.link_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex overflow-hidden rounded-card border border-line bg-soft/50 transition hover:border-blue/30"
+          >
+            {post.link_image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={post.link_image_url}
+                alt=""
+                className="h-24 w-28 shrink-0 object-cover"
+              />
+            )}
+            <span className="min-w-0 p-3">
+              <span className="block text-[0.65rem] font-bold uppercase tracking-wide text-charcoal-soft">
+                {post.link_site_name ?? new URL(post.link_url).hostname} ↗
+              </span>
+              <span className="mt-1 line-clamp-2 block text-sm font-bold text-charcoal">
+                {post.link_title ?? post.link_url}
+              </span>
+              {post.link_description && (
+                <span className="mt-1 line-clamp-2 block text-xs text-charcoal-soft">
+                  {post.link_description}
+                </span>
+              )}
+            </span>
+          </a>
+        )}
+
+        {message && (
+          <p
+            aria-live="polite"
+            className="mt-3 rounded-chip border border-bronze-soft bg-bronze-soft/40 px-4 py-2.5 text-sm text-bronze-deep"
+          >
+            {message}
+          </p>
+        )}
+
+        {confirmingDelete && (
+          <div className="mt-3 flex items-center justify-end gap-3 rounded-card bg-soft p-3 text-sm">
+            <span className="text-charcoal-soft">Delete this post?</span>
+            <button
+              className="font-bold text-bronze-deep"
+              onClick={onDelete}
+              disabled={pending}
             >
-              Cancel
+              {pending ? "Deleting…" : "Yes, delete"}
             </button>
             <button
-              className="btn-primary"
-              disabled={pending || !draft.trim()}
-              onClick={saveEdit}
+              className="font-semibold text-charcoal-soft"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={pending}
             >
-              {pending ? "Saving…" : "Save"}
+              Keep
             </button>
           </div>
-        </div>
-      ) : (
-        <p className="mt-3 whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-charcoal">
-          {post.body}
-        </p>
-      )}
-
-      {error && (
-        <p
-          aria-live="polite"
-          className="mt-3 rounded-chip border border-bronze-soft bg-bronze-soft/40 px-4 py-2.5 text-sm text-bronze-deep"
-        >
-          {error}
-        </p>
-      )}
-
-      <footer className="mt-5 flex items-center gap-1 border-t border-line pt-3 text-sm">
-        <button
-          type="button"
-          onClick={onLike}
-          aria-pressed={liked.on}
-          aria-label={liked.on ? "Remove your support" : "Support this post"}
-          className={`flex items-center gap-1.5 rounded-chip px-3 py-1.5 font-semibold transition ${
-            liked.on
-              ? "text-blue-action"
-              : "text-charcoal-soft hover:text-charcoal"
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill={liked.on ? "currentColor" : "none"} className="h-[18px] w-[18px]">
-            <path
-              d="M12 20s-7-4.3-9-8.5C1.6 8.4 3.6 5 7 5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.4 0 5.4 3.4 4 6.5-2 4.2-9 8.5-9 8.5Z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {liked.count > 0 ? liked.count : "Support"}
-        </button>
-
-        {detail ? (
-          <span className="px-3 py-1.5 font-semibold text-charcoal-soft">
-            {post.comment_count} {post.comment_count === 1 ? "comment" : "comments"}
-          </span>
-        ) : (
-          <Link
-            href={`/app/community/post/${post.id}`}
-            className="rounded-chip px-3 py-1.5 font-semibold text-charcoal-soft transition hover:text-charcoal"
-          >
-            {post.comment_count > 0
-              ? `${post.comment_count} ${post.comment_count === 1 ? "comment" : "comments"}`
-              : "Comment"}
-          </Link>
         )}
 
-        <span className="flex-1" />
+        <footer className="mt-5 grid grid-cols-4 border-t border-line pt-3 text-xs sm:text-sm">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setReactionOpen((open) => !open)}
+              aria-pressed={Boolean(reaction)}
+              className={`flex w-full items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold transition ${
+                reaction
+                  ? "text-blue-action"
+                  : "text-charcoal-soft hover:text-charcoal"
+              }`}
+            >
+              <span aria-hidden="true">{activeReaction?.symbol ?? "♡"}</span>
+              <span>{totalReactions || activeReaction?.label || "React"}</span>
+            </button>
+            {reactionOpen && (
+              <div className="absolute bottom-full left-0 z-20 mb-2 flex rounded-full border border-line bg-paper p-1 shadow-lg">
+                {COMMUNITY_REACTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    title={option.label}
+                    aria-label={option.label}
+                    aria-pressed={reaction === option.value}
+                    className={`grid h-10 w-10 place-items-center rounded-full text-lg hover:bg-soft ${
+                      reaction === option.value ? "bg-blue-tint" : ""
+                    }`}
+                    onClick={() => onReact(option.value)}
+                  >
+                    {option.symbol}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {mine ? (
-          confirmingDelete ? (
-            <span className="flex items-center gap-2 text-xs">
-              <span className="text-charcoal-soft">Delete post?</span>
-              <button
-                className="font-bold text-bronze-deep"
-                onClick={onDelete}
-                disabled={pending}
-              >
-                {pending ? "Deleting…" : "Yes, delete"}
-              </button>
-              <button
-                className="font-semibold text-charcoal-soft"
-                onClick={() => setConfirmingDelete(false)}
-                disabled={pending}
-              >
-                Keep
-              </button>
+          {detail ? (
+            <span className="flex items-center justify-center rounded-chip px-1 py-2 font-semibold text-charcoal-soft">
+              {post.comment_count || "Comment"}
             </span>
           ) : (
-            <span className="flex gap-1 text-xs">
-              <button
-                className="rounded-chip px-2.5 py-1.5 font-semibold text-charcoal-soft hover:text-charcoal"
-                onClick={() => setEditing(true)}
-              >
-                Edit
-              </button>
-              <button
-                className="rounded-chip px-2.5 py-1.5 font-semibold text-charcoal-soft hover:text-bronze-deep"
-                onClick={() => setConfirmingDelete(true)}
-              >
-                Delete
-              </button>
-            </span>
-          )
-        ) : (
-          <button
-            className="rounded-chip px-2.5 py-1.5 text-xs font-semibold text-charcoal-soft hover:text-charcoal"
-            onClick={() => setReporting(true)}
-          >
-            Report
-          </button>
-        )}
-      </footer>
+            <Link
+              href={`/app/community/post/${post.id}`}
+              className="flex items-center justify-center rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
+            >
+              {post.comment_count || "Comment"}
+            </Link>
+          )}
 
-      {reporting && (
-        <ReportDialog
-          targetType="post"
-          targetUserId={post.author_id}
-          postId={post.id}
-          onClose={() => setReporting(false)}
-        />
-      )}
+          <button
+            type="button"
+            onClick={onPass}
+            disabled={pending}
+            aria-pressed={passed}
+            className={`rounded-chip px-1 py-2 font-semibold transition ${
+              passed ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
+            }`}
+          >
+            {passCount || "Pass on"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void sharePost()}
+            className="rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
+          >
+            Send
+          </button>
+        </footer>
+
+        {totalReactions > 0 && (
+          <p className="mt-2 text-xs text-charcoal-soft">
+            {COMMUNITY_REACTIONS.filter(
+              (option) => reactionCounts[option.value] > 0
+            )
+              .map(
+                (option) =>
+                  `${option.label} ${reactionCounts[option.value]}`
+              )
+              .join(" · ")}
+          </p>
+        )}
+
+        {reporting && (
+          <ReportDialog
+            targetType="post"
+            targetUserId={post.author_id}
+            postId={post.id}
+            onClose={() => setReporting(false)}
+          />
+        )}
       </div>
     </article>
   );

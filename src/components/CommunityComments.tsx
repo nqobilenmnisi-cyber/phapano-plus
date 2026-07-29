@@ -19,6 +19,7 @@ export function CommunityComments({
   viewerId,
   canParticipate,
   acceptedGuidelines,
+  postingIdentities,
 }: {
   postId: string;
   comments: CommunityCommentView[];
@@ -27,10 +28,12 @@ export function CommunityComments({
   canParticipate: boolean;
   /** Whether the viewer has accepted the CURRENT Community Guidelines version. */
   acceptedGuidelines: boolean;
+  postingIdentities: { id: string; name: string }[];
 }) {
   const [draft, setDraft] = useState("");
   const [agree, setAgree] = useState(false);
   const [accepted, setAccepted] = useState(acceptedGuidelines);
+  const [authorId, setAuthorId] = useState(viewerId);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -52,7 +55,7 @@ export function CommunityComments({
         }
         setAccepted(true);
       }
-      const result = await addComment(postId, draft);
+      const result = await addComment(postId, draft, authorId);
       if ("error" in result) setError(result.error);
       else setDraft("");
     });
@@ -78,6 +81,24 @@ export function CommunityComments({
 
       {canParticipate ? (
         <div className="mt-5">
+          {postingIdentities.length > 1 && (
+            <label className="label mb-2 block" htmlFor="comment-identity">
+              Replying as{" "}
+              <select
+                id="comment-identity"
+                className="ml-1 rounded-chip border border-line bg-paper px-2 py-1 text-sm font-bold text-charcoal"
+                value={authorId}
+                onChange={(event) => setAuthorId(event.target.value)}
+                disabled={pending}
+              >
+                {postingIdentities.map((identity) => (
+                  <option key={identity.id} value={identity.id}>
+                    {identity.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="sr-only" htmlFor="comment-box">
             Write a comment
           </label>
@@ -148,7 +169,7 @@ function CommentRow({
   comment: CommunityCommentView;
   viewerId: string;
 }) {
-  const mine = comment.author_id === viewerId;
+  const mine = comment.created_by === viewerId;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [reporting, setReporting] = useState(false);

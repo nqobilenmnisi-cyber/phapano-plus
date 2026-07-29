@@ -4,6 +4,7 @@ import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { CommunityProfileForm } from "@/components/CommunityProfileForm";
 import {
   getFeed,
+  getManagedOrganisationPages,
   getMyCommunityProfile,
   getMyModerationState,
   getMyUserId,
@@ -72,10 +73,11 @@ export default async function CommunityPage({
     );
   }
 
-  const [{ posts, hasMore }, accepted, moderation] = await Promise.all([
+  const [{ posts, hasMore }, accepted, moderation, managedPages] = await Promise.all([
     getFeed({ mode, before: query.before }),
     hasAcceptedGuidelines(),
     getMyModerationState(),
+    getManagedOrganisationPages(),
   ]);
   const canCompose =
     !moderation.community_suspended && !moderation.posting_restricted;
@@ -111,7 +113,22 @@ export default async function CommunityPage({
 
       {canCompose && (
         <div className="mt-4">
-          <CommunityComposer acceptedGuidelines={accepted} />
+          <CommunityComposer
+            acceptedGuidelines={accepted}
+            viewerId={uid ?? ""}
+            personalIdentity={{
+              id: uid ?? "",
+              name: communityProfile?.display_name ?? "Your profile",
+              avatarUrl: communityProfile?.avatar_url ?? null,
+              official: false,
+            }}
+            managedPages={managedPages.map((page) => ({
+              id: page.id,
+              name: page.name,
+              avatarUrl: page.avatar_url,
+              official: page.is_official,
+            }))}
+          />
         </div>
       )}
 
