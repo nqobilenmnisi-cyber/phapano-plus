@@ -185,7 +185,11 @@ export function CommunityMemberActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="min-w-[7rem] flex-1 [&>button]:w-full">
-        <FollowButton userId={userId} initiallyFollowing={followedByMe} />
+        <FollowButton
+          userId={userId}
+          initiallyFollowing={followedByMe}
+          subtleWhenFollowing={connectionState === "connected"}
+        />
       </div>
       {allowConnection && (
         <div className="min-w-[7rem] flex-1 [&>button]:w-full">

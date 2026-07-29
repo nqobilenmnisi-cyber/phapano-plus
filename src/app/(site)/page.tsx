@@ -10,8 +10,8 @@ import { getAuthState } from "@/lib/queries";
 
 export default async function LandingPage() {
   const { authed } = await getAuthState();
-  const ctaHref = authed ? "/dashboard" : "/signup";
-  const ctaLabel = authed ? "Open Phapano+" : "Create Account";
+  const ctaHref = authed ? "/dashboard" : "/login";
+  const ctaLabel = authed ? "Open Phapano+" : "Log in";
 
   return (
     <>
@@ -33,8 +33,8 @@ export default async function LandingPage() {
             <Link href={ctaHref} className="btn-primary">
               {ctaLabel}
             </Link>
-            <Link href="/features" className="btn-secondary">
-              See how it works
+            <Link href={authed ? "/features" : "/signup"} className="btn-secondary">
+              {authed ? "See how it works" : "Create account"}
             </Link>
           </div>
         </div>
@@ -146,6 +146,14 @@ export default async function LandingPage() {
           >
             {ctaLabel}
           </Link>
+          {!authed && (
+            <Link
+              href="/signup"
+              className="mt-3 inline-flex items-center justify-center rounded-chip border border-white/35 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+            >
+              Create account
+            </Link>
+          )}
         </div>
       </section>
     </>

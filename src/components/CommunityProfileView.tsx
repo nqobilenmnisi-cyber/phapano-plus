@@ -115,7 +115,7 @@ export function CommunityProfileView({
             </div>
             {isOwnProfile && (
               <Link
-                href="/app/community/profile/edit"
+                href="/app/profile?section=community#community-settings"
                 className="btn-secondary mb-1 inline-flex !px-4 !py-2 text-sm"
               >
                 Edit profile

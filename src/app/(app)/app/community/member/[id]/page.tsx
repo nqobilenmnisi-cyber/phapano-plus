@@ -22,7 +22,7 @@ export default async function CommunityMemberPage({
   if (!uid) notFound();
 
   if (id === uid) {
-    redirect("/app/community/profile");
+    redirect("/app/profile?section=community");
   }
 
   const organisation = await getOrganisationProfile(id);
