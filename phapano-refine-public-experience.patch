@@ -1,0 +1,1852 @@
+diff --git a/src/app/(app)/app/apply/page.tsx b/src/app/(app)/app/apply/page.tsx
+index 66a8003..c614fa6 100644
+--- a/src/app/(app)/app/apply/page.tsx
++++ b/src/app/(app)/app/apply/page.tsx
+@@ -3,7 +3,7 @@ import { ApplyDirectory } from "@/components/ApplyDirectory";
+ import { getProgrammes, getSavedProgrammeIds } from "@/lib/queries";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "Apply — Phapano+" };
++export const metadata = { title: "Apply | Phapano+" };
+ 
+ export default async function ApplyPage() {
+   const [programmes, savedIds] = await Promise.all([
+diff --git a/src/app/(app)/app/apply/programme/[id]/page.tsx b/src/app/(app)/app/apply/programme/[id]/page.tsx
+index 309f29f..2dff10a 100644
+--- a/src/app/(app)/app/apply/programme/[id]/page.tsx
++++ b/src/app/(app)/app/apply/programme/[id]/page.tsx
+@@ -7,7 +7,7 @@ import { SaveProgrammeButton } from "@/components/ApplyDirectory";
+ import { ApplicationPlanTracker } from "@/components/ApplicationPlan";
+ import { UniversityBadge } from "@/components/UniversityBadge";
+ 
+-export const metadata = { title: "Programme — Phapano+" };
++export const metadata = { title: "Programme | Phapano+" };
+ 
+ // Official quick links in priority order. Only links that exist are shown;
+ // the general homepage is the last resort.
+@@ -81,7 +81,7 @@ export default async function ProgrammeDetailPage({
+       <section className="card mt-6 p-6">
+         <h2 className="font-sora text-lg font-bold tracking-tight">Official links</h2>
+         <p className="mt-1 text-sm text-charcoal-soft">
+-          Go straight to the university&apos;s own psychology pages — the source
++          Go straight to the university&apos;s own psychology pages, the source
+           of truth for dates, fees and requirements.
+         </p>
+         {links.length > 0 ? (
+@@ -119,7 +119,7 @@ export default async function ProgrammeDetailPage({
+ 
+       <p className="mt-4 text-xs text-charcoal-soft">
+         Phapano+ helps you discover, organise and track your applications. The
+-        universities remain the authoritative source — always confirm details on
++        universities remain the authoritative source. Always confirm details on
+         their official pages before applying.
+       </p>
+     </main>
+diff --git a/src/app/(app)/app/community/connections/page.tsx b/src/app/(app)/app/community/connections/page.tsx
+index 1daa56c..cc660a0 100644
+--- a/src/app/(app)/app/community/connections/page.tsx
++++ b/src/app/(app)/app/community/connections/page.tsx
+@@ -3,7 +3,7 @@ import { CommunityConnections } from "@/components/CommunityConnections";
+ import { getConnectionHub } from "@/lib/community";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "Connections — Phapano+" };
++export const metadata = { title: "Connections | Phapano+" };
+ 
+ export default async function CommunityConnectionsPage() {
+   const hub = isSupabaseConfigured
+diff --git a/src/app/(app)/app/community/member/[id]/page.tsx b/src/app/(app)/app/community/member/[id]/page.tsx
+index 8e10e57..a130460 100644
+--- a/src/app/(app)/app/community/member/[id]/page.tsx
++++ b/src/app/(app)/app/community/member/[id]/page.tsx
+@@ -4,7 +4,7 @@ import { CommunityProfileView } from "@/components/CommunityProfileView";
+ import { getMemberProfile, getMyUserId } from "@/lib/community";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "Community profile — Phapano+" };
++export const metadata = { title: "Community profile | Phapano+" };
+ 
+ export default async function CommunityMemberPage({
+   params,
+diff --git a/src/app/(app)/app/community/page.tsx b/src/app/(app)/app/community/page.tsx
+index 60dd16c..58c21e4 100644
+--- a/src/app/(app)/app/community/page.tsx
++++ b/src/app/(app)/app/community/page.tsx
+@@ -12,7 +12,7 @@ import {
+ import { getProfile } from "@/lib/queries";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "Community — Phapano+" };
++export const metadata = { title: "Community | Phapano+" };
+ 
+ export default async function CommunityPage({
+   searchParams,
+@@ -49,8 +49,7 @@ export default async function CommunityPage({
+           </h1>
+           <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
+             Choose what fellow psychology students and professionals see about
+-            you. Your Phapano Passport — applications, notes, funding and
+-            documents — always stays private.
++            you. Your applications, notes, funding and documents stay private.
+           </p>
+         </section>
+         <div className="card mt-4 p-6">
+@@ -127,7 +126,7 @@ export default async function CommunityPage({
+             {mode === "following" ? (
+               <>
+                 Your feed is quiet for now. Posts from people you follow will
+-                appear here —{" "}
++                appear here.{" "}
+                 <Link
+                   href="/app/community/people"
+                   className="font-semibold text-blue-action hover:underline"
+diff --git a/src/app/(app)/app/community/people/page.tsx b/src/app/(app)/app/community/people/page.tsx
+index f0e7253..4e32404 100644
+--- a/src/app/(app)/app/community/people/page.tsx
++++ b/src/app/(app)/app/community/people/page.tsx
+@@ -3,7 +3,7 @@ import { CommunityPeople } from "@/components/CommunityPeople";
+ import { getFollowLists, searchMembers } from "@/lib/community";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "People — Phapano+" };
++export const metadata = { title: "People | Phapano+" };
+ 
+ export default async function CommunityPeoplePage() {
+   const [initialMembers, lists] = isSupabaseConfigured
+diff --git a/src/app/(app)/app/community/post/[id]/page.tsx b/src/app/(app)/app/community/post/[id]/page.tsx
+index fecc180..29446ea 100644
+--- a/src/app/(app)/app/community/post/[id]/page.tsx
++++ b/src/app/(app)/app/community/post/[id]/page.tsx
+@@ -11,7 +11,7 @@ import {
+ } from "@/lib/community";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "Post — Phapano+" };
++export const metadata = { title: "Post | Phapano+" };
+ 
+ export default async function CommunityPostPage({
+   params,
+diff --git a/src/app/(app)/app/community/profile/edit/page.tsx b/src/app/(app)/app/community/profile/edit/page.tsx
+index fe95187..40b34df 100644
+--- a/src/app/(app)/app/community/profile/edit/page.tsx
++++ b/src/app/(app)/app/community/profile/edit/page.tsx
+@@ -3,7 +3,7 @@ import { CommunityProfileForm } from "@/components/CommunityProfileForm";
+ import { getMyCommunityProfile } from "@/lib/community";
+ import { getProfile } from "@/lib/queries";
+ 
+-export const metadata = { title: "Edit Community profile — Phapano+" };
++export const metadata = { title: "Edit Community profile | Phapano+" };
+ 
+ export default async function CommunityProfileEditPage() {
+   const [existing, passport] = await Promise.all([
+diff --git a/src/app/(app)/app/community/profile/page.tsx b/src/app/(app)/app/community/profile/page.tsx
+index 12a95e6..5c605f3 100644
+--- a/src/app/(app)/app/community/profile/page.tsx
++++ b/src/app/(app)/app/community/profile/page.tsx
+@@ -4,7 +4,7 @@ import { CommunityProfileView } from "@/components/CommunityProfileView";
+ import { getMemberProfile, getMyUserId } from "@/lib/community";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "My Community profile — Phapano+" };
++export const metadata = { title: "My Community profile | Phapano+" };
+ 
+ export default async function MyCommunityProfilePage() {
+   if (!isSupabaseConfigured) notFound();
+diff --git a/src/app/(app)/app/funding/page.tsx b/src/app/(app)/app/funding/page.tsx
+index 3b52520..7d10094 100644
+--- a/src/app/(app)/app/funding/page.tsx
++++ b/src/app/(app)/app/funding/page.tsx
+@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { DEMO_FUNDING } from "@/lib/demo-content";
+ import { DEMO_NOTICE } from "@/lib/demo";
+ 
+-export const metadata = { title: "Funding — Phapano+" };
++export const metadata = { title: "Funding | Phapano+" };
+ 
+ export default async function FundingPage() {
+   const [funding, sets] = await Promise.all([getFunding(), getSavedIdSets()]);
+diff --git a/src/app/(app)/app/journal/page.tsx b/src/app/(app)/app/journal/page.tsx
+index 6a5a7d3..de4aef9 100644
+--- a/src/app/(app)/app/journal/page.tsx
++++ b/src/app/(app)/app/journal/page.tsx
+@@ -3,7 +3,7 @@ import { SupportLine } from "@/components/AppChrome";
+ import { getJournalEntries } from "@/lib/queries";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "My Notes — Phapano+" };
++export const metadata = { title: "My Notes | Phapano+" };
+ 
+ export default async function JournalPage() {
+   const entries = await getJournalEntries();
+diff --git a/src/app/(app)/app/notifications/page.tsx b/src/app/(app)/app/notifications/page.tsx
+index 8b3a64f..7f0c7e6 100644
+--- a/src/app/(app)/app/notifications/page.tsx
++++ b/src/app/(app)/app/notifications/page.tsx
+@@ -3,7 +3,7 @@ import { getNotifications } from "@/lib/queries";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import type { Notification } from "@/types/database";
+ 
+-export const metadata = { title: "Notifications — Phapano+" };
++export const metadata = { title: "Notifications | Phapano+" };
+ 
+ function demoNotifications(): Notification[] {
+   const ago = (d: number) => {
+@@ -37,7 +37,7 @@ function demoNotifications(): Notification[] {
+       user_id: "demo",
+       type: "system",
+       title: "Welcome to Phapano+",
+-      body: "Your journey starts here. Save a university to begin your radar.",
++      body: "Your journey starts here. Save a university to begin My Pathway.",
+       link: "/app/apply",
+       read: true,
+       created_at: ago(3),
+@@ -56,7 +56,8 @@ export default async function NotificationsPage() {
+           Notifications
+         </h1>
+         <p className="mt-2 text-sm text-charcoal-soft">
+-          Only what matters, when it matters. Nothing noisy.
++          Updates from your saved opportunities and Community activity appear
++          here.
+         </p>
+       </section>
+ 
+diff --git a/src/app/(app)/app/profile/page.tsx b/src/app/(app)/app/profile/page.tsx
+index f661965..24d8303 100644
+--- a/src/app/(app)/app/profile/page.tsx
++++ b/src/app/(app)/app/profile/page.tsx
+@@ -13,7 +13,7 @@ import {
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { careerStageLabels, firstName } from "@/lib/utils";
+ 
+-export const metadata = { title: "You — Phapano+" };
++export const metadata = { title: "You | Phapano+" };
+ 
+ export default async function ProfilePage() {
+   // Authenticated user's own data only. getProfile self-heals (creates the row
+diff --git a/src/app/(app)/app/settings/page.tsx b/src/app/(app)/app/settings/page.tsx
+index 9682734..9b8f059 100644
+--- a/src/app/(app)/app/settings/page.tsx
++++ b/src/app/(app)/app/settings/page.tsx
+@@ -9,7 +9,7 @@ import { getBlockedAccounts } from "@/lib/community";
+ import { CommunityBlockedList } from "@/components/CommunityBlockedList";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ 
+-export const metadata = { title: "Settings — Phapano+" };
++export const metadata = { title: "Settings | Phapano+" };
+ 
+ export default async function SettingsPage() {
+   const [user, profile, blockedAccounts] = await Promise.all([
+@@ -18,7 +18,7 @@ export default async function SettingsPage() {
+     getBlockedAccounts(),
+   ]);
+   // Real Supabase Auth email for the signed-in user. Never a demo value.
+-  const email = user?.email ?? profile?.email ?? "—";
++  const email = user?.email ?? profile?.email ?? "Not provided";
+ 
+   return (
+     <main className="mx-auto max-w-2xl px-6 pb-10">
+diff --git a/src/app/(app)/dashboard/page.tsx b/src/app/(app)/dashboard/page.tsx
+index ec831b9..7aac862 100644
+--- a/src/app/(app)/dashboard/page.tsx
++++ b/src/app/(app)/dashboard/page.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ import { AppTopBar, SupportLine } from "@/components/AppChrome";
+ import { BottomNav } from "@/components/BottomNav";
+-import { OpportunityRadar, type RadarItem } from "@/components/OpportunityRadar";
++import { MyPathway, type PathwayItem } from "@/components/MyPathway";
+ import { Compass, Star, IconApplication, IconNotes } from "@/components/illustrations";
+ import { redirect } from "next/navigation";
+ import {
+@@ -9,16 +9,17 @@ import {
+   getProfile,
+   getSavedFunding,
+   getNotifications,
++  getJournalEntries,
+   getDatedNotes,
+   getSavedProgrammes,
+ } from "@/lib/queries";
+ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { isApplicationStarted } from "@/lib/application-plan-status";
+-import { greeting, firstName } from "@/lib/utils";
+-import { demoRadar, DEMO_NOTICE } from "@/lib/demo";
++import { daysUntil, formatDateShort, greeting, firstName } from "@/lib/utils";
++import { demoPathway, DEMO_NOTICE } from "@/lib/demo";
+ import type { CareerStage } from "@/types/database";
+ 
+-export const metadata = { title: "Today — Phapano+" };
++export const metadata = { title: "Today | Phapano+" };
+ 
+ // Curated, pathway-focused daily encouragement. Easy to edit. Rotates by date.
+ const AFFIRMATIONS = [
+@@ -37,6 +38,24 @@ function affirmationForToday(): string {
+   return AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
+ }
+ 
++function noteStatus(dueDate: string | null): string | null {
++  const days = daysUntil(dueDate);
++  if (days === null) return null;
++  if (days < 0) {
++    const overdue = Math.abs(days);
++    return `Overdue by ${overdue} ${overdue === 1 ? "day" : "days"}`;
++  }
++  if (days === 0) return "Due today";
++  if (days === 1) return "Due tomorrow";
++  if (days <= 7) return `Due soon · ${formatDateShort(dueDate)}`;
++  return `Upcoming · ${formatDateShort(dueDate)}`;
++}
++
++function priorityLabel(priority: string | null): string | null {
++  if (!priority) return null;
++  return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
++}
++
+ export default async function DashboardPage() {
+   // A signed-in user who hasn't finished onboarding belongs in onboarding,
+   // not here. (Middleware already guarantees only authed users reach this
+@@ -47,21 +66,29 @@ export default async function DashboardPage() {
+     if (authed && !onboarded) redirect("/onboarding");
+   }
+ 
+-  const [profile, savedFunding, notifications, datedNotes, savedProgrammes] =
++  const [
++    profile,
++    savedFunding,
++    notifications,
++    recentNotes,
++    datedNotes,
++    savedProgrammes,
++  ] =
+     await Promise.all([
+       getProfile(),
+       getSavedFunding(),
+       getNotifications(),
++      getJournalEntries(),
+       getDatedNotes(),
+       getSavedProgrammes(),
+     ]);
+ 
+-  // Build radar items from the user's real saved data + application deadlines.
+-  let radarItems: RadarItem[] = [];
++  // Build My Pathway from the user's real saved data and application deadlines.
++  let pathwayItems: PathwayItem[] = [];
+ 
+   if (isSupabaseConfigured) {
+     for (const f of savedFunding) {
+-      radarItems.push({
++      pathwayItems.push({
+         id: `fund-${f.id}`,
+         kind: "Funding you saved",
+         title: f.title,
+@@ -72,10 +99,10 @@ export default async function DashboardPage() {
+       });
+     }
+   } else {
+-    radarItems = demoRadar();
++    pathwayItems = demoPathway();
+   }
+ 
+-  // Saved Apply programmes appear on the radar (by closing date) and count
++  // Saved Apply programmes appear in My Pathway (by closing date) and count
+   // toward progress. Only SAVED programmes surface here — never the whole list.
+   if (isSupabaseConfigured) {
+     for (const sp of savedProgrammes) {
+@@ -87,7 +114,7 @@ export default async function DashboardPage() {
+         prog.qualification === "masters"
+           ? `${prog.institution} · Master's`
+           : `${prog.institution} · Honours`;
+-      radarItems.push({
++      pathwayItems.push({
+         id: `saved-prog-${prog.id}`,
+         kind: sp.is_saved ? "Programme deadline" : "Application plan",
+         title: label,
+@@ -99,10 +126,10 @@ export default async function DashboardPage() {
+     }
+   }
+ 
+-  // Notes that have a due date become dated reminders on the radar.
++  // Notes that have a due date become dated reminders in My Pathway.
+   if (isSupabaseConfigured) {
+     for (const n of datedNotes) {
+-      radarItems.push({
++      pathwayItems.push({
+         id: `note-${n.id}`,
+         kind: n.approach ? `Note · ${n.approach}` : "Your note",
+         title: n.content.length > 60 ? `${n.content.slice(0, 60)}…` : n.content,
+@@ -184,7 +211,7 @@ export default async function DashboardPage() {
+                 Finish setting up your profile
+               </p>
+               <p className="text-sm text-charcoal-soft">
+-                A few details help us show what matters most to you.
++                A few details help us suggest more relevant next steps.
+               </p>
+             </div>
+             <span className="text-blue-action">→</span>
+@@ -223,9 +250,9 @@ export default async function DashboardPage() {
+           goals={profile?.goals ?? null}
+         />
+ 
+-        {/* radar */}
++        {/* My Pathway */}
+         <div className="mt-5">
+-          <OpportunityRadar items={radarItems} />
++          <MyPathway items={pathwayItems} />
+         </div>
+ 
+         {/* progress — driven entirely by real data; empty when nothing done */}
+@@ -259,25 +286,67 @@ export default async function DashboardPage() {
+           </div>
+         </div>
+ 
+-        {/* notes nudge — practical planning, not wellness */}
++        {/* My Notes summary. The complete editor remains on the Notes page. */}
+         <div className="mt-10 flex items-center gap-3 px-1 text-[0.74rem] font-extrabold uppercase tracking-[0.16em] text-charcoal-soft">
+-          Your pathway notes
++          My Notes
+           <span className="h-px flex-1 bg-divider opacity-60" />
+         </div>
+-        <div className="relative mt-3.5 overflow-hidden rounded-card border border-dashed border-[#E0D3C6] bg-gradient-to-b from-[#FBF8F4] to-white px-6 py-5 shadow-card">
+-          <div className="flex items-center gap-2 text-[0.72rem] font-extrabold uppercase tracking-wider text-bronze">
+-            <IconNotes className="h-4 w-4" />
+-            Private notes &amp; reminders
++        <div className="relative mt-3.5 overflow-hidden rounded-card border border-[#E0D3C6] bg-gradient-to-b from-[#FBF8F4] to-white px-5 py-5 shadow-card sm:px-6">
++          <div className="flex flex-wrap items-center justify-between gap-3">
++            <div>
++              <div className="flex items-center gap-2 text-[0.72rem] font-extrabold uppercase tracking-wider text-bronze">
++                <IconNotes className="h-4 w-4" />
++                Private planning notes
++              </div>
++              <h3 className="mt-2 font-sora text-lg font-semibold tracking-tight">
++                Recent notes and reminders
++              </h3>
++            </div>
++            <Link href="/app/journal#new-note" className="btn-bronze !px-4 !py-2 text-sm">
++              New note
++            </Link>
+           </div>
+-          <h3 className="mt-2 font-sora text-lg font-semibold tracking-tight">
+-            Keep application notes, funding leads and next steps in one place.
+-          </h3>
+-          <p className="mt-1 text-sm text-charcoal-soft">
+-            Private to you. Never used to profile you.
+-          </p>
+-          <Link href="/app/journal" className="btn-bronze mt-4">
+-            <IconNotes className="h-[15px] w-[15px]" />
+-            Open your notes
++
++          {recentNotes.length === 0 ? (
++            <div className="mt-4 rounded-card border border-dashed border-line bg-white/70 px-4 py-5 text-sm text-charcoal-soft">
++              Add a note to keep a question, reminder or next step close by.
++            </div>
++          ) : (
++            <ul className="mt-4 space-y-2">
++              {recentNotes.slice(0, 3).map((note) => {
++                const status = noteStatus(note.due_date);
++                const priority = priorityLabel(note.priority);
++                return (
++                  <li
++                    key={note.id}
++                    className="rounded-card border border-line bg-white px-4 py-3"
++                  >
++                    <p className="line-clamp-2 text-sm font-semibold leading-relaxed text-charcoal">
++                      {note.content}
++                    </p>
++                    {(status || priority) && (
++                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
++                        {status && (
++                          <span className={status.startsWith("Overdue") ? "text-bronze-deep" : "text-blue-deep"}>
++                            {status}
++                          </span>
++                        )}
++                        {priority && (
++                          <span className="text-charcoal-soft">{priority}</span>
++                        )}
++                      </div>
++                    )}
++                  </li>
++                );
++              })}
++            </ul>
++          )}
++
++          <Link
++            href="/app/journal"
++            className="mt-4 inline-flex text-sm font-bold text-blue-action hover:underline"
++          >
++            View all notes
+           </Link>
+         </div>
+ 
+@@ -307,7 +376,7 @@ function focusStepsFor(
+ ): FocusStep[] {
+   const steps: FocusStep[] = [];
+ 
+-  // If the user set a current focus/goal, surface it first — it's theirs.
++  // If the user set a current focus/goal, surface it first because it is theirs.
+   if (goals && goals.trim()) {
+     steps.push({
+       pill: "Your focus",
+@@ -376,7 +445,7 @@ function focusStepsFor(
+         pill: "Prepare",
+         tone: "blue",
+         title: "Prepare for your internship milestones",
+-        body: "Keep board exam dates and internship requirements on your radar.",
++        body: "Keep board exam dates and internship requirements in My Pathway.",
+         href: "/app/funding",
+       });
+       break;
+@@ -450,8 +519,8 @@ function focusStepsFor(
+     title: savedCount > 0 ? "You've saved a programme" : "Save a programme to begin",
+     body:
+       savedCount > 0
+-        ? "It now appears on your radar, with its deadline tracked."
+-        : "Saving a programme starts your radar and tracks its deadline.",
++        ? "It now appears in My Pathway with its deadline."
++        : "Saving a programme adds its deadline to My Pathway.",
+     href: "/app/apply",
+     done: savedCount > 0,
+   });
+diff --git a/src/app/(app)/onboarding/page.tsx b/src/app/(app)/onboarding/page.tsx
+index 8b01e9f..342e382 100644
+--- a/src/app/(app)/onboarding/page.tsx
++++ b/src/app/(app)/onboarding/page.tsx
+@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { Logo } from "@/components/Logo";
+ import { firstName } from "@/lib/utils";
+ 
+-export const metadata = { title: "Welcome — Phapano+" };
++export const metadata = { title: "Welcome | Phapano+" };
+ 
+ export default async function OnboardingPage() {
+   // Guard: must be signed in, and must not have already completed onboarding.
+diff --git a/src/app/(app)/support/page.tsx b/src/app/(app)/support/page.tsx
+index 3d2d82d..d2dcd64 100644
+--- a/src/app/(app)/support/page.tsx
++++ b/src/app/(app)/support/page.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ import { Logo } from "@/components/Logo";
+ 
+-export const metadata = { title: "Support — Phapano+" };
++export const metadata = { title: "Support | Phapano+" };
+ 
+ const resources = [
+   {
+diff --git a/src/app/(auth)/auth/error/page.tsx b/src/app/(auth)/auth/error/page.tsx
+index 967b9f9..3936bee 100644
+--- a/src/app/(auth)/auth/error/page.tsx
++++ b/src/app/(auth)/auth/error/page.tsx
+@@ -2,7 +2,7 @@ import Link from "next/link";
+ import { ResendVerification } from "@/components/ResendVerification";
+ import { Compass } from "@/components/illustrations";
+ 
+-export const metadata = { title: "Verification link unavailable — Phapano+" };
++export const metadata = { title: "Verification link unavailable | Phapano+" };
+ 
+ /**
+  * Shown when a verification link is invalid, expired or already used and the
+@@ -38,7 +38,7 @@ export default function AuthErrorPage() {
+           href="/signup"
+           className="font-semibold text-blue-action hover:underline"
+         >
+-          Create an account
++          Create Account
+         </Link>
+       </p>
+     </div>
+diff --git a/src/app/(auth)/auth/verified/page.tsx b/src/app/(auth)/auth/verified/page.tsx
+index 9eac0a3..f886849 100644
+--- a/src/app/(auth)/auth/verified/page.tsx
++++ b/src/app/(auth)/auth/verified/page.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ import { Star } from "@/components/illustrations";
+ 
+-export const metadata = { title: "Email verified — Phapano+" };
++export const metadata = { title: "Email verified | Phapano+" };
+ 
+ /**
+  * Shown only after /auth/callback confirms the outcome with Supabase.
+diff --git a/src/app/(auth)/login/page.tsx b/src/app/(auth)/login/page.tsx
+index ac07263..29dfa43 100644
+--- a/src/app/(auth)/login/page.tsx
++++ b/src/app/(auth)/login/page.tsx
+@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/AuthForm";
+ import { signIn } from "@/app/(auth)/actions";
+ import { getAuthState } from "@/lib/queries";
+ 
+-export const metadata = { title: "Log in — Phapano+" };
++export const metadata = { title: "Log in | Phapano+" };
+ 
+ export default async function LoginPage() {
+   // Already signed in? Go where they belong, don't show login again.
+diff --git a/src/app/(auth)/signup/page.tsx b/src/app/(auth)/signup/page.tsx
+index 6c1b215..155c6aa 100644
+--- a/src/app/(auth)/signup/page.tsx
++++ b/src/app/(auth)/signup/page.tsx
+@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/AuthForm";
+ import { signUp } from "@/app/(auth)/actions";
+ import { getAuthState } from "@/lib/queries";
+ 
+-export const metadata = { title: "Create your account — Phapano+" };
++export const metadata = { title: "Create your account | Phapano+" };
+ 
+ export default async function SignupPage() {
+   // A returning, signed-in user should never see sign-up/onboarding again.
+diff --git a/src/app/(site)/about/page.tsx b/src/app/(site)/about/page.tsx
+index b67ff9c..65a9cb3 100644
+--- a/src/app/(site)/about/page.tsx
++++ b/src/app/(site)/about/page.tsx
+@@ -2,7 +2,7 @@ import { PageHero, Prose } from "@/components/Marketing";
+ import Link from "next/link";
+ import { getAuthState } from "@/lib/queries";
+ 
+-export const metadata = { title: "About — Phapano+" };
++export const metadata = { title: "About | Phapano+" };
+ 
+ 
+ export default async function AboutPage() {
+@@ -12,7 +12,7 @@ export default async function AboutPage() {
+       <PageHero
+         eyebrow="About Phapano+"
+         title="Built for the psychology journey"
+-        intro="Phapano+ brings psychology applications, funding, planning, reminders and trusted guidance into one place, so you can navigate each step with clarity."
++        intro="Phapano+ supports people navigating psychology pathways with planning tools, programme information, funding opportunities and community."
+       />
+       <Prose>
+         <p>
+@@ -27,16 +27,15 @@ export default async function AboutPage() {
+           university websites, group chats, PDFs and social media just to answer
+           simple questions. Where can I apply? When do applications open? What
+           are the requirements? How do I find funding? The information exists,
+-          but it is scattered. Phapano+ exists to bring it together into one
+-          trusted place.
++          but it is scattered. Phapano+ exists to make that journey easier to
++          organise and understand.
+         </p>
+         <h2>What Phapano+ does</h2>
+         <p>
+-          Phapano+ helps you explore psychology programmes across South Africa,
+-          track your Honours and Master&apos;s applications, discover funding you
+-          qualify for, and stay ahead of deadlines, all alongside guidance
+-          written for where you are in your pathway. It is a practical academic
+-          and career companion, not another inbox to manage.
++          Phapano+ helps you explore psychology programmes, organise the
++          applications you are considering, browse funding opportunities and
++          keep relevant dates and notes together. Community features also make
++          it possible to learn from people at different stages of the pathway.
+         </p>
+         <h2>How we treat information</h2>
+         <p>
+@@ -52,7 +51,7 @@ export default async function AboutPage() {
+         </p>
+         <p>
+           <Link href={authed ? "/dashboard" : "/signup"} className="font-semibold text-blue-action hover:underline">
+-            {authed ? "Open Phapano+ →" : "Create your free account →"}
++            {authed ? "Open Phapano+ →" : "Create Account →"}
+           </Link>
+         </p>
+       </Prose>
+diff --git a/src/app/(site)/apply/page.tsx b/src/app/(site)/apply/page.tsx
+index 083b5db..9ca48ef 100644
+--- a/src/app/(site)/apply/page.tsx
++++ b/src/app/(site)/apply/page.tsx
+@@ -1,7 +1,7 @@
+ import { PageHero, MarketingCTA } from "@/components/Marketing";
+ import { getAuthState } from "@/lib/queries";
+ 
+-export const metadata = { title: "Applications — Phapano+" };
++export const metadata = { title: "Applications | Phapano+" };
+ 
+ export default async function Page() {
+   const { authed } = await getAuthState();
+@@ -14,11 +14,9 @@ export default async function Page() {
+       />
+       <section className="mx-auto max-w-3xl px-6 py-16">
+         <p className="text-charcoal-soft">
+-          When you create a free account, this section becomes personalised:
+-          explore programmes at universities and private institutions, check
+-          verified requirements and referee guidance, save the institutions
+-          you&apos;re considering, and track each application with its deadlines
+-          in one place.
++          With an account, you can explore programmes at universities and
++          private institutions, review available requirements and guidance,
++          save institutions you are considering and organise application dates.
+         </p>
+         <MarketingCTA authed={authed} />
+       </section>
+diff --git a/src/app/(site)/community-guidelines/page.tsx b/src/app/(site)/community-guidelines/page.tsx
+index a1a5885..10e1515 100644
+--- a/src/app/(site)/community-guidelines/page.tsx
++++ b/src/app/(site)/community-guidelines/page.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ 
+ export const metadata = {
+-  title: "Community Guidelines — Phapano+",
++  title: "Community Guidelines | Phapano+",
+   description:
+     "The standards that keep the Phapano+ community safe, honest and useful for South African psychology students and professionals.",
+ };
+@@ -86,7 +86,7 @@ export default function CommunityGuidelinesPage() {
+         <p className="mt-3 text-sm leading-relaxed text-charcoal-soft">
+           The Phapano+ community exists so that South African psychology
+           students and professionals can support one another along the pathway
+-          — honestly, generously and safely. These guidelines protect that
++          honestly, generously and safely. These guidelines protect that
+           purpose. By posting or commenting, you agree to follow them together
+           with our Terms of Use.
+         </p>
+@@ -100,7 +100,7 @@ export default function CommunityGuidelinesPage() {
+           Be accurate about your experience and qualifications. Be kind in
+           disagreement. Share opportunities and information you believe to be
+           true, and say so when you are unsure. Remember that many members are
+-          navigating stressful application seasons — write the kind of post you
++          navigating stressful application seasons. Write the kind of post you
+           would want to receive.
+         </p>
+       </section>
+diff --git a/src/app/(site)/contact/page.tsx b/src/app/(site)/contact/page.tsx
+index ed8c995..812b2ca 100644
+--- a/src/app/(site)/contact/page.tsx
++++ b/src/app/(site)/contact/page.tsx
+@@ -1,7 +1,7 @@
+ import { PageHero } from "@/components/Marketing";
+ import { ContactForm } from "@/components/ContactForm";
+ 
+-export const metadata = { title: "Contact — Phapano+" };
++export const metadata = { title: "Contact | Phapano+" };
+ 
+ export default function ContactPage() {
+   return (
+diff --git a/src/app/(site)/features/page.tsx b/src/app/(site)/features/page.tsx
+index 0b17a65..1553d0f 100644
+--- a/src/app/(site)/features/page.tsx
++++ b/src/app/(site)/features/page.tsx
+@@ -2,23 +2,22 @@ import { PageHero } from "@/components/Marketing";
+ import {
+   IconApplication,
+   IconFunding,
+-  IconRadar,
+   IconDashboard,
+-  IconLearn,
++  IconProfile,
+   IconNotes,
+ } from "@/components/illustrations";
+ import { getAuthState } from "@/lib/queries";
+ import Link from "next/link";
+ 
+-export const metadata = { title: "Features — Phapano+" };
++export const metadata = { title: "Features | Phapano+" };
+ 
+ const features = [
+-  { icon: <IconApplication className="h-7 w-7" />, title: "Apply", body: "Explore psychology programmes across South Africa, with verified deadlines, requirements, referee guidance and application tracking, for both Honours and Master's applicants." },
+-  { icon: <IconFunding className="h-7 w-7" />, title: "Funding", body: "Keep track of verified bursaries, scholarships and relevant opportunities, with deadline reminders so nothing is missed." },
+-  { icon: <IconRadar className="h-7 w-7" />, title: "Opportunity Radar", body: "Your personalised view of what matters now: closing application deadlines, saved funding and your next step, ordered by what's most urgent." },
+-  { icon: <IconDashboard className="h-7 w-7" />, title: "A dashboard that orients you", body: "Open Phapano+ and see exactly where you are and what to do next, adapted to your stage. Every screen answers one question: what is the next useful step?" },
+-  { icon: <IconLearn className="h-7 w-7" />, title: "Learning resources", body: "Practical videos, guides and workshop resources from Phapano on applications, requirements, interviews and selection, for the South African psychology pathway." },
+-  { icon: <IconNotes className="h-7 w-7" />, title: "Private planning notes", body: "A private space to record application notes, goals, decisions and next steps. Your notes stay private and are never used to profile you." },
++  { icon: <IconApplication className="h-7 w-7" />, title: "Apply", body: "Explore psychology programmes, review application requirements and keep track of the programmes you are considering." },
++  { icon: <IconFunding className="h-7 w-7" />, title: "Funding", body: "Browse available bursaries, scholarships and other relevant funding opportunities, and save the ones you want to revisit." },
++  { icon: <IconDashboard className="h-7 w-7" />, title: "My Pathway", body: "View upcoming application dates, funding deadlines, saved items and pathway milestones in one planning space." },
++  { icon: <IconDashboard className="h-7 w-7" />, title: "Today", body: "See practical next steps based on the information you have added, including saved programmes, deadlines, goals and notes." },
++  { icon: <IconProfile className="h-7 w-7" />, title: "Community", body: "Connect with psychology students and professionals, share questions and resources, and take part in pathway-focused discussions." },
++  { icon: <IconNotes className="h-7 w-7" />, title: "Notes", body: "Keep private planning notes, reminders, questions and next steps linked to your psychology journey." },
+ ];
+ 
+ export default async function FeaturesPage() {
+@@ -27,8 +26,8 @@ export default async function FeaturesPage() {
+     <>
+       <PageHero
+         eyebrow="Features"
+-        title="Everything you need, nothing that overwhelms"
+-        intro="Phapano+ is not a collection of tools. It is a companion designed around the psychology pathway, from first application to professional practice."
++        title="Support for your psychology pathway"
++        intro="Explore the current Phapano+ tools for planning, finding opportunities and participating in the psychology community."
+       />
+       <section className="mx-auto max-w-6xl px-6 py-16">
+         <div className="grid gap-6 md:grid-cols-3">
+@@ -42,7 +41,7 @@ export default async function FeaturesPage() {
+         </div>
+         <div className="mt-12 text-center">
+           <Link href={authed ? "/dashboard" : "/signup"} className="btn-primary">
+-            {authed ? "Open Phapano+" : "Create your free account"}
++            {authed ? "Open Phapano+" : "Create Account"}
+           </Link>
+         </div>
+       </section>
+diff --git a/src/app/(site)/funding/page.tsx b/src/app/(site)/funding/page.tsx
+index b939443..f7a9ae2 100644
+--- a/src/app/(site)/funding/page.tsx
++++ b/src/app/(site)/funding/page.tsx
+@@ -1,7 +1,7 @@
+ import { PageHero, MarketingCTA } from "@/components/Marketing";
+ import { getAuthState } from "@/lib/queries";
+ 
+-export const metadata = { title: "Funding — Phapano+" };
++export const metadata = { title: "Funding | Phapano+" };
+ 
+ export default async function Page() {
+   const { authed } = await getAuthState();
+@@ -9,15 +9,14 @@ export default async function Page() {
+     <>
+       <PageHero
+         eyebrow="Funding"
+-        title="Find funding that fits you"
+-        intro="Funding opportunities for psychology students are limited and often hard to track. Phapano+ helps you find verified opportunities, save what is relevant and stay aware of important deadlines."
++        title="Explore psychology funding"
++        intro="Browse bursaries, scholarships and other funding opportunities that may be relevant to different stages of the psychology pathway."
+       />
+       <section className="mx-auto max-w-3xl px-6 py-16">
+         <p className="text-charcoal-soft">
+-          When you create a free account, this section becomes personalised:
+-          saved opportunities, deadline reminders and your own funding tracker,
+-          so a bursary or scholarship that&apos;s relevant to you is easier to
+-          catch when it becomes available.
++          With an account, you can save opportunities you want to revisit and
++          keep their available closing dates alongside your other pathway
++          planning.
+         </p>
+         <MarketingCTA authed={authed} />
+       </section>
+diff --git a/src/app/(site)/learn/page.tsx b/src/app/(site)/learn/page.tsx
+index ffc8a34..a6d33c7 100644
+--- a/src/app/(site)/learn/page.tsx
++++ b/src/app/(site)/learn/page.tsx
+@@ -1,7 +1,7 @@
+ import { PageHero, MarketingCTA } from "@/components/Marketing";
+ import { getAuthState } from "@/lib/queries";
+ 
+-export const metadata = { title: "Learn — Phapano+" };
++export const metadata = { title: "Learn | Phapano+" };
+ 
+ export default async function Page() {
+   const { authed } = await getAuthState();
+diff --git a/src/app/(site)/page.tsx b/src/app/(site)/page.tsx
+index 42a55c9..476f2bf 100644
+--- a/src/app/(site)/page.tsx
++++ b/src/app/(site)/page.tsx
+@@ -2,33 +2,32 @@ import Link from "next/link";
+ import {
+   IconApplication,
+   IconFunding,
+-  IconRadar,
+   IconDashboard,
+   Compass,
+ } from "@/components/illustrations";
++import { Logo } from "@/components/Logo";
+ import { getAuthState } from "@/lib/queries";
+ 
+ export default async function LandingPage() {
+   const { authed } = await getAuthState();
+   const ctaHref = authed ? "/dashboard" : "/signup";
+-  const ctaLabel = authed ? "Open Phapano+" : "Create your free account";
++  const ctaLabel = authed ? "Open Phapano+" : "Create Account";
+ 
+   return (
+     <>
+       {/* HERO */}
+       <section className="relative overflow-hidden">
+         <Compass className="pointer-events-none absolute right-2 top-6 hidden w-64 opacity-80 sm:block" />
+-        <div className="mx-auto max-w-6xl px-6 pb-16 pt-20">
++        <div className="mx-auto max-w-6xl px-5 pb-12 pt-14 sm:px-6 sm:pb-16 sm:pt-20">
+           <p className="eyebrow">Psychology pathway support for South African students</p>
+-          <h1 className="mt-4 max-w-3xl font-sora text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
++          <h1 className="mt-4 max-w-3xl break-words font-sora text-3xl font-bold leading-[1.12] tracking-tight sm:text-6xl">
+             Navigate your psychology pathway{" "}
+             <span className="text-blue-action">with confidence.</span>
+           </h1>
+-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal-soft">
+-            Phapano+ brings Honours and Master&apos;s applications, funding
+-            opportunities and pathway guidance together, helping South African
+-            psychology students find verified information, track next steps and
+-            plan with clarity.
++          <p className="mt-5 max-w-xl text-base leading-relaxed text-charcoal-soft sm:mt-6 sm:text-lg">
++            Finding reliable psychology pathway information can feel
++            overwhelming. Phapano+ helps you organise your journey, explore
++            guidance and keep track of your next steps.
+           </p>
+           <div className="mt-9 flex flex-wrap gap-3">
+             <Link href={ctaHref} className="btn-primary">
+@@ -60,38 +59,36 @@ export default async function LandingPage() {
+         <div className="grid gap-6 md:grid-cols-3">
+           <ValueCard
+             icon={<IconApplication className="h-8 w-8" />}
+-            title="Apply with confidence"
+-            body="Explore psychology programmes across South Africa, with verified deadlines, requirements and referee guidance. Track every Honours and Master's application in one place."
++            title="Plan your applications"
++            body="Explore psychology programmes, review application requirements and keep track of the programmes you are considering."
+           />
+           <ValueCard
+             icon={<IconFunding className="h-8 w-8" />}
+-            title="Find funding that fits"
+-            body="Keep track of verified bursaries, scholarships and relevant opportunities, with deadline reminders so you don't miss the ones that matter."
++            title="Explore funding"
++            body="Browse relevant bursaries, scholarships and funding opportunities, and save the ones you want to revisit."
+           />
+           <ValueCard
+-            icon={<IconRadar className="h-8 w-8" />}
+-            title="Stay ahead of deadlines"
+-            body="Your Opportunity Radar surfaces what's closing soon and what to do next, ordered by what's most urgent, so nothing slips past you."
++            icon={<IconDashboard className="h-8 w-8" />}
++            title="Manage upcoming dates"
++            body="Keep your application deadlines, funding dates and pathway milestones together so they are easier to follow."
+           />
+         </div>
+       </section>
+ 
+-      {/* OPPORTUNITY RADAR FEATURE */}
++      {/* MY PATHWAY FEATURE */}
+       <section className="border-y border-line bg-gradient-to-br from-[#EAF3FC] to-[#F4F9FF]">
+         <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 md:grid-cols-2">
+           <div>
+             <div className="flex items-center gap-2.5 text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-blue-action">
+-              <IconRadar className="h-6 w-6" />
+-              The Opportunity Radar
++              <IconDashboard className="h-6 w-6" />
++              My Pathway
+             </div>
+             <h2 className="mt-3 font-sora text-3xl font-bold tracking-tight">
+-              You should never wonder what to do next.
++              Keep your next steps in view.
+             </h2>
+             <p className="mt-4 text-charcoal-soft">
+-              Phapano&apos;s defining feature surfaces what matters right now:
+-              the deadlines approaching, the funding you&apos;ve saved, the next
+-              step in an application you&apos;ve started, ordered by what&apos;s
+-              closest.
++              View upcoming application dates, funding deadlines, saved items
++              and pathway milestones in one planning space.
+             </p>
+             <Link href={ctaHref} className="btn-primary mt-7">
+               {ctaLabel}
+@@ -100,22 +97,24 @@ export default async function LandingPage() {
+           <div className="card overflow-hidden p-0">
+             <div className="border-b border-line bg-white px-6 py-4">
+               <p className="text-[0.68rem] font-extrabold uppercase tracking-wider text-blue-action">
+-                Your radar · today
++                Coming up
+               </p>
+               <p className="mt-1 font-sora text-lg font-bold">
+-                Everything that matters, today
++                Keep track of upcoming dates
+               </p>
+             </div>
+-            <PreviewRow days={6} kind="Application closes" title="Wits, MA Clinical" colour="#C2693F" />
+-            <PreviewRow days={12} kind="Funding you saved" title="NRF Master's bursary" colour="#2E6FB0" />
+-            <PreviewRow days={23} kind="Selection week" title="UJ Counselling interviews" colour="#5C5C5E" />
++            <PreviewRow status="Closes in 6 days" kind="Application" title="Wits, MA Clinical" colour="#C2693F" />
++            <PreviewRow status="Due in 12 days" kind="Funding you saved" title="NRF Master's bursary" colour="#2E6FB0" />
++            <PreviewRow status="Starts in 23 days" kind="Selection week" title="UJ Counselling interviews" colour="#5C5C5E" />
+           </div>
+         </div>
+       </section>
+ 
+       {/* JOURNEY */}
+       <section className="mx-auto max-w-4xl px-6 py-20 text-center">
+-        <IconDashboard className="mx-auto h-12 w-12" />
++        <div className="mx-auto flex justify-center">
++          <Logo href={null} size={52} />
++        </div>
+         <h2 className="mt-4 font-sora text-2xl font-bold tracking-tight sm:text-3xl">
+           Built for every stage, not just one season
+         </h2>
+@@ -139,7 +138,7 @@ export default async function LandingPage() {
+           <p className="mx-auto mt-3 max-w-xl text-white/70">
+             {authed
+               ? "Pick up where you left off and keep your applications on track."
+-              : "Create your free account and see your whole application picture come together in minutes."}
++              : "Begin organising your psychology pathway with a Phapano+ account."}
+           </p>
+           <Link
+             href={ctaHref}
+@@ -174,28 +173,26 @@ function ValueCard({
+ }
+ 
+ function PreviewRow({
+-  days,
++  status,
+   kind,
+   title,
+   colour,
+ }: {
+-  days: number;
++  status: string;
+   kind: string;
+   title: string;
+   colour: string;
+ }) {
+   return (
+     <div className="flex items-center gap-4 border-b border-line-soft bg-white px-6 py-4 last:border-0">
+-      <div className="grid h-12 w-12 flex-none place-items-center rounded-full border-[3px]" style={{ borderColor: colour }}>
+-        <span className="font-sora text-lg font-extrabold tabular-nums" style={{ color: colour }}>
+-          {days}
+-        </span>
+-      </div>
+       <div>
+         <div className="text-[0.68rem] font-extrabold uppercase tracking-wider text-charcoal-soft">
+           {kind}
+         </div>
+         <div className="font-sora font-semibold">{title}</div>
++        <div className="mt-0.5 text-xs font-bold" style={{ color: colour }}>
++          {status}
++        </div>
+       </div>
+     </div>
+   );
+diff --git a/src/app/(site)/privacy/page.tsx b/src/app/(site)/privacy/page.tsx
+index dbbc841..2f36c3a 100644
+--- a/src/app/(site)/privacy/page.tsx
++++ b/src/app/(site)/privacy/page.tsx
+@@ -1,7 +1,7 @@
+ import { Prose } from "@/components/Marketing";
+ import Link from "next/link";
+ 
+-export const metadata = { title: "Privacy Policy — Phapano+" };
++export const metadata = { title: "Privacy Policy | Phapano+" };
+ 
+ // Note: this policy still requires legal review before public launch (internal).
+ export default function PrivacyPage() {
+@@ -21,9 +21,9 @@ export default function PrivacyPage() {
+         <p>
+           Phapano+ collects what it needs to run your account and its features:
+           your account details (such as email), the profile information you
+-          provide, and the pathway data you choose to save — saved
++          provide, and the pathway data you choose to save, including saved
+           institutions, applications, funding opportunities, notes, reminders
+-          and preferences — along with basic technical information needed to
++          and preferences, along with basic technical information needed to
+           operate and secure the service.
+         </p>
+         <p>
+@@ -47,8 +47,8 @@ export default function PrivacyPage() {
+ 
+         <h2>3. What the community can and cannot see</h2>
+         <p>
+-          Your private Phapano Passport — applications, saved programmes,
+-          funding records, notes, deadlines, documents and account settings —
++          Your private Phapano Passport, including applications, saved programmes,
++          funding records, notes, deadlines, documents and account settings,
+           is never shown in the community. Only the community profile you
+           create, and the posts and comments you publish, are visible to other
+           members, according to the visibility setting you choose. Reports and
+@@ -78,8 +78,8 @@ export default function PrivacyPage() {
+         </p>
+         <p>
+           For the safety and integrity of the community, reports and moderation
+-          records may be kept in <b>anonymised</b> form after deletion — with
+-          your identity removed — so that a record of safety decisions remains.
++          records may be kept in <b>anonymised</b> form after deletion, with
++          your identity removed, so that a record of safety decisions remains.
+           These retained records no longer identify you.
+         </p>
+ 
+diff --git a/src/app/(site)/terms/page.tsx b/src/app/(site)/terms/page.tsx
+index 408e070..d46a567 100644
+--- a/src/app/(site)/terms/page.tsx
++++ b/src/app/(site)/terms/page.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ 
+ export const metadata = {
+-  title: "Terms of Use — Phapano+",
++  title: "Terms of Use | Phapano+",
+   description:
+     "The terms that govern your use of Phapano+, the psychology pathway platform for South African students and professionals.",
+ };
+@@ -32,7 +32,7 @@ export default function TermsPage() {
+         </h1>
+         <p className="mt-3 text-sm leading-relaxed text-charcoal-soft">
+           Version 2026-07-v2. These terms are written in plain language on
+-          purpose — they are the agreement between you and Phapano, the
++          purpose. They are the agreement between you and Phapano, the
+           non-profit organisation behind Phapano+ (&quot;we&quot;,
+           &quot;us&quot;), for your use of the Phapano+ platform.
+         </p>
+@@ -62,7 +62,7 @@ export default function TermsPage() {
+         <p>
+           You may use Phapano+ to plan your psychology pathway, explore
+           programmes and funding, keep notes, and take part in the community.
+-          You agree not to misuse the platform — including attempting to
++          You agree not to misuse the platform, including attempting to
+           access other people&apos;s data, disrupting the service, scraping
+           content at scale, misrepresenting who you are, or using Phapano+
+           for anything unlawful.
+@@ -116,7 +116,7 @@ export default function TermsPage() {
+       <Section title="7. Pathway, programme and funding information">
+         <p>
+           We work to keep programme, funding and pathway information accurate
+-          and we show verification dates where available — but requirements,
++          and we show checking dates where available. However, requirements,
+           dates and eligibility change and mistakes are possible. Always
+           confirm details on the official university or funder website before
+           acting. Phapano+ does not guarantee admission to any programme,
+@@ -148,7 +148,7 @@ export default function TermsPage() {
+           You can delete your account at any time from Settings. Deletion is
+           permanent: your profile, applications, saved items, notes and
+           community content are removed. Reports and moderation records may
+-          be retained in anonymised form — with your identity removed — where
++          be retained in anonymised form, with your identity removed, where
+           this is needed for the safety and integrity of the platform. We may
+           suspend or terminate accounts that seriously or repeatedly violate
+           these terms or the Community Guidelines.
+@@ -161,7 +161,7 @@ export default function TermsPage() {
+           &quot;as available&quot; basis. We do not promise uninterrupted or
+           error-free operation. To the extent permitted by South African law,
+           Phapano is not liable for indirect losses arising from your use of
+-          the platform — including decisions made in reliance on programme,
++          the platform, including decisions made in reliance on programme,
+           funding or community information. Nothing in these terms limits
+           rights you have under the Consumer Protection Act or other laws
+           that cannot be excluded.
+diff --git a/src/app/admin/articles/page.tsx b/src/app/admin/articles/page.tsx
+index 6a828f7..3c1b133 100644
+--- a/src/app/admin/articles/page.tsx
++++ b/src/app/admin/articles/page.tsx
+@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { verificationLabels } from "@/lib/utils";
+ import type { VerificationStatus } from "@/types/database";
+ 
+-export const metadata = { title: "Articles — Admin" };
++export const metadata = { title: "Articles | Admin" };
+ 
+ const statusOptions = (
+   Object.keys(verificationLabels) as VerificationStatus[]
+@@ -17,7 +17,7 @@ const statusOptions = (
+ 
+ const fields: FieldDef[] = [
+   { name: "title", label: "Title", type: "text", full: true },
+-  { name: "slug", label: "Slug (optional)", type: "text", placeholder: "auto-generated if blank" },
++  { name: "slug", label: "Slug", type: "text", placeholder: "Leave blank to generate automatically" },
+   { name: "category", label: "Category", type: "text", placeholder: "Applications" },
+   { name: "reading_minutes", label: "Reading minutes", type: "number" },
+   { name: "excerpt", label: "Excerpt", type: "textarea", full: true },
+diff --git a/src/app/admin/community/page.tsx b/src/app/admin/community/page.tsx
+index 69700e9..d12e303 100644
+--- a/src/app/admin/community/page.tsx
++++ b/src/app/admin/community/page.tsx
+@@ -10,7 +10,7 @@ import type {
+   CommunityReport,
+ } from "@/types/database";
+ 
+-export const metadata = { title: "Community moderation — Phapano+ Admin" };
++export const metadata = { title: "Community moderation | Phapano+ Admin" };
+ 
+ export default async function AdminCommunityPage({
+   searchParams,
+diff --git a/src/app/admin/funding/page.tsx b/src/app/admin/funding/page.tsx
+index fdcbda6..b79ece9 100644
+--- a/src/app/admin/funding/page.tsx
++++ b/src/app/admin/funding/page.tsx
+@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { verificationLabels, formatDate } from "@/lib/utils";
+ import type { VerificationStatus } from "@/types/database";
+ 
+-export const metadata = { title: "Funding — Admin" };
++export const metadata = { title: "Funding | Admin" };
+ 
+ const statusOptions = (
+   Object.keys(verificationLabels) as VerificationStatus[]
+diff --git a/src/app/admin/messages/page.tsx b/src/app/admin/messages/page.tsx
+index 0194202..c1602ed 100644
+--- a/src/app/admin/messages/page.tsx
++++ b/src/app/admin/messages/page.tsx
+@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/admin";
+ import { MessagesList } from "@/components/AdminMessages";
+ import type { ContactMessage } from "@/types/database";
+ 
+-export const metadata = { title: "Messages — Phapano+ Admin" };
++export const metadata = { title: "Messages | Phapano+ Admin" };
+ 
+ export default async function AdminMessagesPage({
+   searchParams,
+diff --git a/src/app/admin/page.tsx b/src/app/admin/page.tsx
+index 60adf8b..cb6d966 100644
+--- a/src/app/admin/page.tsx
++++ b/src/app/admin/page.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ import { getAdminStats } from "@/lib/admin";
+ 
+-export const metadata = { title: "Admin — Phapano+" };
++export const metadata = { title: "Admin | Phapano+" };
+ 
+ export default async function AdminHome() {
+   const stats = await getAdminStats();
+diff --git a/src/app/admin/universities/page.tsx b/src/app/admin/universities/page.tsx
+index 0b9b864..5172be4 100644
+--- a/src/app/admin/universities/page.tsx
++++ b/src/app/admin/universities/page.tsx
+@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
+ import { SA_PROVINCES, verificationLabels } from "@/lib/utils";
+ import type { VerificationStatus } from "@/types/database";
+ 
+-export const metadata = { title: "Universities — Admin" };
++export const metadata = { title: "Universities | Admin" };
+ 
+ const statusOptions = (
+   Object.keys(verificationLabels) as VerificationStatus[]
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index daf8837..11dfef5 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -13,14 +13,14 @@ const poppins = Poppins({
+ });
+ 
+ export const metadata: Metadata = {
+-  title: "Phapano+ — Your psychology journey, in one place",
++  title: "Phapano+ | Psychology pathway support",
+   description:
+-    "Phapano+ helps psychology students in South Africa explore programmes, track Honours and Master's applications, find funding, and navigate every next step with verified, trusted information.",
++    "Phapano+ helps psychology students organise their pathway, explore programmes and funding, and participate in a focused community.",
+   metadataBase: new URL("https://phapano.com"),
+   openGraph: {
+-    title: "Phapano+ — Your psychology journey, in one place",
++    title: "Phapano+ | Psychology pathway support",
+     description:
+-      "Explore programmes, track Honours and Master's applications, find funding, and plan your next steps with verified guidance.",
++      "Organise your psychology pathway, explore programmes and funding, and participate in a focused community.",
+     type: "website",
+   },
+ };
+diff --git a/src/components/AuthForm.tsx b/src/components/AuthForm.tsx
+index b6912b9..4a0f20e 100644
+--- a/src/components/AuthForm.tsx
++++ b/src/components/AuthForm.tsx
+@@ -269,7 +269,7 @@ export function AuthForm({
+           <>
+             New to Phapano?{" "}
+             <Link href="/signup" className="font-semibold text-blue-action hover:underline">
+-              Create an account
++              Create Account
+             </Link>
+           </>
+         )}
+diff --git a/src/components/BottomNav.tsx b/src/components/BottomNav.tsx
+index f872188..b36388c 100644
+--- a/src/components/BottomNav.tsx
++++ b/src/components/BottomNav.tsx
+@@ -35,26 +35,17 @@ const items = [
+     href: "/app/funding",
+     label: "Funding",
+     icon: (
+-      <>
+-        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" />
+-        <path
+-          d="M12 8v8M9.5 9.8c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.5-2.5 1.7-2.5.7-2.5 1.7 1 1.6 2.5 1.6 2.5-.6 2.5-1.6"
+-          stroke="currentColor"
+-          strokeWidth="1.5"
+-          strokeLinecap="round"
+-        />
+-      </>
+-    ),
+-  },
+-  {
+-    href: "/app/journal",
+-    label: "Notes",
+-    icon: (
+-      <>
+-        <rect x="5.5" y="4" width="13" height="16" rx="2" stroke="currentColor" strokeWidth="1.7" />
+-        <path d="M5.5 8h13" stroke="currentColor" strokeWidth="1.4" />
+-        <path d="M9 12h6M9 15.5h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+-      </>
++      <text
++        x="12"
++        y="16"
++        textAnchor="middle"
++        fill="currentColor"
++        fontSize="14"
++        fontWeight="800"
++        fontFamily="Arial, sans-serif"
++      >
++        R
++      </text>
+     ),
+   },
+   {
+@@ -88,7 +79,7 @@ export function BottomNav() {
+       aria-label="Primary"
+       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 backdrop-blur-md"
+     >
+-      <div className="mx-auto flex max-w-3xl justify-around px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
++      <div className="mx-auto grid max-w-3xl grid-cols-5 px-1 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
+         {items.map((it) => {
+           const active =
+             it.href === "/dashboard"
+@@ -99,11 +90,16 @@ export function BottomNav() {
+               key={it.href}
+               href={it.href}
+               aria-current={active ? "page" : undefined}
+-              className={`flex flex-col items-center gap-0.5 rounded-chip px-2 py-1.5 text-[0.66rem] font-bold transition ${
++              className={`min-w-0 flex flex-col items-center gap-0.5 rounded-chip px-1 py-1.5 text-[0.62rem] font-bold transition sm:text-[0.66rem] ${
+                 active ? "text-blue-action" : "text-charcoal-soft hover:text-charcoal"
+               }`}
+             >
+-              <svg viewBox="0 0 24 24" fill="none" className="h-[22px] w-[22px]">
++              <svg
++                viewBox="0 0 24 24"
++                fill="none"
++                aria-hidden="true"
++                className="h-[22px] w-[22px]"
++              >
+                 {it.icon}
+               </svg>
+               {it.label}
+diff --git a/src/components/CommunityProfileForm.tsx b/src/components/CommunityProfileForm.tsx
+index 3b8aca2..166d344 100644
+--- a/src/components/CommunityProfileForm.tsx
++++ b/src/components/CommunityProfileForm.tsx
+@@ -110,8 +110,8 @@ export function CommunityProfileForm({
+           disabled={pending}
+         />
+         <p className="mt-1 text-xs text-charcoal-soft">
+-          This is the only name shown in the community — your Passport stays
+-          private.
++          This is the name shown in the community. Your private Passport data
++          stays private unless you choose to share it.
+         </p>
+       </div>
+ 
+diff --git a/src/components/ContactForm.tsx b/src/components/ContactForm.tsx
+index 4741424..6738ff9 100644
+--- a/src/components/ContactForm.tsx
++++ b/src/components/ContactForm.tsx
+@@ -66,7 +66,7 @@ export function ContactForm() {
+           Message sent
+         </h2>
+         <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
+-          Thank you — we&apos;ve received your message and will reply to{" "}
++          Thank you. We&apos;ve received your message and will reply to{" "}
+           <b>{email}</b> as soon as we can.
+         </p>
+       </div>
+diff --git a/src/components/JournalEntries.tsx b/src/components/JournalEntries.tsx
+index 72d078e..2297b51 100644
+--- a/src/components/JournalEntries.tsx
++++ b/src/components/JournalEntries.tsx
+@@ -252,7 +252,7 @@ export function JournalEntries({
+   return (
+     <div>
+       {/* composer */}
+-      <div className="card mt-6 p-6">
++      <div id="new-note" className="card mt-6 scroll-mt-24 p-6">
+         <label className="label" htmlFor="note_text">Add a note</label>
+         <textarea
+           id="note_text"
+@@ -264,7 +264,8 @@ export function JournalEntries({
+         />
+ 
+         {/* tag */}
+-        <p className="mt-4 text-sm font-semibold text-charcoal-soft">Tag it (optional)</p>
++        <p className="mt-4 text-sm font-semibold text-charcoal-soft">Tag it</p>
++        <p className="mt-1 text-xs text-charcoal-soft">Choose a tag if it helps you organise the note.</p>
+         <div className="mt-2 flex flex-wrap gap-2">
+           {TAGS.map((t) => {
+             const on = tag === t;
+@@ -297,7 +298,8 @@ export function JournalEntries({
+         {/* urgency + due date */}
+         <div className="mt-4 grid gap-4 sm:grid-cols-2">
+           <div>
+-            <p className="text-sm font-semibold text-charcoal-soft">Priority (optional)</p>
++            <p className="text-sm font-semibold text-charcoal-soft">Priority</p>
++            <p className="mt-1 text-xs text-charcoal-soft">Add a priority when the note needs one.</p>
+             <div className="mt-2 flex flex-wrap gap-2">
+               {PRIORITIES.map((p) => {
+                 const on = priority === p.value;
+@@ -323,8 +325,9 @@ export function JournalEntries({
+           </div>
+           <div>
+             <label className="text-sm font-semibold text-charcoal-soft" htmlFor="due_input">
+-              Due date (optional)
++              Due date
+             </label>
++            <p className="mt-1 text-xs text-charcoal-soft">Leave this blank for a general note.</p>
+             <input
+               id="due_input"
+               type="date"
+diff --git a/src/components/Logo.tsx b/src/components/Logo.tsx
+index 8248755..b8f0e6f 100644
+--- a/src/components/Logo.tsx
++++ b/src/components/Logo.tsx
+@@ -3,21 +3,18 @@ import Image from "next/image";
+ 
+ /**
+  * The Phapano brand mark. Uses the official asset (public/phapano-logo.png) at
+- * its true 1:1 aspect ratio with object-contain — never stretched, cropped or
+- * squashed. The blue field is part of the official artwork. A bronze "+"
+- * denotes the Phapano+ product.
++ * its true 1:1 aspect ratio with object-contain. The blue field is part of the
++ * official artwork.
+  */
+ export function Logo({
+   href = "/",
+   className = "",
+   size = 44,
+-  showPlus = true,
+   priority = false,
+ }: {
+   href?: string | null;
+   className?: string;
+   size?: number;
+-  showPlus?: boolean;
+   priority?: boolean;
+ }) {
+   const inner = (
+@@ -36,15 +33,6 @@ export function Logo({
+           className="h-full w-full object-contain"
+         />
+       </span>
+-      {showPlus && (
+-        <span
+-          aria-hidden="true"
+-          className="select-none font-sora font-semibold leading-none text-bronze"
+-          style={{ fontSize: Math.round(size * 0.44) }}
+-        >
+-          +
+-        </span>
+-      )}
+     </span>
+   );
+ 
+diff --git a/src/components/Marketing.tsx b/src/components/Marketing.tsx
+index cebed20..4e79fec 100644
+--- a/src/components/Marketing.tsx
++++ b/src/components/Marketing.tsx
+@@ -9,13 +9,15 @@ export function PageHero({
+   intro: string;
+ }) {
+   return (
+-    <section className="border-b border-line bg-soft">
+-      <div className="mx-auto max-w-4xl px-6 py-16">
++    <section className="overflow-hidden border-b border-line bg-soft">
++      <div className="mx-auto max-w-4xl px-5 py-11 sm:px-6 sm:py-16">
+         <p className="eyebrow">{eyebrow}</p>
+-        <h1 className="mt-3 font-sora text-4xl font-bold tracking-tight">
++        <h1 className="mt-3 break-words font-sora text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+           {title}
+         </h1>
+-        <p className="mt-4 max-w-2xl text-lg text-charcoal-soft">{intro}</p>
++        <p className="mt-4 max-w-2xl text-base leading-relaxed text-charcoal-soft sm:text-lg">
++          {intro}
++        </p>
+       </div>
+     </section>
+   );
+@@ -33,7 +35,7 @@ export function Prose({ children }: { children: React.ReactNode }) {
+ /** Auth-aware marketing CTA: signed-in users get "Open Phapano+". */
+ export function MarketingCTA({
+   authed,
+-  signedOutLabel = "Create your free account",
++  signedOutLabel = "Create Account",
+   secondaryHref = "/features",
+   secondaryLabel = "See all features",
+ }: {
+diff --git a/src/components/ModerationQueue.tsx b/src/components/ModerationQueue.tsx
+index 808c1d7..a817460 100644
+--- a/src/components/ModerationQueue.tsx
++++ b/src/components/ModerationQueue.tsx
+@@ -46,7 +46,7 @@ export function ModerationQueue({ rows }: { rows: ModerationRow[] }) {
+   if (rows.length === 0) {
+     return (
+       <p className="text-sm text-charcoal-soft">
+-        Nothing here — the queue is clear.
++        Nothing here. The queue is clear.
+       </p>
+     );
+   }
+@@ -163,7 +163,7 @@ function ReportCard({ report }: { report: ModerationRow }) {
+                 {timeAgo(a.created_at)}
+                 {" · "}
+                 {a.by_me ? "by you" : "by another moderator"}
+-                {a.notes ? ` — ${a.notes}` : ""}
++                {a.notes ? `: ${a.notes}` : ""}
+               </li>
+             ))}
+           </ul>
+@@ -274,7 +274,7 @@ function ReportCard({ report }: { report: ModerationRow }) {
+           {report.moderator_notes ? (
+             <>
+               {" "}
+-              — <span className="font-semibold">Notes:</span>{" "}
++              <span className="font-semibold">Notes:</span>{" "}
+               {report.moderator_notes}
+             </>
+           ) : null}
+diff --git a/src/components/OnboardingWizard.tsx b/src/components/OnboardingWizard.tsx
+index 896c339..231200f 100644
+--- a/src/components/OnboardingWizard.tsx
++++ b/src/components/OnboardingWizard.tsx
+@@ -32,7 +32,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
+ 
+   const total = 3;
+ 
+-  // Neutral wording — Phapano+ supports Honours applicants and earlier stages,
++  // Neutral wording | Phapano+ supports Honours applicants and earlier stages,
+   // not only Master's applicants.
+   const streamQuestion = "Which psychology stream are you interested in?";
+ 
+@@ -95,7 +95,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
+             Where are you in your psychology pathway?
+           </h2>
+           <p className="mt-1 text-sm text-charcoal-soft">
+-            This helps us show what matters most to you.
++            This helps us suggest more relevant next steps.
+           </p>
+           <div className="mt-5 grid gap-2">
+             {ONBOARDING_STAGES.map((s) => {
+@@ -154,7 +154,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
+         </div>
+       )}
+ 
+-      {/* STEP 3 — university + intended stream (both optional) */}
++      {/* STEP 3: university and intended stream */}
+       {step === 2 && (
+         <form
+           action={async (formData) => {
+@@ -164,7 +164,7 @@ export function OnboardingWizard({ defaultName }: { defaultName: string }) {
+         >
+           <Star className="mb-3 h-6 w-6" />
+           <h2 className="font-sora text-xl font-bold tracking-tight">
+-            A little more (optional)
++            A little more
+           </h2>
+           <p className="mt-1 text-sm text-charcoal-soft">
+             Skip anything you&apos;re unsure of. You can add it later.
+diff --git a/src/components/OpportunityRadar.tsx b/src/components/OpportunityRadar.tsx
+deleted file mode 100644
+index 7a0e319..0000000
+--- a/src/components/OpportunityRadar.tsx
++++ /dev/null
+@@ -1,135 +0,0 @@
+-import Link from "next/link";
+-import { ReachingHands } from "@/components/illustrations";
+-import { CountdownRing, VerifiedBadge } from "@/components/Trust";
+-import { daysUntil, urgencyOf, formatDateShort, type Urgency } from "@/lib/utils";
+-
+-export interface RadarItem {
+-  id: string;
+-  kind: string; // "Application closes", "Funding you qualify for", ...
+-  title: string;
+-  date: string | null;
+-  verifiedAt: string | null;
+-  href: string;
+-  meta?: string;
+-}
+-
+-function bandOf(items: RadarItem[], band: Urgency) {
+-  return items
+-    .map((it) => ({ it, d: daysUntil(it.date), u: urgencyOf(daysUntil(it.date)) }))
+-    .filter((x) => x.u === band)
+-    .sort((a, b) => (a.d ?? 9999) - (b.d ?? 9999));
+-}
+-
+-function Row({ it, d, u }: { it: RadarItem; d: number | null; u: Urgency }) {
+-  return (
+-    <Link
+-      href={it.href}
+-      className="group flex items-center gap-4 rounded-[15px] p-3.5 transition hover:translate-x-0.5 hover:bg-soft"
+-    >
+-      <CountdownRing days={d} urgency={u} />
+-      <div className="min-w-0 flex-1">
+-        <div className="text-[0.68rem] font-extrabold uppercase tracking-wider text-charcoal-soft">
+-          {it.kind}
+-        </div>
+-        <h4 className="truncate font-sora text-base font-semibold tracking-tight">
+-          {it.title}
+-        </h4>
+-        <div className="flex flex-wrap items-center gap-1.5 text-sm text-charcoal-soft">
+-          {it.date && <span>Closes {formatDateShort(it.date)}</span>}
+-          {it.meta && <span>· {it.meta}</span>}
+-          <VerifiedBadge date={it.verifiedAt} />
+-        </div>
+-      </div>
+-    </Link>
+-  );
+-}
+-
+-export function OpportunityRadar({ items }: { items: RadarItem[] }) {
+-  const now = bandOf(items, "now");
+-  const soon = bandOf(items, "soon");
+-  const ahead = bandOf(items, "ahead");
+-  const hasAny = now.length + soon.length + ahead.length > 0;
+-
+-  return (
+-    <section
+-      aria-label="Opportunity Radar"
+-      className="overflow-hidden rounded-[26px] border-[1.5px] border-[#D3E4F6] shadow-[0_3px_6px_rgba(55,55,56,.05),0_26px_60px_rgba(46,111,176,.13)]"
+-    >
+-      <div className="relative overflow-hidden border-b border-[#E0EBF7] bg-gradient-to-br from-[#E8F2FC] to-[#F3F9FF] px-6 pb-5 pt-6">
+-        <ReachingHands className="pointer-events-none absolute -bottom-5 -right-2.5 w-40 opacity-[0.16]" />
+-        <div className="flex items-center gap-2.5 text-[0.7rem] font-extrabold uppercase tracking-[0.18em] text-blue-action">
+-          <svg viewBox="0 0 22 22" className="h-[22px] w-[22px]">
+-            <circle cx="11" cy="11" r="9.5" fill="none" stroke="#76B9F0" strokeWidth="1.5" opacity="0.55" />
+-            <circle cx="11" cy="11" r="5" fill="none" stroke="#76B9F0" strokeWidth="1.5" opacity="0.55" />
+-            <line x1="11" y1="11" x2="11" y2="2.5" stroke="#AD795B" strokeWidth="1.6" strokeLinecap="round" />
+-            <circle cx="11" cy="11" r="1.6" fill="#2E6FB0" />
+-          </svg>
+-          Your radar · today
+-        </div>
+-        <h2 className="mt-2 font-sora text-2xl font-extrabold tracking-tight">
+-          Everything that matters, today
+-        </h2>
+-        <p className="mt-1 max-w-[90%] text-sm text-charcoal-soft">
+-          Ordered by what&apos;s closest. Nothing slips past you.
+-        </p>
+-      </div>
+-
+-      {!hasAny ? (
+-        <div className="bg-white px-6 py-10 text-center">
+-          <p className="font-sora text-charcoal">Nothing on your radar yet.</p>
+-          <p className="mt-1 text-sm text-charcoal-soft">
+-            Save an institution or some funding, or add a note with a due date,
+-            and deadlines will appear here.
+-          </p>
+-          <Link href="/app/apply" className="btn-secondary mt-5 inline-flex">
+-            Explore universities
+-          </Link>
+-        </div>
+-      ) : (
+-        <>
+-          {now.length > 0 && (
+-            <Band label="This week" tick="#C2693F">
+-              {now.map((x) => (
+-                <Row key={x.it.id} {...x} />
+-              ))}
+-            </Band>
+-          )}
+-          {soon.length > 0 && (
+-            <Band label="Coming up" tick="#2E6FB0">
+-              {soon.map((x) => (
+-                <Row key={x.it.id} {...x} />
+-              ))}
+-            </Band>
+-          )}
+-          {ahead.length > 0 && (
+-            <Band label="On the horizon" tick="#5C5C5E">
+-              {ahead.map((x) => (
+-                <Row key={x.it.id} {...x} />
+-              ))}
+-            </Band>
+-          )}
+-        </>
+-      )}
+-    </section>
+-  );
+-}
+-
+-function Band({
+-  label,
+-  tick,
+-  children,
+-}: {
+-  label: string;
+-  tick: string;
+-  children: React.ReactNode;
+-}) {
+-  return (
+-    <div className="bg-white">
+-      <div className="flex items-center gap-2.5 px-5 pb-2 pt-3.5 text-[0.7rem] font-extrabold uppercase tracking-wider text-charcoal-soft">
+-        <span className="h-2 w-2 flex-none rounded-full" style={{ background: tick }} />
+-        {label}
+-      </div>
+-      <div className="px-2 pb-1">{children}</div>
+-    </div>
+-  );
+-}
+diff --git a/src/components/ReportDialog.tsx b/src/components/ReportDialog.tsx
+index 034995f..523533b 100644
+--- a/src/components/ReportDialog.tsx
++++ b/src/components/ReportDialog.tsx
+@@ -113,8 +113,11 @@ export function ReportDialog({
+               ))}
+             </select>
+             <label className="label mt-3" htmlFor="report-details">
+-              Add context (optional)
++              Add context
+             </label>
++            <p className="mb-1 text-xs text-charcoal-soft">
++              Include details if they will help the review.
++            </p>
+             <textarea
+               id="report-details"
+               className="input min-h-20"
+diff --git a/src/components/ResendVerification.tsx b/src/components/ResendVerification.tsx
+index b2b286c..27c8aed 100644
+--- a/src/components/ResendVerification.tsx
++++ b/src/components/ResendVerification.tsx
+@@ -96,7 +96,7 @@ export function ResendVerification({ email }: { email?: string }) {
+         {pending
+           ? "Sending…"
+           : cooldown > 0
+-            ? `Sent — resend available in ${cooldown}s`
++            ? `Sent. Resend available in ${cooldown}s`
+             : "Resend verification email"}
+       </button>
+ 
+diff --git a/src/components/SettingsControls.tsx b/src/components/SettingsControls.tsx
+index 63908e7..dd4b7a5 100644
+--- a/src/components/SettingsControls.tsx
++++ b/src/components/SettingsControls.tsx
+@@ -213,7 +213,7 @@ export function DangerZone({ disabled }: { disabled: boolean }) {
+         notes, reminders, and your community posts, comments, reactions and
+         follows and connections. For community safety, any reports and
+         moderation records may be kept in anonymised form with your identity
+-        removed — see our{" "}
++        removed. See our{" "}
+         <a href="/privacy" className="font-semibold text-blue-action hover:underline">
+           Privacy Policy
+         </a>
+diff --git a/src/components/SiteChrome.tsx b/src/components/SiteChrome.tsx
+index 321ade3..d77c4f5 100644
+--- a/src/components/SiteChrome.tsx
++++ b/src/components/SiteChrome.tsx
+@@ -4,9 +4,6 @@ import { Logo } from "@/components/Logo";
+ const navLinks = [
+   { href: "/about", label: "About" },
+   { href: "/features", label: "Features" },
+-  { href: "/apply", label: "Apply" },
+-  { href: "/funding", label: "Funding" },
+-  { href: "/learn", label: "Learn" },
+   { href: "/contact", label: "Contact" },
+ ];
+ 
+@@ -41,7 +38,7 @@ export function SiteHeader({ authed = false }: { authed?: boolean }) {
+                 Log in
+               </Link>
+               <Link href="/signup" className="btn-primary !px-4 !py-2 text-sm">
+-                Join Phapano+
++                Create Account
+               </Link>
+             </>
+           )}
+@@ -59,30 +56,25 @@ export function SiteFooter({ authed = false }: { authed?: boolean }) {
+           <div className="md:col-span-2">
+             <Logo href={authed ? "/dashboard" : "/"} />
+             <p className="mt-4 max-w-sm text-sm leading-relaxed text-charcoal-soft">
+-              Psychology pathway support for South African students. Honours and
+-              Master&apos;s applications, funding opportunities and verified
+-              guidance, together in one place.
++              Psychology pathway support for South African students.
+             </p>
+           </div>
+           <div>
+             <h4 className="font-sora text-sm font-bold">Explore</h4>
+             <ul className="mt-3 space-y-2 text-sm text-charcoal-soft">
+               <li><Link href="/features" className="hover:text-charcoal">Features</Link></li>
+-              <li><Link href="/apply" className="hover:text-charcoal">Apply</Link></li>
+-              <li><Link href="/funding" className="hover:text-charcoal">Funding</Link></li>
+-              <li><Link href="/learn" className="hover:text-charcoal">Learn</Link></li>
+             </ul>
+           </div>
+           <div>
+             <h4 className="font-sora text-sm font-bold">Phapano</h4>
+             <ul className="mt-3 space-y-2 text-sm text-charcoal-soft">
+-              <li><Link href="/about" className="hover:text-charcoal">Our story</Link></li>
++              <li><Link href="/about" className="hover:text-charcoal">About</Link></li>
+               <li><Link href="/contact" className="hover:text-charcoal">Contact</Link></li>
+               <li><Link href="/support" className="hover:text-charcoal">Support resources</Link></li>
+               {authed ? (
+                 <li><Link href="/dashboard" className="hover:text-charcoal">Open Phapano+</Link></li>
+               ) : (
+-                <li><Link href="/signup" className="hover:text-charcoal">Create an account</Link></li>
++                <li><Link href="/signup" className="hover:text-charcoal">Create Account</Link></li>
+               )}
+             </ul>
+             <h4 className="mt-6 font-sora text-sm font-bold">Legal</h4>
+diff --git a/src/components/Trust.tsx b/src/components/Trust.tsx
+index c257790..5c237fc 100644
+--- a/src/components/Trust.tsx
++++ b/src/components/Trust.tsx
+@@ -70,7 +70,7 @@ export function CountdownRing({
+           className="font-sora text-[1.18rem] font-extrabold leading-none tabular-nums tracking-tight"
+           style={{ color: numColour[urgency] }}
+         >
+-          {days === null ? "—" : days < 0 ? "—" : days}
++          {days === null ? "TBC" : days < 0 ? "Past" : days}
+         </span>
+         <span className="mt-0.5 text-[0.55rem] font-bold uppercase tracking-wider text-charcoal-soft">
+           {days !== null && days >= 0 ? "days" : "soon"}
+diff --git a/src/components/illustrations.tsx b/src/components/illustrations.tsx
+index 31489c0..5f45101 100644
+--- a/src/components/illustrations.tsx
++++ b/src/components/illustrations.tsx
+@@ -89,7 +89,7 @@ export function Compass({ className = "" }: { className?: string }) {
+   );
+ }
+ 
+-/** Connected opportunity markers — a small "radar / pathway" motif. */
++/** Connected opportunity markers for a pathway view. */
+ export function PathwayDots({ className = "" }: { className?: string }) {
+   return (
+     <svg viewBox="0 0 190 150" fill="none" aria-hidden className={className}>
+@@ -131,24 +131,13 @@ export function IconApplication({ className = "" }: { className?: string }) {
+ }
+ 
+ export function IconFunding({ className = "" }: { className?: string }) {
+-  // Wallet with a coin — funding / bursaries.
+   return (
+-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+-      <rect x="3.5" y="6.5" width="17" height="12" rx="2.5" stroke="#2E6FB0" strokeWidth="1.6" />
+-      <path d="M3.5 10h17" stroke="#2E6FB0" strokeWidth="1.6" />
+-      <circle cx="16.5" cy="14" r="1.6" fill="#AD795B" />
+-    </svg>
+-  );
+-}
+-
+-export function IconRadar({ className = "" }: { className?: string }) {
+-  // Bell with alert dot — deadlines / opportunity radar.
+-  return (
+-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+-      <path d="M6.5 17.5c1-.8 1.5-2 1.5-3.6V11a4 4 0 0 1 8 0v2.9c0 1.6.5 2.8 1.5 3.6h-11Z" stroke="#2E6FB0" strokeWidth="1.6" strokeLinejoin="round" />
+-      <path d="M10.5 20a1.7 1.7 0 0 0 3 0" stroke="#2E6FB0" strokeWidth="1.6" strokeLinecap="round" />
+-      <circle cx="17" cy="7" r="2.3" fill="#AD795B" />
+-    </svg>
++    <span
++      className={`inline-flex items-center justify-center rounded-full border border-blue/50 bg-blue-tint/50 font-sora font-extrabold text-blue-deep ${className}`}
++      aria-hidden="true"
++    >
++      R
++    </span>
+   );
+ }
+ 
+diff --git a/src/lib/demo.ts b/src/lib/demo.ts
+index a4155bf..2a2a4b7 100644
+--- a/src/lib/demo.ts
++++ b/src/lib/demo.ts
+@@ -1,10 +1,10 @@
+-import type { RadarItem } from "@/components/OpportunityRadar";
++import type { PathwayItem } from "@/components/MyPathway";
+ 
+ export const DEMO_NOTICE =
+   "Demo mode · sample data shown until Supabase is connected";
+ 
+-/** Sample radar items used only in placeholder mode for preview. */
+-export function demoRadar(): RadarItem[] {
++/** Sample pathway items used only in placeholder mode for preview. */
++export function demoPathway(): PathwayItem[] {
+   const today = new Date();
+   const plus = (n: number) => {
+     const d = new Date(today);
+@@ -28,7 +28,7 @@ export function demoRadar(): RadarItem[] {
+     },
+     {
+       id: "demo-2",
+-      kind: "Funding you qualify for",
++      kind: "Funding opportunity",
+       title: "NRF Postgraduate, Master's bursary",
+       date: plus(12),
+       verifiedAt: minus(2),
+diff --git a/src/lib/queries.ts b/src/lib/queries.ts
+index 2953d4d..e9fb89f 100644
+--- a/src/lib/queries.ts
++++ b/src/lib/queries.ts
+@@ -136,7 +136,7 @@ export async function getJournalEntries(): Promise<JournalEntry[]> {
+   return data ?? [];
+ }
+ 
+-/** Notes that have a due date, for the dashboard radar / next steps. */
++/** Notes that have a due date, for My Pathway and dashboard next steps. */
+ export async function getDatedNotes(): Promise<JournalEntry[]> {
+   if (!isSupabaseConfigured) return [];
+   const supabase = await createClient();
