@@ -41,6 +41,7 @@ export default async function MyCommunityProfilePage() {
           posts={member.posts}
           viewerId={uid}
           isOwnProfile
+          verificationBadges={member.verificationBadges}
         />
       ) : (
         <section className="card mt-4 p-6">

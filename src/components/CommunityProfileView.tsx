@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CommunityMemberActions } from "@/components/CommunityMemberActions";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { MemberAvatar } from "@/components/CommunityShared";
+import { VerificationBadges } from "@/components/VerificationBadges";
 import {
   communityChoiceLabel,
   orcidProfileUrl,
@@ -13,6 +14,7 @@ import type {
   CommunityConnectionState,
   CommunityPostView,
   CommunityProfile,
+  ProfileVerificationBadge,
 } from "@/types/database";
 import { careerStageLabels, streamLabels } from "@/lib/utils";
 
@@ -30,6 +32,7 @@ type CommunityProfileViewProps = {
   posts: CommunityPostView[];
   viewerId: string;
   isOwnProfile?: boolean;
+  verificationBadges?: ProfileVerificationBadge[];
 };
 
 export function CommunityProfileView({
@@ -46,6 +49,7 @@ export function CommunityProfileView({
   posts,
   viewerId,
   isOwnProfile = false,
+  verificationBadges = [],
 }: CommunityProfileViewProps) {
   const headline = profileHeadline(profile.headline);
   const pathwayStage = communityChoiceLabel(
@@ -119,6 +123,11 @@ export function CommunityProfileView({
               <h1 className="break-words font-sora text-2xl font-bold tracking-tight sm:text-3xl">
                 {profile.display_name}
               </h1>
+            )}
+            {verificationBadges.length > 0 && (
+              <div className="mt-2">
+                <VerificationBadges badges={verificationBadges} />
+              </div>
             )}
             {pathwayStage && (
               <p className="mt-1 break-words text-sm font-bold text-blue-deep">

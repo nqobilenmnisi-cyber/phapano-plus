@@ -89,7 +89,7 @@ export function CommunityPostCard({
             </Link>
             {post.is_official && (
               <span className="rounded-chip bg-blue-action/10 px-2 py-0.5 text-[0.65rem] font-bold text-blue-action">
-                Phapano+
+                Official page
               </span>
             )}
           </div>

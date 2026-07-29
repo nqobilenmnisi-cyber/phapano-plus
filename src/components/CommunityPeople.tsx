@@ -7,6 +7,7 @@ import {
   toggleFollow,
 } from "@/app/(app)/app/community/actions";
 import { MemberAvatar } from "@/components/CommunityShared";
+import { VerificationBadges } from "@/components/VerificationBadges";
 import { careerStageLabels, streamLabels } from "@/lib/utils";
 import type { CommunityMemberCard } from "@/types/database";
 
@@ -203,6 +204,16 @@ export function MemberRow({ member }: { member: CommunityMemberCard }) {
         >
           {member.display_name}
         </Link>
+        {(member.verification_badges?.length ||
+          member.identity_type === "organisation") && (
+          <span className="mt-1 block">
+            <VerificationBadges
+              badges={member.verification_badges}
+              organisationType={member.organisation_type}
+              officialOrganisation={member.identity_type === "organisation"}
+            />
+          </span>
+        )}
         {(member.headline || member.institution) && (
           <p className="truncate text-xs text-charcoal-soft">
             {member.headline || member.institution}

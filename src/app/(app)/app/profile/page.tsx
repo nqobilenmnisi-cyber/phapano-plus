@@ -4,6 +4,11 @@ import { ProfileForm } from "@/components/ProfileForm";
 import { AvatarUploader } from "@/components/AvatarUploader";
 import { SupportLine } from "@/components/AppChrome";
 import { Star, IconProfile } from "@/components/illustrations";
+import { VerificationBadges } from "@/components/VerificationBadges";
+import {
+  getManagedOrganisationPages,
+  getMyProfileVerifications,
+} from "@/lib/community";
 import {
   getProfile,
   getCurrentUser,
@@ -25,6 +30,10 @@ export default async function ProfilePage() {
       getSavedProgrammes(),
       getSavedFunding(),
     ]);
+  const [managedPages, verificationBadges] = await Promise.all([
+    getManagedOrganisationPages(),
+    getMyProfileVerifications(),
+  ]);
 
   if (isSupabaseConfigured && !user) redirect("/login?redirect=/app/profile");
 
@@ -58,6 +67,11 @@ export default async function ProfilePage() {
             {email && (
               <p className="mt-0.5 truncate text-sm text-charcoal-soft">{email}</p>
             )}
+            {verificationBadges.length ? (
+              <span className="mt-2 block">
+                <VerificationBadges badges={verificationBadges} />
+              </span>
+            ) : null}
           </div>
         </div>
 
@@ -86,6 +100,28 @@ export default async function ProfilePage() {
           </div>
         )}
       </section>
+
+      {managedPages.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-sora text-lg font-bold tracking-tight">
+            Pages you manage
+          </h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {managedPages.map((page) => (
+              <Link
+                key={page.id}
+                href={`/app/organisations/${page.id}/edit`}
+                className="card p-4 transition hover:-translate-y-0.5 hover:shadow-lift"
+              >
+                <span className="font-semibold text-charcoal">{page.name}</span>
+                <span className="mt-1 block text-xs text-charcoal-soft">
+                  Manage official page
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* saved content summary */}
       <section className="mt-8 grid grid-cols-2 gap-3">

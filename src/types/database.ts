@@ -363,6 +363,34 @@ export interface Database {
         Update: Partial<CommunityProfile>;
         Relationships: [];
       };
+      organisation_pages: {
+        Row: OrganisationPage;
+        Insert: Partial<OrganisationPage> & {
+          id: string;
+          slug: string;
+          name: string;
+        };
+        Update: Partial<OrganisationPage>;
+        Relationships: [];
+      };
+      organisation_page_admins: {
+        Row: OrganisationPageAdmin;
+        Insert: Partial<OrganisationPageAdmin> & {
+          page_id: string;
+          user_id: string;
+        };
+        Update: Partial<OrganisationPageAdmin>;
+        Relationships: [];
+      };
+      profile_verifications: {
+        Row: ProfileVerification;
+        Insert: Partial<ProfileVerification> & {
+          user_id: string;
+          badge: ProfileVerificationBadge;
+        };
+        Update: Partial<ProfileVerification>;
+        Relationships: [];
+      };
       community_moderation_state: {
         Row: CommunityModerationState;
         Insert: Partial<CommunityModerationState> & { user_id: string };
@@ -771,6 +799,45 @@ export type CommunityTermsAcceptance = {
   accepted_at: string;
 };
 
+export type OrganisationPageType = "organisation" | "initiative";
+export type OrganisationPageStatus = "active" | "retired";
+export type OrganisationPageAdminRole = "owner" | "admin" | "editor";
+export type ProfileVerificationBadge = "verified_person" | "founder";
+
+export type OrganisationPage = {
+  id: string;
+  slug: string;
+  name: string;
+  page_type: OrganisationPageType;
+  parent_page_id: string | null;
+  tagline: string | null;
+  about: string | null;
+  focus_areas: string[];
+  services: string[];
+  location: string | null;
+  contact_email: string | null;
+  website_url: string | null;
+  avatar_url: string | null;
+  is_official: boolean;
+  status: OrganisationPageStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OrganisationPageAdmin = {
+  page_id: string;
+  user_id: string;
+  role: OrganisationPageAdminRole;
+  created_at: string;
+};
+
+export type ProfileVerification = {
+  user_id: string;
+  badge: ProfileVerificationBadge;
+  verified_at: string;
+  created_at: string;
+};
+
 /** A post joined with its author card and viewer-relative state, for feeds. */
 export type CommunityPostView = CommunityPost & {
   author: Pick<
@@ -799,7 +866,12 @@ export type CommunityMemberCard = Pick<
   | "institution"
   | "bio"
   | "avatar_url"
-> & { followed_by_me: boolean };
+> & {
+  followed_by_me: boolean;
+  identity_type?: "person" | "organisation";
+  verification_badges?: ProfileVerificationBadge[];
+  organisation_type?: OrganisationPageType;
+};
 
 export type CommunityConnectionItem = {
   connection_id: string;
