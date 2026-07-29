@@ -8,6 +8,8 @@ import type {
   CommunityMemberCard,
   CommunityPostView,
   CommunityProfile,
+  OrganisationPage,
+  ProfileVerificationBadge,
 } from "@/types/database";
 import {
   canRequestConnection,
@@ -238,6 +240,15 @@ export async function searchMembers(
   if (!uid) return [];
   const supabase = await createClient();
 
+  const { data: organisationRows } = await supabase
+    .from("organisation_pages")
+    .select("*")
+    .eq("status", "active")
+    .order("name")
+    .limit(MEMBERS_PAGE_SIZE);
+  const organisations = (organisationRows ?? []) as OrganisationPage[];
+  const organisationIds = organisations.map((page) => page.id);
+
   let query = supabase
     .from("community_profiles")
     .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
@@ -246,6 +257,8 @@ export async function searchMembers(
     .order("display_name")
     .limit(MEMBERS_PAGE_SIZE);
 
+  if (organisationIds.length)
+    query = query.not("user_id", "in", `(${organisationIds.join(",")})`);
   if (params.q?.trim())
     query = query.ilike("display_name", `%${params.q.trim()}%`);
   if (params.stage) query = query.eq("stage", params.stage as never);
@@ -258,7 +271,97 @@ export async function searchMembers(
     query = query.not("user_id", "in", `(${blocked.join(",")})`);
 
   const { data } = await query;
-  return withFollowState((data ?? []) as CommunityMemberCard[], uid);
+  const people = await decorateMemberCards(
+    (data ?? []) as CommunityMemberCard[]
+  );
+  const search = params.q?.trim().toLocaleLowerCase("en-ZA");
+  const organisationCards =
+    params.stage || params.stream || params.institution?.trim()
+      ? []
+      : organisations
+          .filter(
+            (page) =>
+              !search ||
+              page.name.toLocaleLowerCase("en-ZA").includes(search) ||
+              page.tagline?.toLocaleLowerCase("en-ZA").includes(search)
+          )
+          .filter((page) => !blocked.includes(page.id))
+          .filter((page) => page.id !== uid)
+          .map(
+            (page) =>
+              ({
+                user_id: page.id,
+                display_name: page.name,
+                headline: page.tagline,
+                stage: null,
+                stream: null,
+                institution: null,
+                bio: page.about,
+                avatar_url: page.avatar_url,
+                followed_by_me: false,
+                identity_type: "organisation",
+                organisation_type: page.page_type,
+              }) satisfies CommunityMemberCard
+          );
+
+  return withFollowState(
+    [...people, ...organisationCards]
+      .sort((a, b) => a.display_name.localeCompare(b.display_name, "en-ZA"))
+      .slice(0, MEMBERS_PAGE_SIZE),
+    uid
+  );
+}
+
+async function decorateMemberCards(
+  cards: CommunityMemberCard[]
+): Promise<CommunityMemberCard[]> {
+  if (!cards.length) return [];
+  const supabase = await createClient();
+  const ids = cards.map((card) => card.user_id);
+  const [{ data: pageRows }, { data: verificationRows }] = await Promise.all([
+    supabase
+      .from("organisation_pages")
+      .select("*")
+      .in("id", ids)
+      .eq("status", "active"),
+    supabase
+      .from("profile_verifications")
+      .select("user_id, badge")
+      .in("user_id", ids),
+  ]);
+  const pageById = new Map(
+    ((pageRows ?? []) as OrganisationPage[]).map((page) => [page.id, page])
+  );
+  const badgesById = new Map<string, ProfileVerificationBadge[]>();
+  for (const row of verificationRows ?? []) {
+    const current = badgesById.get(row.user_id as string) ?? [];
+    current.push(row.badge as ProfileVerificationBadge);
+    badgesById.set(row.user_id as string, current);
+  }
+
+  return cards.map((card) => {
+    const page = pageById.get(card.user_id);
+    if (page) {
+      return {
+        ...card,
+        display_name: page.name,
+        headline: page.tagline,
+        stage: null,
+        stream: null,
+        institution: null,
+        bio: page.about,
+        avatar_url: page.avatar_url,
+        identity_type: "organisation",
+        organisation_type: page.page_type,
+        verification_badges: [],
+      };
+    }
+    return {
+      ...card,
+      identity_type: "person",
+      verification_badges: badgesById.get(card.user_id) ?? [],
+    };
+  });
 }
 
 async function withFollowState(
@@ -301,7 +404,10 @@ export async function getFollowLists(): Promise<{
       .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
       .in("user_id", ids)
       .order("display_name");
-    return withFollowState((data ?? []) as CommunityMemberCard[], uid!);
+    return withFollowState(
+      await decorateMemberCards((data ?? []) as CommunityMemberCard[]),
+      uid!
+    );
   }
 
   const [followers, following] = await Promise.all([
@@ -402,6 +508,7 @@ export async function getMemberProfile(id: string): Promise<{
   connectionNote: string | null;
   canConnect: boolean;
   posts: CommunityPostView[];
+  verificationBadges: ProfileVerificationBadge[];
 } | null> {
   if (!isSupabaseConfigured) return null;
   const uid = await getMyUserId();
@@ -422,6 +529,7 @@ export async function getMemberProfile(id: string): Promise<{
     { data: targetFollowRow },
     { data: blockRow },
     { data: connectionRow },
+    { data: verificationRows },
     postRes,
   ] = await Promise.all([
       (supabase as unknown as RpcClient).rpc("community_follow_counts", {
@@ -456,6 +564,10 @@ export async function getMemberProfile(id: string): Promise<{
         )
         .in("status", ["pending", "accepted"])
         .maybeSingle(),
+      supabase
+        .from("profile_verifications")
+        .select("badge")
+        .eq("user_id", id),
       supabase
         .from("community_posts")
         .select(POST_SELECT)
@@ -493,7 +605,109 @@ export async function getMemberProfile(id: string): Promise<{
         !!targetFollowRow
       ),
     posts,
+    verificationBadges: (verificationRows ?? []).map(
+      (row) => row.badge as ProfileVerificationBadge
+    ),
   };
+}
+
+export async function getOrganisationProfile(id: string): Promise<{
+  page: OrganisationPage;
+  followers: number;
+  following: number;
+  followedByMe: boolean;
+  blockedByMe: boolean;
+  canManage: boolean;
+  posts: CommunityPostView[];
+} | null> {
+  if (!isSupabaseConfigured) return null;
+  const uid = await getMyUserId();
+  if (!uid || !isUuid(id)) return null;
+  const supabase = await createClient();
+
+  const { data: page } = await supabase
+    .from("organisation_pages")
+    .select("*")
+    .eq("id", id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (!page) return null;
+
+  const [
+    { data: counts },
+    { data: followRow },
+    { data: blockRow },
+    { data: adminRow },
+    postRes,
+  ] = await Promise.all([
+    (supabase as unknown as RpcClient).rpc("community_follow_counts", {
+      target: id,
+    }) as Promise<{ data: unknown; error: unknown }>,
+    supabase
+      .from("community_follows")
+      .select("followee_id")
+      .eq("follower_id", uid)
+      .eq("followee_id", id)
+      .maybeSingle(),
+    supabase
+      .from("community_blocks")
+      .select("blocked_id")
+      .eq("blocker_id", uid)
+      .eq("blocked_id", id)
+      .maybeSingle(),
+    supabase
+      .from("organisation_page_admins")
+      .select("role")
+      .eq("page_id", id)
+      .eq("user_id", uid)
+      .maybeSingle(),
+    supabase
+      .from("community_posts")
+      .select(POST_SELECT)
+      .eq("author_id", id)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+  const countRow = (
+    counts as { followers: number; following: number }[] | null
+  )?.[0];
+  const posts = await attachViewerState(
+    (postRes.data ?? []) as unknown as RawPost[],
+    uid
+  );
+
+  return {
+    page: page as OrganisationPage,
+    followers: Number(countRow?.followers ?? 0),
+    following: Number(countRow?.following ?? 0),
+    followedByMe: !!followRow,
+    blockedByMe: !!blockRow,
+    canManage: !!adminRow,
+    posts,
+  };
+}
+
+export async function getManagedOrganisationPages(): Promise<
+  OrganisationPage[]
+> {
+  if (!isSupabaseConfigured) return [];
+  const uid = await getMyUserId();
+  if (!uid) return [];
+  const supabase = await createClient();
+  const { data: adminRows } = await supabase
+    .from("organisation_page_admins")
+    .select("page_id")
+    .eq("user_id", uid);
+  const ids = (adminRows ?? []).map((row) => row.page_id as string);
+  if (!ids.length) return [];
+  const { data } = await supabase
+    .from("organisation_pages")
+    .select("*")
+    .in("id", ids)
+    .eq("status", "active")
+    .order("name");
+  return (data ?? []) as OrganisationPage[];
 }
 
 export async function getBlockedAccounts(): Promise<CommunityMemberCard[]> {

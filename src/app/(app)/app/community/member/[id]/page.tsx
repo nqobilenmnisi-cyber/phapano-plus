@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CommunityProfileView } from "@/components/CommunityProfileView";
-import { getMemberProfile, getMyUserId } from "@/lib/community";
+import { OrganisationProfileView } from "@/components/OrganisationProfileView";
+import {
+  getMemberProfile,
+  getMyUserId,
+  getOrganisationProfile,
+} from "@/lib/community";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata = { title: "Community profile | Phapano+" };
@@ -18,6 +23,32 @@ export default async function CommunityMemberPage({
 
   if (id === uid) {
     redirect("/app/community/profile");
+  }
+
+  const organisation = await getOrganisationProfile(id);
+  if (organisation) {
+    return (
+      <main className="mx-auto max-w-3xl px-5 pb-12 sm:px-6">
+        <section className="pt-7">
+          <Link
+            href="/app/community/people"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-charcoal-soft hover:text-charcoal"
+          >
+            ← Back to people
+          </Link>
+        </section>
+        <OrganisationProfileView
+          page={organisation.page}
+          followers={organisation.followers}
+          following={organisation.following}
+          followedByMe={organisation.followedByMe}
+          blockedByMe={organisation.blockedByMe}
+          canManage={organisation.canManage}
+          posts={organisation.posts}
+          viewerId={uid}
+        />
+      </main>
+    );
   }
 
   const member = await getMemberProfile(id);
@@ -47,6 +78,7 @@ export default async function CommunityMemberPage({
         canConnect={member.canConnect}
         posts={member.posts}
         viewerId={uid}
+        verificationBadges={member.verificationBadges}
       />
     </main>
   );

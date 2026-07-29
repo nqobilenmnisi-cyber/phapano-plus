@@ -24,6 +24,8 @@ export function CommunityMemberActions({
   connectionState,
   connectionNote,
   canConnect,
+  allowConnection = true,
+  identityLabel = "member",
 }: {
   userId: string;
   followedByMe: boolean;
@@ -33,6 +35,8 @@ export function CommunityMemberActions({
   connectionState: CommunityConnectionState;
   connectionNote: string | null;
   canConnect: boolean;
+  allowConnection?: boolean;
+  identityLabel?: "member" | "page";
 }) {
   const router = useRouter();
   const menuId = useId();
@@ -45,6 +49,11 @@ export function CommunityMemberActions({
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const reportLabel =
+    identityLabel === "page" ? "Report page" : "Report profile";
+  const blockLabel = identityLabel === "page" ? "Block page" : "Block user";
+  const blockTitle =
+    identityLabel === "page" ? "Block this page?" : "Block this user?";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -178,16 +187,18 @@ export function CommunityMemberActions({
       <div className="min-w-[7rem] flex-1 [&>button]:w-full">
         <FollowButton userId={userId} initiallyFollowing={followedByMe} />
       </div>
-      <div className="min-w-[7rem] flex-1 [&>button]:w-full">
-        <ConnectionButton
-          userId={userId}
-          displayName={displayName}
-          state={connectionState}
-          connectionId={connectionId}
-          requestNote={connectionNote}
-          canConnect={canConnect}
-        />
-      </div>
+      {allowConnection && (
+        <div className="min-w-[7rem] flex-1 [&>button]:w-full">
+          <ConnectionButton
+            userId={userId}
+            displayName={displayName}
+            state={connectionState}
+            connectionId={connectionId}
+            requestNote={connectionNote}
+            canConnect={canConnect}
+          />
+        </div>
+      )}
 
       <div className="relative" ref={menuRef}>
         <button
@@ -219,7 +230,7 @@ export function CommunityMemberActions({
                 setReporting(true);
               }}
             >
-              Report profile
+              {reportLabel}
             </button>
             <button
               type="button"
@@ -230,7 +241,7 @@ export function CommunityMemberActions({
                 setConfirmingBlock(true);
               }}
             >
-              Block user
+              {blockLabel}
             </button>
           </div>
         )}
@@ -267,15 +278,25 @@ export function CommunityMemberActions({
               id="block-user-title"
               className="font-sora text-lg font-bold tracking-tight"
             >
-              Block this user?
+              {blockTitle}
             </h2>
             <p
               id="block-user-description"
               className="mt-2 text-sm leading-relaxed text-charcoal-soft"
             >
-              You will no longer see each other&apos;s Community profiles or
-              content. Any follow or connection between you will also end. You
-              can manage blocked users later in Settings.
+              {identityLabel === "page" ? (
+                <>
+                  You will no longer see this page&apos;s Community profile or
+                  content. Any follow between you will also end. You can manage
+                  blocked pages later in Settings.
+                </>
+              ) : (
+                <>
+                  You will no longer see each other&apos;s Community profiles or
+                  content. Any follow or connection between you will also end.
+                  You can manage blocked users later in Settings.
+                </>
+              )}
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -294,7 +315,7 @@ export function CommunityMemberActions({
                 disabled={pending}
                 aria-busy={pending}
               >
-                {pending ? "Blocking…" : "Block user"}
+                {pending ? "Blocking…" : blockLabel}
               </button>
             </div>
           </div>

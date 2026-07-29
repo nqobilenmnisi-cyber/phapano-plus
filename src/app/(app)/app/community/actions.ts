@@ -425,6 +425,17 @@ export async function sendConnection(
   if ("error" in auth) return auth;
   if (!isUuid(userId) || userId === auth.uid)
     return { error: "Please choose another member to connect with." };
+  const supabase = await createClient();
+  const { count: organisationCount } = await supabase
+    .from("organisation_pages")
+    .select("id", { count: "exact", head: true })
+    .eq("id", userId)
+    .eq("status", "active");
+  if ((organisationCount ?? 0) > 0)
+    return {
+      error:
+        "Organisation pages are follow-only and do not accept connection requests.",
+    };
   if (note.trim().length > CONNECTION_NOTE_MAX_LENGTH)
     return {
       error: `Your note can be up to ${CONNECTION_NOTE_MAX_LENGTH} characters.`,
