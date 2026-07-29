@@ -121,6 +121,9 @@ describe("Passport sharing controls", () => {
     expect(Object.keys(preferences)).not.toContain("email");
     expect(Object.keys(preferences)).not.toContain("application_year");
     expect(preferences.share_orcid).toBe(false);
+    expect(preferences.share_professional_category).toBe(false);
+    expect(preferences.share_education).toBe(false);
+    expect(preferences.share_experience).toBe(false);
   });
 
   it("permits only web links and normalises ORCID identifiers", () => {

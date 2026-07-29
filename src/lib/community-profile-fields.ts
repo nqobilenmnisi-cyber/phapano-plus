@@ -21,6 +21,9 @@ export const COMMUNITY_PROFILE_SHARING_KEYS = [
   "share_scholar",
   "share_researchgate",
   "share_orcid",
+  "share_professional_category",
+  "share_education",
+  "share_experience",
 ] as const;
 
 export type CommunityProfileSharingKey =

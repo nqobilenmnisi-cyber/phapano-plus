@@ -16,7 +16,11 @@ import type {
   CommunityProfile,
   ProfileVerificationBadge,
 } from "@/types/database";
-import { careerStageLabels, streamLabels } from "@/lib/utils";
+import {
+  careerStageLabels,
+  professionalCategoryLabels,
+  streamLabels,
+} from "@/lib/utils";
 
 type CommunityProfileViewProps = {
   profile: CommunityProfile;
@@ -60,6 +64,11 @@ export function CommunityProfileView({
   const psychologyInterests = profile.interests.map(
     (interest) =>
       communityChoiceLabel(interest, null, streamLabels) ?? interest
+  );
+  const professionalCategory = communityChoiceLabel(
+    profile.professional_category,
+    profile.professional_category_other,
+    professionalCategoryLabels
   );
   const experience = [
     { label: "Skills", value: profile.skills },
@@ -132,6 +141,11 @@ export function CommunityProfileView({
             {pathwayStage && (
               <p className="mt-1 break-words text-sm font-bold text-blue-deep">
                 {pathwayStage}
+              </p>
+            )}
+            {professionalCategory && (
+              <p className="mt-1 break-words text-sm font-semibold text-charcoal-soft">
+                {professionalCategory}
               </p>
             )}
             {headline && (
@@ -226,6 +240,46 @@ export function CommunityProfileView({
             </div>
           )}
 
+          {profile.experience.length > 0 && (
+            <ProfileHistory
+              title="Experience"
+              entries={profile.experience.map((entry) => ({
+                id: entry.id,
+                title: entry.title,
+                subtitle: entry.organisation,
+                meta: historyDateRange(
+                  entry.start_date,
+                  entry.end_date,
+                  entry.current,
+                  true
+                ),
+                secondary: entry.location,
+                description: entry.description,
+              }))}
+            />
+          )}
+
+          {profile.education.length > 0 && (
+            <ProfileHistory
+              title="Education"
+              entries={profile.education.map((entry) => ({
+                id: entry.id,
+                title: entry.institution,
+                subtitle: [entry.qualification, entry.field_of_study]
+                  .filter(Boolean)
+                  .join(" · "),
+                meta: historyDateRange(
+                  entry.start_year,
+                  entry.end_year,
+                  entry.current,
+                  false
+                ),
+                secondary: "",
+                description: entry.description,
+              }))}
+            />
+          )}
+
           {professionalLinks.length > 0 && (
             <div className="mt-6 border-t border-line pt-5">
               <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-charcoal-soft">
@@ -277,6 +331,77 @@ export function CommunityProfileView({
       )}
     </>
   );
+}
+
+type ProfileHistoryItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+  meta: string;
+  secondary: string;
+  description: string;
+};
+
+function ProfileHistory({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: ProfileHistoryItem[];
+}) {
+  return (
+    <section className="mt-6 border-t border-line pt-5">
+      <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-charcoal-soft">
+        {title}
+      </h3>
+      <ul className="mt-3 divide-y divide-line rounded-card border border-line bg-white px-4">
+        {entries.map((entry) => (
+          <li key={entry.id} className="py-4 first:pt-4 last:pb-4">
+            <p className="font-sora text-sm font-bold text-charcoal">
+              {entry.title}
+            </p>
+            {entry.subtitle && (
+              <p className="mt-1 text-sm font-semibold text-charcoal">
+                {entry.subtitle}
+              </p>
+            )}
+            {(entry.meta || entry.secondary) && (
+              <p className="mt-1 text-xs text-charcoal-soft">
+                {[entry.meta, entry.secondary].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {entry.description && (
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-charcoal-soft">
+                {entry.description}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function historyDateRange(
+  start: string,
+  end: string,
+  current: boolean,
+  monthPrecision: boolean
+) {
+  const format = (value: string) => {
+    if (!value) return "";
+    if (!monthPrecision) return value;
+    const [year, month] = value.split("-").map(Number);
+    if (!year || !month) return value;
+    return new Intl.DateTimeFormat("en-ZA", {
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(year, month - 1, 1)));
+  };
+  return [format(start), current ? "Present" : format(end)]
+    .filter(Boolean)
+    .join(" – ");
 }
 
 function ProfileDetail({ label, value }: { label: string; value: string }) {

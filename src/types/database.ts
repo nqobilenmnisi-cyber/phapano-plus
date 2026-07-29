@@ -19,6 +19,34 @@ export type CareerStage =
 
 export type UserRole = "student" | "professional" | "admin";
 
+export type ProfessionalCategory =
+  | "psychologist"
+  | "registered_counsellor"
+  | "psychometrist"
+  | "other";
+
+export type EducationEntry = {
+  id: string;
+  institution: string;
+  qualification: string;
+  field_of_study: string;
+  start_year: string;
+  end_year: string;
+  current: boolean;
+  description: string;
+};
+
+export type ExperienceEntry = {
+  id: string;
+  title: string;
+  organisation: string;
+  location: string;
+  start_date: string;
+  end_date: string;
+  current: boolean;
+  description: string;
+};
+
 export type VerificationStatus =
   | "pending"
   | "verified"
@@ -70,6 +98,8 @@ export type Profile = {
   role: UserRole;
   career_stage: CareerStage | null;
   career_stage_other: string | null;
+  professional_category: ProfessionalCategory | null;
+  professional_category_other: string | null;
   university: string | null;
   province: string | null;
   interests: PsychologyStream[];
@@ -85,6 +115,8 @@ export type Profile = {
   skills: string | null;
   volunteering: string | null;
   workshops: string | null;
+  education: EducationEntry[];
+  experience: ExperienceEntry[];
   avatar_url: string | null;
   share_bio: boolean;
   share_career_stage: boolean;
@@ -99,6 +131,9 @@ export type Profile = {
   share_scholar: boolean;
   share_researchgate: boolean;
   share_orcid: boolean;
+  share_professional_category: boolean;
+  share_education: boolean;
+  share_experience: boolean;
   onboarding_complete: boolean;
   founding_member: boolean;
   notification_prefs: NotificationPrefs;
@@ -688,6 +723,8 @@ export type CommunityProfile = {
   headline: string | null;
   stage: CareerStage | null;
   stage_other: string | null;
+  professional_category: ProfessionalCategory | null;
+  professional_category_other: string | null;
   stream: PsychologyStream | null;
   stream_other: string | null;
   institution: string | null;
@@ -697,6 +734,8 @@ export type CommunityProfile = {
   skills: string | null;
   volunteering: string | null;
   workshops: string | null;
+  education: EducationEntry[];
+  experience: ExperienceEntry[];
   linkedin_url: string | null;
   website_url: string | null;
   scholar_url: string | null;
