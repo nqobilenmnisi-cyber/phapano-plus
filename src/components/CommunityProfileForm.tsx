@@ -7,7 +7,11 @@ import {
   COMMUNITY_HEADLINE_MAX_LENGTH,
   type CommunityProfileSharingKey,
 } from "@/lib/community-profile-fields";
-import { careerStageLabels, streamLabels } from "@/lib/utils";
+import {
+  careerStageLabels,
+  professionalCategoryLabels,
+  streamLabels,
+} from "@/lib/utils";
 import type { CommunityProfile, Profile } from "@/types/database";
 
 const VISIBILITY_OPTIONS = [
@@ -75,10 +79,20 @@ export function CommunityProfileForm({
     passport?.interests
       .map((interest) => streamLabels[interest] ?? interest)
       .join(", ") || null;
+  const professionalCategory = passport?.professional_category
+    ? passport.professional_category === "other"
+      ? passport.professional_category_other || "Other"
+      : professionalCategoryLabels[passport.professional_category]
+    : null;
 
   const sharingControls: SharingControl[] = [
     { key: "share_bio", label: "Professional bio", value: passport?.bio ?? null },
     { key: "share_career_stage", label: "Career stage", value: stage },
+    {
+      key: "share_professional_category",
+      label: "Professional category",
+      value: professionalCategory,
+    },
     { key: "share_university", label: "University", value: passport?.university ?? null },
     { key: "share_province", label: "Province", value: passport?.province ?? null },
     {
@@ -102,6 +116,22 @@ export function CommunityProfileForm({
       value: passport?.researchgate_url ?? null,
     },
     { key: "share_orcid", label: "ORCID", value: passport?.orcid ?? null },
+    {
+      key: "share_education",
+      label: "Education",
+      value:
+        passport?.education?.length
+          ? `${passport.education.length} ${passport.education.length === 1 ? "entry" : "entries"}`
+          : null,
+    },
+    {
+      key: "share_experience",
+      label: "Experience",
+      value:
+        passport?.experience?.length
+          ? `${passport.experience.length} ${passport.experience.length === 1 ? "entry" : "entries"}`
+          : null,
+    },
   ];
 
   function submit(formData: FormData) {

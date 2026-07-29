@@ -5,7 +5,18 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { safeExternalProfileUrl } from "@/lib/community-profile-fields";
-import type { CareerStage, PsychologyStream } from "@/types/database";
+import {
+  parseEducationFormValue,
+  parseExperienceFormValue,
+} from "@/lib/profile-history";
+import {
+  PROFESSIONAL_CATEGORIES,
+} from "@/lib/utils";
+import type {
+  CareerStage,
+  ProfessionalCategory,
+  PsychologyStream,
+} from "@/types/database";
 
 export async function completeOnboarding(formData: FormData) {
   if (!isSupabaseConfigured) redirect("/dashboard");
@@ -64,6 +75,17 @@ export async function updateProfile(formData: FormData) {
   const interests = formData.getAll("interests").map(String) as PsychologyStream[];
   const stage = (String(formData.get("career_stage") ?? "") || null) as CareerStage | null;
   const stageOther = String(formData.get("career_stage_other") ?? "").trim();
+  const submittedProfessionalCategory = String(
+    formData.get("professional_category") ?? ""
+  );
+  const professionalCategory = PROFESSIONAL_CATEGORIES.includes(
+    submittedProfessionalCategory as ProfessionalCategory
+  )
+    ? (submittedProfessionalCategory as ProfessionalCategory)
+    : null;
+  const professionalCategoryOther = String(
+    formData.get("professional_category_other") ?? ""
+  ).trim();
   const profileLinks = [
     ["linkedin_url", "LinkedIn"],
     ["website_url", "website"],
@@ -98,6 +120,11 @@ export async function updateProfile(formData: FormData) {
       surname: String(formData.get("surname") ?? "").trim() || null,
       career_stage: stage,
       career_stage_other: stage === "other" ? stageOther || null : null,
+      professional_category: professionalCategory,
+      professional_category_other:
+        professionalCategory === "other"
+          ? professionalCategoryOther || null
+          : null,
       university: String(formData.get("university") ?? "").trim() || null,
       province: String(formData.get("province") ?? "").trim() || null,
       bio: String(formData.get("bio") ?? "").trim() || null,
@@ -109,6 +136,8 @@ export async function updateProfile(formData: FormData) {
       skills: String(formData.get("skills") ?? "").trim() || null,
       volunteering: String(formData.get("volunteering") ?? "").trim() || null,
       workshops: String(formData.get("workshops") ?? "").trim() || null,
+      education: parseEducationFormValue(formData.get("education")),
+      experience: parseExperienceFormValue(formData.get("experience")),
       linkedin_url: normalisedLinks.linkedin_url,
       website_url: normalisedLinks.website_url,
       scholar_url: normalisedLinks.scholar_url,

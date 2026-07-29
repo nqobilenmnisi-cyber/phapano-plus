@@ -4,19 +4,30 @@ import { useState, useTransition } from "react";
 import { updateProfile } from "@/app/(app)/profile-actions";
 import {
   careerStageLabels,
+  professionalCategoryLabels,
   streamLabels,
   SA_PROVINCES,
   ONBOARDING_STAGES,
+  PROFESSIONAL_CATEGORIES,
   STREAM_OPTIONS,
 } from "@/lib/utils";
 import { InstitutionAutocomplete } from "@/components/InstitutionAutocomplete";
-import type { Profile, CareerStage, PsychologyStream } from "@/types/database";
+import { ProfileHistoryFields } from "@/components/ProfileHistoryFields";
+import type {
+  Profile,
+  CareerStage,
+  ProfessionalCategory,
+  PsychologyStream,
+} from "@/types/database";
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [stage, setStage] = useState<CareerStage | "">(
     profile.career_stage ?? ""
   );
   const [stageOther, setStageOther] = useState(profile.career_stage_other ?? "");
+  const [professionalCategory, setProfessionalCategory] = useState<
+    ProfessionalCategory | ""
+  >(profile.professional_category ?? "");
   const [institution, setInstitution] = useState(profile.university ?? "");
   const [interests, setInterests] = useState<PsychologyStream[]>(
     profile.interests ?? []
@@ -132,6 +143,51 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <input type="hidden" name="career_stage_other" value="" />
       )}
 
+      <div>
+        <label className="label" htmlFor="professional_category">
+          Professional category
+        </label>
+        <select
+          id="professional_category"
+          name="professional_category"
+          value={professionalCategory}
+          onChange={(event) =>
+            setProfessionalCategory(
+              event.target.value as ProfessionalCategory | ""
+            )
+          }
+          className="input"
+        >
+          <option value="">Not applicable yet</option>
+          {PROFESSIONAL_CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {professionalCategoryLabels[category]}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-charcoal-soft">
+          For registered or professionally practising members. Verification is
+          managed separately.
+        </p>
+      </div>
+
+      {professionalCategory === "other" ? (
+        <div>
+          <label className="label" htmlFor="professional_category_other">
+            Other professional category
+          </label>
+          <input
+            id="professional_category_other"
+            name="professional_category_other"
+            defaultValue={profile.professional_category_other ?? ""}
+            className="input"
+            placeholder="Enter your professional category"
+          />
+        </div>
+      ) : (
+        <input type="hidden" name="professional_category_other" value="" />
+      )}
+
       {/* institution + province */}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
@@ -240,6 +296,10 @@ export function ProfileForm({ profile }: { profile: Profile }) {
               placeholder="e.g. Phapano application workshop, research methods seminar"
             />
           </div>
+          <ProfileHistoryFields
+            education={profile.education ?? []}
+            experience={profile.experience ?? []}
+          />
         </div>
       </div>
 

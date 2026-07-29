@@ -1,5 +1,6 @@
 import type {
   CareerStage,
+  ProfessionalCategory,
   PsychologyStream,
   VerificationStatus,
 } from "@/types/database";
@@ -62,6 +63,20 @@ export const careerStageLabels: Record<CareerStage, string> = {
   professional: "Registered psychologist",
   other: "Other",
 };
+
+export const professionalCategoryLabels: Record<ProfessionalCategory, string> = {
+  psychologist: "Psychologist",
+  registered_counsellor: "Registered Counsellor",
+  psychometrist: "Psychometrist",
+  other: "Other",
+};
+
+export const PROFESSIONAL_CATEGORIES: ProfessionalCategory[] = [
+  "psychologist",
+  "registered_counsellor",
+  "psychometrist",
+  "other",
+];
 
 /**
  * The stages offered during onboarding, in the order we present them.
