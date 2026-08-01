@@ -20,36 +20,25 @@ const LEVELS: {
 ];
 
 function LevelLink({ level, label }: { level: PsychologyUniversityLevel; label: string }) {
-  if (level.status === "offered" && level.url) {
-    return (
-      <a
-        href={level.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group flex min-w-0 items-center justify-between gap-3 rounded-card border border-line bg-white px-3 py-2.5 transition hover:border-blue"
-      >
-        <span className="min-w-0">
-          <span className="block text-xs font-bold text-blue-action">{label}</span>
-          <span className="mt-0.5 block text-xs leading-snug text-charcoal-soft">
-            {level.title}
-          </span>
-        </span>
-        <span aria-hidden="true" className="flex-none text-blue-action transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
-          ↗
-        </span>
-      </a>
-    );
-  }
+  if (level.status !== "offered" || !level.url) return null;
 
   return (
-    <div className="rounded-card border border-dashed border-divider bg-soft px-3 py-2.5">
-      <span className="block text-xs font-bold text-charcoal-soft">{label}</span>
-      <span className="mt-0.5 block text-xs text-charcoal-soft">
-        {level.status === "not_offered"
-          ? "Not offered in the current official catalogue"
-          : "No current Psychology qualification verified"}
+    <a
+      href={level.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex min-w-0 items-center justify-between gap-3 rounded-card border border-line bg-white px-3 py-2.5 transition hover:border-blue"
+    >
+      <span className="min-w-0">
+        <span className="block text-xs font-bold text-blue-action">{label}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-charcoal-soft">
+          {level.title}
+        </span>
       </span>
-    </div>
+      <span aria-hidden="true" className="flex-none text-blue-action transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+        ↗
+      </span>
+    </a>
   );
 }
 
@@ -58,31 +47,35 @@ export function PsychologyUniversityCatalogue({ rows }: { rows: CatalogueRow[] }
   const [province, setProvince] = useState("all");
   const [level, setLevel] = useState<"all" | keyof PsychologyUniversityLevels>("all");
 
-  const provinces = useMemo(
-    () => Array.from(new Set(rows.map((row) => row.province))).sort(),
+  const universitiesWithOfferings = useMemo(
+    () => rows.filter((row) => LEVELS.some((item) => row.levels[item.key].status === "offered")),
     [rows]
+  );
+
+  const provinces = useMemo(
+    () => Array.from(new Set(universitiesWithOfferings.map((row) => row.province))).sort(),
+    [universitiesWithOfferings]
   );
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return rows.filter((row) => {
+    return universitiesWithOfferings.filter((row) => {
       if (province !== "all" && row.province !== province) return false;
       if (level !== "all" && row.levels[level].status !== "offered") return false;
       if (term && !row.institution.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [level, province, query, rows]);
+  }, [level, province, query, universitiesWithOfferings]);
 
   return (
     <section className="mt-7" aria-labelledby="national-psychology-catalogue">
       <div className="rounded-card border border-line bg-soft px-4 py-4 sm:px-5">
         <h2 id="national-psychology-catalogue" className="font-sora text-lg font-bold tracking-tight">
-          All 26 public universities
+          Psychology programmes at public universities
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
-          Each available qualification links to an official university source. “Not verified” means
-          we did not find enough current official evidence to publish that level; it does not mean the
-          university can never offer it.
+          Only institutions with a verified Psychology qualification are shown. Every programme
+          links directly to an official university source.
         </p>
         <p className="mt-2 text-xs font-semibold text-charcoal-soft">
           Verified 2 August 2026 · next full review due within 90 days
@@ -98,7 +91,7 @@ export function PsychologyUniversityCatalogue({ rows }: { rows: CatalogueRow[] }
               level === "all" ? "border-charcoal bg-charcoal text-white" : "border-line bg-white text-charcoal-soft"
             }`}
           >
-            All universities
+            All institutions
           </button>
           {LEVELS.map((item) => (
             <button
@@ -164,14 +157,11 @@ export function PsychologyUniversityCatalogue({ rows }: { rows: CatalogueRow[] }
             </header>
 
             <div className="mt-4 grid min-w-0 gap-2">
-              {LEVELS.map((item) => (
+              {LEVELS.filter((item) => row.levels[item.key].status === "offered").map((item) => (
                 <LevelLink key={item.key} level={row.levels[item.key]} label={item.label} />
               ))}
             </div>
 
-            {row.audit_note && (
-              <p className="mt-3 text-xs leading-relaxed text-charcoal-soft">{row.audit_note}</p>
-            )}
             <a
               href={row.audit_source_url}
               target="_blank"
@@ -186,7 +176,7 @@ export function PsychologyUniversityCatalogue({ rows }: { rows: CatalogueRow[] }
 
       {filtered.length === 0 && (
         <p className="mt-4 rounded-card border border-dashed border-divider px-5 py-8 text-center text-sm text-charcoal-soft">
-          No universities match those filters.
+          Try a different search or filter.
         </p>
       )}
     </section>
