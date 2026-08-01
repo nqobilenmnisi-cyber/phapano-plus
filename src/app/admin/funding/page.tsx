@@ -47,7 +47,11 @@ export default async function AdminFunding() {
   const rows: AdminRow[] = funding.map((f) => ({
     id: f.id,
     title: f.title,
-    subtitle: [f.provider, f.closing_date ? `closes ${formatDate(f.closing_date)}` : null]
+    subtitle: [
+      f.needs_review ? "Source changed — review needed" : null,
+      f.provider,
+      f.closing_date ? `closes ${formatDate(f.closing_date)}` : null,
+    ]
       .filter(Boolean)
       .join(" · "),
     published: f.is_published,

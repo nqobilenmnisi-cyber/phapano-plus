@@ -15,15 +15,17 @@ export async function toggleSaveFunding(fundingId: string, saved: boolean) {
   if (!user) redirect("/login");
 
   if (saved) {
-    await supabase
+    const { error } = await supabase
       .from("saved_funding")
       .delete()
       .eq("user_id", user.id)
       .eq("funding_id", fundingId);
+    if (error) return { ok: false, error: "We couldn't update your saved funding. Please try again." };
   } else {
-    await supabase
+    const { error } = await supabase
       .from("saved_funding")
       .insert({ user_id: user.id, funding_id: fundingId });
+    if (error) return { ok: false, error: "We couldn't update your saved funding. Please try again." };
   }
   revalidatePath("/app/funding");
   revalidatePath("/dashboard");

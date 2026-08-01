@@ -129,6 +129,18 @@ export function BellIcon(props: IconProps) {
   );
 }
 
+export function BookmarkIcon({ filled = false, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <IconFrame {...props}>
+      <path
+        d="M6.5 4.2h11v15.6L12 16.4l-5.5 3.4V4.2Z"
+        fill={filled ? "currentColor" : "none"}
+        {...line}
+      />
+    </IconFrame>
+  );
+}
+
 export function VerifiedIcon(props: IconProps) {
   return (
     <IconFrame {...props}>

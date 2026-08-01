@@ -13,7 +13,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "funding:refresh": "node scripts/refresh-funding.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.1",

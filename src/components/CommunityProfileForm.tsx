@@ -212,11 +212,11 @@ export function CommunityProfileForm({
           Every Passport field starts private. Turn on only what you want shown
           publicly; updates to enabled details stay synchronized automatically.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
           {sharingControls.map((control) => (
             <label
               key={control.key}
-              className="flex cursor-pointer items-start gap-3 rounded-card border border-blue/30 bg-paper px-4 py-3.5 transition hover:border-blue-action"
+              className="flex min-w-0 cursor-pointer items-start gap-3 overflow-hidden rounded-card border border-blue/30 bg-paper px-3 py-3.5 transition hover:border-blue-action sm:px-4"
             >
               <input
                 type="checkbox"

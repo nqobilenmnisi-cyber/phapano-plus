@@ -6,6 +6,7 @@ import type { ApplyProgramme } from "@/types/database";
 import { applyStreamLabel, APPLY_STREAMS } from "@/lib/utils";
 import { toggleSaveProgramme } from "@/app/(app)/app/apply/actions";
 import { UniversityBadge } from "@/components/UniversityBadge";
+import { BookmarkIcon } from "@/components/PhapanoIcons";
 
 const PROVINCES = [
   "Eastern Cape",
@@ -73,9 +74,7 @@ function ProgrammeCard({
               : "border border-line bg-white text-charcoal hover:border-blue"
           } disabled:opacity-60`}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"}>
-            <path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-          </svg>
+          <BookmarkIcon className="h-4 w-4" filled={saved} />
           {saving ? "Saving…" : saved ? "Saved" : "Save"}
         </button>
 
@@ -391,9 +390,7 @@ export function SaveProgrammeButton({
           saved ? "bg-bronze text-white" : "border border-line bg-white text-charcoal hover:border-blue"
         }`}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"}>
-          <path d="M6 4h12v16l-6-4-6 4V4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-        </svg>
+        <BookmarkIcon className="h-4 w-4" filled={saved} />
         {pending ? "Saving…" : saved ? "Saved" : "Save programme"}
       </button>
       {error && (

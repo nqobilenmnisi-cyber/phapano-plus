@@ -18,20 +18,29 @@ export default async function FundingPage({
   const savedIds = Array.from(sets.fundingIds);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 pb-12 sm:px-6">
-      <section className="pb-2 pt-7">
-        <div className="flex items-center gap-2.5">
-          <IconFunding className="h-7 w-7 flex-none" />
-          <h1 className="font-sora text-3xl font-bold tracking-tight">Funding</h1>
+    <main className="mx-auto max-w-4xl px-4 pb-12 sm:px-6">
+      <section className="card relative mt-7 overflow-hidden border-blue/30 bg-gradient-to-br from-[#EAF4FF] via-white to-[#FBF4ED] p-5 sm:p-7">
+        <div aria-hidden="true" className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-blue/15 blur-2xl" />
+        <div className="relative">
+          <p className="inline-flex items-center gap-2 rounded-full border border-blue/25 bg-white/85 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-blue-deep">
+            <span className="h-2 w-2 rounded-full bg-ok" />
+            Live funding board
+          </p>
+          <div className="mt-4 flex items-center gap-3">
+            <span className="grid h-11 w-11 flex-none place-items-center rounded-card bg-blue-action text-white shadow-sm">
+              <IconFunding className="h-7 w-7" />
+            </span>
+            <h1 className="font-sora text-3xl font-bold tracking-tight sm:text-4xl">Funding</h1>
+          </div>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-charcoal-soft sm:text-base">
+            Find bursaries, scholarships, research grants and conference support
+            relevant to psychology pathways in South Africa.
+          </p>
+          <p className="mt-4 max-w-2xl text-xs leading-relaxed text-charcoal-soft">
+            Phapano+ monitors official sources for changes. Always confirm final
+            eligibility and dates on the funder&apos;s own page before applying.
+          </p>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
-          Phapano+ is a guide to funding opportunities that may be relevant to
-          psychology students and graduates. Funding opportunities open and close
-          throughout the year, eligibility requirements may change, and not every
-          opportunity is available every year. Always verify the latest
-          information on the official funder&apos;s website before making plans or
-          submitting an application.
-        </p>
       </section>
 
       {!isSupabaseConfigured && (
