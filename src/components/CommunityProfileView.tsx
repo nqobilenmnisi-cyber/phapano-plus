@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CommunityMemberActions } from "@/components/CommunityMemberActions";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
+import { CommunityActivity } from "@/components/CommunityActivity";
 import { MemberAvatar } from "@/components/CommunityShared";
 import { VerificationBadges } from "@/components/VerificationBadges";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/lib/community-profile-fields";
 import type {
   CommunityConnectionState,
+  CommunityActivityComment,
   CommunityPostView,
   CommunityProfile,
   ProfileVerificationBadge,
@@ -37,6 +39,10 @@ type CommunityProfileViewProps = {
   viewerId: string;
   isOwnProfile?: boolean;
   verificationBadges?: ProfileVerificationBadge[];
+  activity?: {
+    reactions: CommunityPostView[];
+    comments: CommunityActivityComment[];
+  } | null;
 };
 
 export function CommunityProfileView({
@@ -54,6 +60,7 @@ export function CommunityProfileView({
   viewerId,
   isOwnProfile = false,
   verificationBadges = [],
+  activity = null,
 }: CommunityProfileViewProps) {
   const headline = profileHeadline(profile.headline);
   const pathwayStage = communityChoiceLabel(
@@ -312,26 +319,37 @@ export function CommunityProfileView({
 
       {!blockedByMe && (
         <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between border-b border-line">
-            <h2 className="border-b-2 border-blue-action px-1 pb-3 font-sora text-base font-bold tracking-tight text-charcoal">
-              Posts
-            </h2>
-            <span className="pb-3 text-xs font-semibold text-charcoal-soft">
-              {posts.length} {posts.length === 1 ? "post" : "posts"}
-            </span>
-          </div>
-          {posts.length === 0 ? (
-            <p className="text-sm text-charcoal-soft">No posts yet.</p>
+          {isOwnProfile && activity ? (
+            <CommunityActivity
+              posts={posts}
+              reactions={activity.reactions}
+              comments={activity.comments}
+              viewerId={viewerId}
+            />
           ) : (
-            <div className="space-y-3">
-              {posts.map((post) => (
-                <CommunityPostCard
-                  key={post.id}
-                  post={post}
-                  viewerId={viewerId}
-                />
-              ))}
-            </div>
+            <>
+              <div className="mb-3 flex items-center justify-between border-b border-line">
+                <h2 className="border-b-2 border-blue-action px-1 pb-3 font-sora text-base font-bold tracking-tight text-charcoal">
+                  Posts
+                </h2>
+                <span className="pb-3 text-xs font-semibold text-charcoal-soft">
+                  {posts.length} {posts.length === 1 ? "post" : "posts"}
+                </span>
+              </div>
+              {posts.length === 0 ? (
+                <p className="text-sm text-charcoal-soft">No posts yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {posts.map((post) => (
+                    <CommunityPostCard
+                      key={post.id}
+                      post={post}
+                      viewerId={viewerId}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
       )}

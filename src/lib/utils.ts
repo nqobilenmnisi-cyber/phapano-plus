@@ -4,13 +4,19 @@ import type {
   PsychologyStream,
   VerificationStatus,
 } from "@/types/database";
+import {
+  SOUTH_AFRICA_TIME_ZONE,
+  johannesburgDateParts,
+} from "@/lib/time";
 
-export function daysUntil(dateStr: string | null): number | null {
+export function daysUntil(dateStr: string | null, now = new Date()): number | null {
   if (!dateStr) return null;
-  const target = new Date(dateStr + "T00:00:00");
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const diff = Math.round((target.getTime() - now.getTime()) / 86_400_000);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  const today = johannesburgDateParts(now);
+  const targetDay = Date.UTC(year, month - 1, day);
+  const todayDay = Date.UTC(today.year, today.month - 1, today.day);
+  const diff = Math.round((targetDay - todayDay) / 86_400_000);
   return diff;
 }
 
@@ -20,6 +26,7 @@ export function formatDate(dateStr: string | null): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: SOUTH_AFRICA_TIME_ZONE,
   });
 }
 
@@ -28,6 +35,7 @@ export function formatDateShort(dateStr: string | null): string {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-ZA", {
     day: "numeric",
     month: "short",
+    timeZone: SOUTH_AFRICA_TIME_ZONE,
   });
 }
 
@@ -145,8 +153,8 @@ export const SA_PROVINCES = [
   "Western Cape",
 ];
 
-export function greeting(): string {
-  const h = new Date().getHours();
+export function greeting(now = new Date()): string {
+  const h = johannesburgDateParts(now).hour;
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";

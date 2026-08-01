@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AppTopBar, SupportLine } from "@/components/AppChrome";
 import { BottomNav } from "@/components/BottomNav";
 import { MyPathway, type PathwayItem } from "@/components/MyPathway";
-import { Compass, Star, IconApplication, IconNotes } from "@/components/illustrations";
+import { IconApplication, IconNotes } from "@/components/illustrations";
 import { redirect } from "next/navigation";
 import {
   getAuthState,
@@ -16,6 +16,10 @@ import {
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isApplicationStarted } from "@/lib/application-plan-status";
 import { daysUntil, formatDateShort, greeting, firstName } from "@/lib/utils";
+import {
+  johannesburgDateLabel,
+  johannesburgDateParts,
+} from "@/lib/time";
 import { demoPathway, DEMO_NOTICE } from "@/lib/demo";
 import type { CareerStage } from "@/types/database";
 
@@ -33,8 +37,12 @@ const AFFIRMATIONS = [
 ];
 
 function affirmationForToday(): string {
-  const start = new Date(new Date().getFullYear(), 0, 0).getTime();
-  const dayOfYear = Math.floor((Date.now() - start) / 86_400_000);
+  const today = johannesburgDateParts();
+  const dayOfYear = Math.floor(
+    (Date.UTC(today.year, today.month - 1, today.day) -
+      Date.UTC(today.year, 0, 0)) /
+      86_400_000
+  );
   return AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
 }
 
@@ -146,26 +154,21 @@ export default async function DashboardPage() {
   // An application is "in progress" once the user moves it beyond Interested
   // (or marks it submitted) in their planner.
   const appsStarted = savedProgrammes.filter(isApplicationStarted).length;
-  const fundingSaved = savedFunding.length;
-  const deadlinesTracked = datedNotes.length;
   const stage = profile?.career_stage ?? null;
-
-  // Pathway progress only: saved programmes, applications in progress, funding,
-  // deadlines. Profile setup is deliberately NOT counted here (this card is
-  // pathway progress, so it starts at 0% until the user acts).
-  const milestones = [
-    programmesSaved > 0,
-    appsStarted > 0,
-    fundingSaved > 0,
-    deadlinesTracked > 0,
-  ];
-  const milestonesDone = milestones.filter(Boolean).length;
-  const progressPct = Math.round((milestonesDone / milestones.length) * 100);
-  const hasData = milestonesDone > 0 || Boolean(profile?.goals);
+  const hasData =
+    programmesSaved > 0 ||
+    appsStarted > 0 ||
+    savedFunding.length > 0 ||
+    datedNotes.length > 0 ||
+    Boolean(profile?.goals);
 
   // Only nudge when the profile is genuinely missing required fields.
   const profileIncomplete =
     isSupabaseConfigured && (!profile?.full_name || !profile?.career_stage);
+  const dueSoon = pathwayItems.filter((item) => {
+    const days = daysUntil(item.date);
+    return days !== null && days >= 0 && days <= 7;
+  }).length;
 
   return (
     <div className="min-h-screen pb-24">
@@ -182,10 +185,11 @@ export default async function DashboardPage() {
           </p>
         )}
 
-        {/* Personalised greeting remains on Today; redundant date chrome was removed. */}
-        <section className="relative overflow-hidden px-1 pb-1.5 pt-7">
-          <Compass className="pointer-events-none absolute -top-1.5 right-0 w-44 opacity-90" />
-          <h1 className="mt-1 font-sora text-[2.15rem] font-bold leading-tight tracking-tight">
+        <section className="pt-7">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-action">
+            {johannesburgDateLabel()} · Johannesburg time
+          </p>
+          <h1 className="mt-2 max-w-2xl font-sora text-[2rem] font-bold leading-tight tracking-tight sm:text-[2.35rem]">
             {name ? (
               <>
                 {greeting()}, <span className="text-blue-action">{name}</span>.
@@ -193,9 +197,12 @@ export default async function DashboardPage() {
             ) : (
               "Welcome back."
             )}
-            <br />
-            Let&apos;s take the next step.
           </h1>
+          <p className="mt-2 text-base text-charcoal-soft">
+            {dueSoon > 0
+              ? `${dueSoon} ${dueSoon === 1 ? "item needs" : "items need"} your attention this week.`
+              : "Nothing urgent is due this week. Continue when you are ready."}
+          </p>
         </section>
 
         {/* gentle prompt to complete profile (only when truly incomplete) */}
@@ -222,20 +229,15 @@ export default async function DashboardPage() {
           </Link>
         )}
 
-        {/* a short, practical note */}
-        <div className="relative mt-5 flex items-start gap-3.5 overflow-hidden rounded-card border border-line bg-gradient-to-b from-white to-[#FBFCFE] px-5 py-5 shadow-card">
-          <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue to-bronze-soft" />
-          <Star className="mt-0.5 h-[22px] w-[22px] flex-none" />
-          <p className="font-medium leading-relaxed text-charcoal">
-            {affirmationForToday()}
-          </p>
+        <div className="mt-5 rounded-card border border-line bg-gradient-to-r from-blue-tint/55 to-white px-5 py-4 text-sm font-medium leading-relaxed text-charcoal shadow-card">
+          {affirmationForToday()}
         </div>
 
         {/* your next steps */}
         <div className="mt-10 flex items-center gap-3 px-1">
           <IconApplication className="h-[26px] w-[26px] flex-none" />
           <h2 className="font-sora text-[1.34rem] font-bold tracking-tight">
-            Your next steps
+            Continue your pathway
           </h2>
           <span className="ml-auto text-sm font-semibold text-charcoal-soft">
             {appsStarted > 0 ? "Pick up where you left off" : "Where to start"}
@@ -247,7 +249,7 @@ export default async function DashboardPage() {
             : "Add your goals, saved institutions or deadlines to personalise your next steps."}
         </p>
 
-        <FocusList
+        <TodayFocusGrid
           stage={stage}
           appsStarted={appsStarted}
           savedCount={programmesSaved}
@@ -257,37 +259,6 @@ export default async function DashboardPage() {
         {/* My Pathway */}
         <div className="mt-5">
           <MyPathway items={pathwayItems} />
-        </div>
-
-        {/* progress — driven entirely by real data; empty when nothing done */}
-        <div className="mt-10 flex items-center gap-4 rounded-card border border-bronze-soft bg-gradient-to-b from-white to-[#FBF7F3] px-5 py-5 shadow-card">
-          <span className="grid h-[52px] w-[52px] flex-none place-items-center rounded-full border-[3px] border-bronze-soft bg-white">
-            <span className="font-sora text-sm font-extrabold tabular-nums text-bronze-deep">
-              {progressPct}%
-            </span>
-          </span>
-          <div className="flex-1">
-            <b className="font-sora text-base font-bold">Your progress so far</b>
-            {hasData ? (
-              <div className="text-sm text-charcoal-soft">
-                {programmesSaved} programme{programmesSaved === 1 ? "" : "s"} saved ·{" "}
-                {appsStarted} application{appsStarted === 1 ? "" : "s"} tracked ·{" "}
-                {fundingSaved} funding saved · {deadlinesTracked} deadline
-                {deadlinesTracked === 1 ? "" : "s"}
-              </div>
-            ) : (
-              <div className="text-sm text-charcoal-soft">
-                Your progress will appear here once you save an institution, add
-                an application or track a deadline.
-              </div>
-            )}
-            <div className="mt-2.5 h-[9px] overflow-hidden rounded-full border border-bronze-soft bg-white">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-bronze to-[#C99A7C] transition-all duration-1000"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </div>
         </div>
 
         {/* My Notes summary. The complete editor remains on the Notes page. */}
@@ -532,7 +503,7 @@ function focusStepsFor(
   return steps;
 }
 
-function FocusList({
+function TodayFocusGrid({
   stage,
   appsStarted,
   savedCount,
@@ -546,28 +517,12 @@ function FocusList({
   const steps = focusStepsFor(stage, appsStarted, savedCount, goals);
 
   return (
-    <div className="relative mt-4 pl-[42px]">
-      <span className="pointer-events-none absolute bottom-3.5 left-[15px] top-2 w-[3px] rounded bg-[repeating-linear-gradient(180deg,#76B9F0_0_9px,transparent_9px_16px)] opacity-50" />
-      {steps.map((s, i) => (
-        <div key={i} className="relative mb-3.5">
-          <span
-            className={`absolute -left-[34px] top-4 z-[2] grid h-6 w-6 place-items-center rounded-full border-[2.5px] ${
-              s.done
-                ? "border-bronze bg-bronze"
-                : i === 0
-                  ? "border-blue bg-white shadow-[0_0_0_6px_rgba(118,185,240,.16)]"
-                  : "border-blue bg-white"
-            }`}
-          >
-            {s.done && (
-              <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
-                <path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </span>
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      {steps.slice(0, 3).map((s) => (
+        <div key={`${s.pill}-${s.title}`} className="min-w-0">
           <Link
             href={s.href}
-            className={`block rounded-card border p-[17px] shadow-card transition hover:-translate-y-0.5 hover:border-[#D2E4F7] hover:shadow-lift ${
+            className={`flex h-full min-w-0 flex-col rounded-card border p-4 shadow-card transition hover:-translate-y-0.5 hover:border-[#D2E4F7] hover:shadow-lift ${
               s.done
                 ? "border-bronze-soft bg-gradient-to-b from-[#FFFDFB] to-[#FBF7F3]"
                 : "border-line bg-white"
@@ -582,7 +537,7 @@ function FocusList({
             >
               {s.pill}
             </span>
-            <h3 className="mt-2 font-sora text-[1.08rem] font-semibold tracking-tight">
+            <h3 className="mt-2 break-words font-sora text-base font-semibold tracking-tight">
               {s.title}
             </h3>
             <p className="text-sm text-charcoal-soft">{s.body}</p>

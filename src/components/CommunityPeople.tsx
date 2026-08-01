@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toggleFollow } from "@/app/(app)/app/community/actions";
 import { MemberAvatar } from "@/components/CommunityShared";
+import { ConnectionButton } from "@/components/ConnectionButton";
 import { VerificationBadges } from "@/components/VerificationBadges";
 import type { CommunityMemberCard } from "@/types/database";
 
@@ -118,11 +119,32 @@ export function MemberRow({ member }: { member: CommunityMemberCard }) {
           {member.bio}
         </p>
       )}
-      <div className="mt-auto pt-3 [&>button]:w-full">
-        <FollowButton
-          userId={member.user_id}
-          initiallyFollowing={member.followed_by_me}
-        />
+      <div className="mt-auto grid grid-cols-2 gap-2 pt-3 [&>button]:w-full">
+        <div
+          className={
+            member.identity_type === "organisation"
+              ? "col-span-2 [&>button]:w-full"
+              : "[&>button]:w-full"
+          }
+        >
+          <FollowButton
+            userId={member.user_id}
+            initiallyFollowing={member.followed_by_me}
+            subtleWhenFollowing={member.connection_state === "connected"}
+          />
+        </div>
+        {member.identity_type !== "organisation" && (
+          <div className="[&>button]:w-full">
+            <ConnectionButton
+              userId={member.user_id}
+              displayName={member.display_name}
+              state={member.connection_state ?? "none"}
+              connectionId={member.connection_id ?? null}
+              requestNote={member.connection_note ?? null}
+              canConnect={member.can_connect ?? false}
+            />
+          </div>
+        )}
       </div>
     </li>
   );

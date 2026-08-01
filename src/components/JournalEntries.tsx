@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { JournalEntry } from "@/types/database";
+import { daysUntil } from "@/lib/utils";
 import {
   createEntry,
   updateEntry,
@@ -48,17 +49,6 @@ const priorityMeta = (v: string | null) =>
 const PLACEHOLDER =
   "e.g. Email Dr Khumalo to ask about being a referee before the Wits deadline…";
 
-function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-function daysUntil(due: string | null): number | null {
-  if (!due) return null;
-  const d = new Date(due + "T00:00:00");
-  if (Number.isNaN(d.getTime())) return null;
-  return Math.round((d.getTime() - startOfToday().getTime()) / 86_400_000);
-}
 type Bucket = "overdue" | "soon" | "upcoming" | "none";
 function bucketOf(due: string | null): Bucket {
   const d = daysUntil(due);

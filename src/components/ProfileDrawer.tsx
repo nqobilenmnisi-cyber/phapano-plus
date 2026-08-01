@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { MemberAvatar } from "@/components/CommunityShared";
 import { VerificationBadges } from "@/components/VerificationBadges";
@@ -32,12 +32,31 @@ export function ProfileDrawer({
   managedPages: DrawerIdentity[];
   verificationBadges: ProfileVerificationBadge[];
 }) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
+      if (event.key !== "Tab") return;
+      const controls = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled])'
+        ) ?? []
+      );
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => {
@@ -63,16 +82,18 @@ export function ProfileDrawer({
         tabIndex={open ? 0 : -1}
       />
       <aside
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Your Phapano menu"
-        className={`absolute inset-y-0 left-0 flex w-[min(88vw,23rem)] flex-col overflow-y-auto border-r border-line bg-paper shadow-2xl transition-transform duration-200 ease-out ${
+        className={`absolute inset-y-0 left-0 flex w-[min(92vw,23rem)] min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-r border-line bg-paper pb-[env(safe-area-inset-bottom)] shadow-2xl transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <p className="font-sora text-base font-bold tracking-tight">Your Phapano</p>
           <button
+            ref={closeRef}
             type="button"
             aria-label="Close menu"
             className="grid h-10 w-10 place-items-center rounded-full text-xl text-charcoal-soft transition hover:bg-soft hover:text-charcoal"
@@ -147,31 +168,31 @@ export function ProfileDrawer({
                       />
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 text-sm font-bold">
-                          <span className="truncate">{page.name}</span>
+                          <span className="min-w-0 break-words">{page.name}</span>
                           <VerificationBadges
                             organisationType={page.organisationType}
                             officialOrganisation={page.official}
                           />
                         </p>
                         {page.headline && (
-                          <p className="truncate text-xs text-charcoal-soft">
+                          <p className="line-clamp-2 break-words text-xs text-charcoal-soft">
                             {page.headline}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs font-bold">
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-center text-[0.7rem] font-bold sm:text-xs">
                       <Link
                         href={page.href}
                         onClick={onClose}
-                        className="rounded-chip border border-line px-2 py-2 text-blue-deep"
+                        className="whitespace-nowrap rounded-chip border border-line px-1.5 py-2 text-blue-deep"
                       >
                         View as member
                       </Link>
                       <Link
                         href={page.manageHref ?? page.href}
                         onClick={onClose}
-                        className="rounded-chip bg-blue-action px-2 py-2 text-white"
+                        className="whitespace-nowrap rounded-chip bg-blue-action px-1.5 py-2 text-white"
                       >
                         Manage page
                       </Link>

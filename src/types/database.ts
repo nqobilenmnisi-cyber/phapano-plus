@@ -979,6 +979,11 @@ export type CommunityEmbeddedPost = CommunityPost & {
   author: CommunityPostAuthor | null;
   image_url: string | null;
   attachments: CommunityPostAttachmentView[];
+  reaction_counts: Record<CommunityReactionType, number>;
+  my_reaction: CommunityReactionType | null;
+  comment_count: number;
+  pass_count: number;
+  passed_by_me: boolean;
   mentions?: CommunityMention[];
   verification_badges?: ProfileVerificationBadge[];
 };
@@ -998,6 +1003,11 @@ export type CommunityPostView = CommunityPost & {
   mentions?: CommunityMention[];
   verification_badges?: ProfileVerificationBadge[];
 };
+
+export type CommunityActivityComment = Pick<
+  CommunityComment,
+  "id" | "post_id" | "body" | "created_at"
+>;
 
 export type CommunityCommentView = CommunityComment & {
   author: Pick<
@@ -1021,6 +1031,11 @@ export type CommunityMemberCard = Pick<
   | "avatar_url"
 > & {
   followed_by_me: boolean;
+  connection_permission?: CommunityConnectionPermission;
+  connection_id?: string | null;
+  connection_state?: CommunityConnectionState;
+  connection_note?: string | null;
+  can_connect?: boolean;
   identity_type?: "person" | "organisation";
   verification_badges?: ProfileVerificationBadge[];
   organisation_type?: OrganisationPageType;

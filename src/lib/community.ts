@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type {
   CommunityCommentView,
+  CommunityActivityComment,
   CommunityConnection,
   CommunityConnectionItem,
   CommunityConnectionState,
@@ -152,7 +153,8 @@ async function attachViewerState(
     )
   );
 
-  const mentionPostIds = [...ids, ...resharedIds];
+  const interactionIds = Array.from(new Set([...ids, ...resharedIds]));
+  const mentionPostIds = interactionIds;
   const authorIds = Array.from(
     new Set(rows.map((row) => row.author_id as string).filter(Boolean))
   );
@@ -168,11 +170,11 @@ async function attachViewerState(
         supabase
           .from("community_reactions")
           .select("post_id, user_id, actor_id, created_by, reaction_type")
-          .in("post_id", ids),
+          .in("post_id", interactionIds),
         supabase
           .from("community_posts")
           .select("reshared_post_id, author_id, created_by")
-          .in("reshared_post_id", ids)
+          .in("reshared_post_id", interactionIds)
           .eq("status", "published"),
         supabase
           .from("organisation_page_admins")
@@ -274,6 +276,15 @@ async function attachViewerState(
             ? signedUrls.get(post.image_path) ?? null
             : null,
         attachments: [],
+        reaction_counts: reactionCounts.get(post.id) ?? {
+          support: 0,
+          insightful: 0,
+          celebrate: 0,
+        },
+        my_reaction: myReactions.get(post.id) ?? null,
+        comment_count: row.community_comments?.[0]?.count ?? 0,
+        pass_count: passCounts.get(post.id) ?? 0,
+        passed_by_me: passedByMe.has(post.id),
         mentions: mentionsByPost.get(post.id) ?? [],
         verification_badges: verificationByAuthor.get(post.author_id) ?? [],
       });
@@ -317,36 +328,44 @@ async function attachViewerState(
     }
   }
 
-  return rows.map((r) => ({
-    ...(r as unknown as CommunityPostView),
-    author: r.author ?? null,
-    image_url:
-      r.image_path && r.media_status === "approved"
-        ? signedUrls.get(r.image_path as string) ?? null
-        : null,
-    attachments: attachmentsByPost.get(r.id as string) ?? [],
-    reaction_counts: reactionCounts.get(r.id as string) ?? {
+  return rows.map((r) => {
+    const original = r.reshared_post_id
+      ? embedded.get(r.reshared_post_id as string) ?? null
+      : null;
+    const isPlainCarry = Boolean(original && !String(r.body ?? "").trim());
+    const engagementId = isPlainCarry ? original!.id : (r.id as string);
+    const engagementCounts = reactionCounts.get(engagementId) ?? {
       support: 0,
       insightful: 0,
       celebrate: 0,
-    },
-    my_reaction: myReactions.get(r.id as string) ?? null,
-    like_count: Object.values(reactionCounts.get(r.id as string) ?? {}).reduce(
-      (sum, value) => sum + value,
-      0
-    ),
-    comment_count: r.community_comments?.[0]?.count ?? 0,
-    pass_count: passCounts.get(r.id as string) ?? 0,
-    passed_by_me: passedByMe.has(r.id as string),
-    can_manage:
-      r.created_by === uid || managedIds.has(r.author_id as string),
-    reshared_post: r.reshared_post_id
-      ? embedded.get(r.reshared_post_id as string) ?? null
-      : null,
-    mentions: mentionsByPost.get(r.id as string) ?? [],
-    verification_badges:
-      verificationByAuthor.get(r.author_id as string) ?? [],
-  }));
+    };
+    return {
+      ...(r as unknown as CommunityPostView),
+      author: r.author ?? null,
+      image_url:
+        r.image_path && r.media_status === "approved"
+          ? signedUrls.get(r.image_path as string) ?? null
+          : null,
+      attachments: attachmentsByPost.get(r.id as string) ?? [],
+      reaction_counts: engagementCounts,
+      my_reaction: myReactions.get(engagementId) ?? null,
+      like_count: Object.values(engagementCounts).reduce(
+        (sum, value) => sum + value,
+        0
+      ),
+      comment_count: isPlainCarry
+        ? original!.comment_count
+        : r.community_comments?.[0]?.count ?? 0,
+      pass_count: passCounts.get(engagementId) ?? 0,
+      passed_by_me: passedByMe.has(engagementId),
+      can_manage:
+        r.created_by === uid || managedIds.has(r.author_id as string),
+      reshared_post: original,
+      mentions: mentionsByPost.get(r.id as string) ?? [],
+      verification_badges:
+        verificationByAuthor.get(r.author_id as string) ?? [],
+    };
+  });
 }
 
 export async function getFeed(opts: {
@@ -393,6 +412,55 @@ export async function getFeed(opts: {
   const hasMore = rows.length > FEED_PAGE_SIZE;
   const posts = await attachViewerState(rows.slice(0, FEED_PAGE_SIZE), uid);
   return { posts, hasMore };
+}
+
+export async function getMyCommunityActivity(): Promise<{
+  reactions: CommunityPostView[];
+  comments: CommunityActivityComment[];
+}> {
+  const empty = { reactions: [], comments: [] };
+  if (!isSupabaseConfigured) return empty;
+  const uid = await getMyUserId();
+  if (!uid) return empty;
+  const supabase = await createClient();
+  const [{ data: reactionRows }, { data: commentRows }] = await Promise.all([
+    supabase
+      .from("community_reactions")
+      .select("post_id, created_at")
+      .eq("actor_id", uid)
+      .order("created_at", { ascending: false })
+      .limit(40),
+    supabase
+      .from("community_comments")
+      .select("id, post_id, body, created_at")
+      .eq("created_by", uid)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(40),
+  ]);
+  const reactionIds = Array.from(
+    new Set((reactionRows ?? []).map((row) => row.post_id as string))
+  );
+  let reactions: CommunityPostView[] = [];
+  if (reactionIds.length) {
+    const { data: postRows } = await supabase
+      .from("community_posts")
+      .select(POST_SELECT)
+      .in("id", reactionIds)
+      .eq("status", "published");
+    const decorated = await attachViewerState(
+      (postRows ?? []) as unknown as RawPost[],
+      uid
+    );
+    const rank = new Map(reactionIds.map((id, index) => [id, index]));
+    reactions = decorated.sort(
+      (a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999)
+    );
+  }
+  return {
+    reactions,
+    comments: (commentRows ?? []) as CommunityActivityComment[],
+  };
 }
 
 export async function getPostView(
@@ -503,7 +571,7 @@ export async function searchMembers(
 
   let query = supabase
     .from("community_profiles")
-    .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
+    .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url, connection_permission")
     .eq("visibility", "visible")
     .neq("user_id", uid)
     .order("display_name")
@@ -551,6 +619,7 @@ export async function searchMembers(
                 bio: page.about,
                 avatar_url: page.avatar_url,
                 followed_by_me: false,
+                connection_permission: "nobody",
                 identity_type: "organisation",
                 organisation_type: page.page_type,
                 official_organisation: page.is_official,
@@ -624,13 +693,62 @@ async function withFollowState(
 ): Promise<CommunityMemberCard[]> {
   if (!cards.length) return [];
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("community_follows")
-    .select("followee_id")
-    .eq("follower_id", uid)
-    .in("followee_id", cards.map((c) => c.user_id));
-  const followed = new Set((data ?? []).map((r) => r.followee_id as string));
-  return cards.map((c) => ({ ...c, followed_by_me: followed.has(c.user_id) }));
+  const ids = cards.map((card) => card.user_id);
+  const [
+    { data: followingRows },
+    { data: targetFollowRows },
+    { data: connectionRows },
+  ] = await Promise.all([
+      supabase
+        .from("community_follows")
+        .select("followee_id")
+        .eq("follower_id", uid)
+        .in("followee_id", ids),
+      supabase
+        .from("community_follows")
+        .select("follower_id")
+        .in("follower_id", ids)
+        .eq("followee_id", uid),
+      supabase
+        .from("community_connections")
+        .select("*")
+        .or(
+          `and(requester_id.eq.${uid},recipient_id.in.(${ids.join(",")})),and(recipient_id.eq.${uid},requester_id.in.(${ids.join(",")}))`
+        )
+        .in("status", ["pending", "accepted"]),
+  ]);
+  const followed = new Set(
+    (followingRows ?? []).map((row) => row.followee_id as string)
+  );
+  const targetFollowsViewer = new Set(
+    (targetFollowRows ?? []).map((row) => row.follower_id as string)
+  );
+  const connectionByMember = new Map<string, CommunityConnection>();
+  for (const row of (connectionRows ?? []) as CommunityConnection[]) {
+    const memberId =
+      row.requester_id === uid ? row.recipient_id : row.requester_id;
+    connectionByMember.set(memberId, row);
+  }
+  return cards.map((card) => {
+    const connection = connectionByMember.get(card.user_id) ?? null;
+    const state = connectionStateFor(connection, uid);
+    const person = card.identity_type !== "organisation";
+    return {
+      ...card,
+      followed_by_me: followed.has(card.user_id),
+      connection_id: connection?.id ?? null,
+      connection_state: state,
+      connection_note:
+        state === "incoming_pending" ? connection?.note ?? null : null,
+      can_connect:
+        person &&
+        state === "none" &&
+        canRequestConnection(
+          card.connection_permission ?? "everyone",
+          targetFollowsViewer.has(card.user_id)
+        ),
+    };
+  });
 }
 
 export async function getFollowLists(): Promise<{
@@ -655,7 +773,7 @@ export async function getFollowLists(): Promise<{
     const sb = await createClient();
     const { data } = await sb
       .from("community_profiles")
-      .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url")
+      .select("user_id, display_name, headline, stage, stream, institution, bio, avatar_url, connection_permission")
       .in("user_id", ids)
       .order("display_name");
     return withFollowState(
@@ -702,7 +820,7 @@ export async function getConnectionHub(): Promise<{
   const { data: profileRows } = await supabase
     .from("community_profiles")
     .select(
-      "user_id, display_name, headline, stage, stream, institution, bio, avatar_url"
+      "user_id, display_name, headline, stage, stream, institution, bio, avatar_url, connection_permission"
     )
     .in("user_id", memberIds);
   const cards = await withFollowState(
@@ -828,7 +946,7 @@ export async function getMemberProfile(id: string): Promise<{
         .eq("author_id", id)
         .eq("status", "published")
         .order("created_at", { ascending: false })
-        .limit(10),
+        .limit(id === uid ? 40 : 10),
     ]);
 
   const countRow = (counts as { followers: number; following: number }[] | null)?.[0];

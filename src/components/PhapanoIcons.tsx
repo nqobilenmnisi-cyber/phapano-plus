@@ -77,8 +77,10 @@ export function CommentIcon(props: IconProps) {
 export function PassOnIcon(props: IconProps) {
   return (
     <IconFrame {...props}>
-      <path d="M6.2 7.5h10.4l-2.4-2.4M17.8 16.5H7.4l2.4 2.4" {...line} />
-      <path d="M18.8 8.5v2.3M5.2 15.5v-2.3" {...line} />
+      <path d="M18.7 9A7 7 0 0 0 6.5 5.8L4.6 8" {...line} />
+      <path d="M4.7 4.5 4.6 8l3.5.1" {...line} />
+      <path d="M5.3 15A7 7 0 0 0 17.5 18.2l1.9-2.2" {...line} />
+      <path d="m19.3 19.5.1-3.5-3.5-.1" {...line} />
     </IconFrame>
   );
 }
@@ -86,8 +88,8 @@ export function PassOnIcon(props: IconProps) {
 export function SendIcon(props: IconProps) {
   return (
     <IconFrame {...props}>
-      <path d="M6 18 18 6M9 6h9v9" {...line} />
-      <path d="M18 12v6H6V6h6" {...line} />
+      <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" {...line} />
+      <path d="M5 13v6h14v-6" {...line} />
     </IconFrame>
   );
 }

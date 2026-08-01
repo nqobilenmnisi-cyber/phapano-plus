@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import {
   deletePost,
   passOnPost,
@@ -45,6 +52,10 @@ function ReactionIcon({
 
 function EmbeddedPost({ post }: { post: CommunityEmbeddedPost }) {
   const name = post.author?.display_name ?? "Phapano+ member";
+  const hasImage =
+    Boolean(post.image_url) ||
+    post.attachments.some((attachment) => attachment.kind === "image");
+  const hasMedia = Boolean(post.image_path || post.attachments.length);
   return (
     <div className="mt-3 overflow-hidden rounded-card border border-line bg-soft/50">
       <div className="flex items-center gap-2.5 p-3">
@@ -65,19 +76,38 @@ function EmbeddedPost({ post }: { post: CommunityEmbeddedPost }) {
         </div>
       </div>
       {post.body && (
-        <p className="whitespace-pre-wrap break-words px-3 pb-3 text-sm leading-relaxed text-charcoal [overflow-wrap:anywhere]">
+        <ExpandablePostText
+          className="px-3 pb-3 text-sm"
+          lines={hasImage ? 2 : 3}
+        >
           <CommunityRichText text={post.body} mentions={post.mentions} />
-        </p>
+        </ExpandablePostText>
       )}
       {post.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.image_url}
-          alt={post.image_alt_text ?? ""}
-          className="max-h-[38rem] w-full object-contain bg-white"
+        <PostImage
+          url={post.image_url}
+          alt={post.image_alt_text ?? post.body}
+          className="max-h-[38rem] w-full bg-white object-contain"
         />
       )}
       <PostAttachments attachments={post.attachments} caption={post.body} embedded />
+      {post.link_url && !hasMedia && (
+        <a
+          href={post.link_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="m-3 flex min-w-0 flex-col overflow-hidden rounded-card border border-line bg-paper transition hover:border-blue/30"
+        >
+          <span className="min-w-0 p-3">
+            <span className="block text-[0.65rem] font-bold uppercase tracking-wide text-charcoal-soft">
+              {post.link_site_name ?? new URL(post.link_url).hostname} ↗
+            </span>
+            <span className="mt-1 line-clamp-2 block text-sm font-bold text-charcoal">
+              {post.link_title ?? post.link_url}
+            </span>
+          </span>
+        </a>
+      )}
     </div>
   );
 }
@@ -128,6 +158,14 @@ export function CommunityPostCard({
   const activeReaction = COMMUNITY_REACTIONS.find(
     (option) => option.value === reaction
   );
+  const plainCarry = Boolean(post.reshared_post_id && !post.body.trim());
+  const interactionPostId = plainCarry
+    ? post.reshared_post_id ?? post.id
+    : post.id;
+  const hasImages =
+    Boolean(post.image_url) ||
+    post.attachments.some((attachment) => attachment.kind === "image");
+  const hasAttachments = Boolean(post.image_path || post.attachments.length);
 
   function onReact(nextType: CommunityReactionType) {
     const next = reaction === nextType ? null : nextType;
@@ -141,7 +179,7 @@ export function CommunityPostCard({
     });
     setReactionOpen(false);
     startTransition(async () => {
-      const result = await toggleReaction(post.id, next, actorId);
+      const result = await toggleReaction(interactionPostId, next, actorId);
       if ("error" in result) setMessage(result.error);
     });
   }
@@ -170,7 +208,7 @@ export function CommunityPostCard({
     setPassed(true);
     setPassCount((count) => count + 1);
     startTransition(async () => {
-      const result = await passOnPost(post.id, actorId, thoughts);
+      const result = await passOnPost(interactionPostId, actorId, thoughts);
       if ("error" in result) {
         setPassed(false);
         setPassCount((count) => Math.max(0, count - 1));
@@ -323,19 +361,21 @@ export function CommunityPostCard({
           </div>
         ) : (
           post.body && (
-            <p className="mt-3 whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-charcoal [overflow-wrap:anywhere]">
+            <ExpandablePostText
+              className="mt-3 text-[0.95rem]"
+              lines={hasImages ? 2 : 3}
+            >
               <CommunityRichText text={post.body} mentions={post.mentions} />
-            </p>
+            </ExpandablePostText>
           )
         )}
 
         {post.reshared_post && <EmbeddedPost post={post.reshared_post} />}
 
         {post.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.image_url}
-            alt={post.image_alt_text ?? ""}
+          <PostImage
+            url={post.image_url}
+            alt={post.image_alt_text ?? post.body}
             className="-mx-4 mt-4 max-h-[42rem] w-[calc(100%+2rem)] bg-soft object-contain sm:-mx-5 sm:w-[calc(100%+2.5rem)]"
           />
         )}
@@ -352,7 +392,7 @@ export function CommunityPostCard({
           </p>
         )}
 
-        {post.link_url && (
+        {post.link_url && !hasAttachments && (
           <a
             href={post.link_url}
             target="_blank"
@@ -393,23 +433,11 @@ export function CommunityPostCard({
         )}
 
         {confirmingDelete && (
-          <div className="mt-3 flex items-center justify-end gap-3 rounded-card bg-soft p-3 text-sm">
-            <span className="text-charcoal-soft">Delete this post?</span>
-            <button
-              className="font-bold text-bronze-deep"
-              onClick={onDelete}
-              disabled={pending}
-            >
-              {pending ? "Deleting…" : "Yes, delete"}
-            </button>
-            <button
-              className="font-semibold text-charcoal-soft"
-              onClick={() => setConfirmingDelete(false)}
-              disabled={pending}
-            >
-              Keep
-            </button>
-          </div>
+          <DeletePostDialog
+            pending={pending}
+            onDelete={onDelete}
+            onClose={() => setConfirmingDelete(false)}
+          />
         )}
 
         {identities.length > 1 && (
@@ -469,7 +497,23 @@ export function CommunityPostCard({
           </div>
         )}
 
-        <footer className="mt-5 grid grid-cols-4 border-t border-line pt-2 text-xs sm:text-sm">
+        {(totalReactions > 0 || post.comment_count > 0 || passCount > 0) && (
+          <div className="mt-4 flex min-w-0 items-center justify-between gap-3 border-b border-line pb-2 text-xs text-charcoal-soft">
+            <ReactionSummary counts={reactionCounts} total={totalReactions} />
+            <div className="flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-1">
+              {post.comment_count > 0 && (
+                <Link href={`/app/community/post/${interactionPostId}`} className="hover:underline">
+                  {post.comment_count} {post.comment_count === 1 ? "comment" : "comments"}
+                </Link>
+              )}
+              {passCount > 0 && (
+                <span>{passCount} carried forward</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        <footer className="grid grid-cols-4 pt-2 text-xs sm:text-sm">
           <div className="relative">
             <button
               type="button"
@@ -492,7 +536,6 @@ export function CommunityPostCard({
               ) : (
                 <HeartIcon className="h-5 w-5" />
               )}
-              {totalReactions > 0 && <span>{totalReactions}</span>}
             </button>
             {reactionOpen && (
               <div className="absolute bottom-full left-0 z-20 mb-2 flex rounded-full border border-line bg-paper p-1 shadow-lg">
@@ -526,13 +569,12 @@ export function CommunityPostCard({
             </span>
           ) : (
             <Link
-              href={`/app/community/post/${post.id}`}
+              href={`/app/community/post/${interactionPostId}`}
               className="flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
               aria-label={`${post.comment_count} comments`}
               title="Comment"
             >
               <CommentIcon className="h-5 w-5" />
-              {post.comment_count > 0 && <span>{post.comment_count}</span>}
             </Link>
           )}
 
@@ -553,7 +595,6 @@ export function CommunityPostCard({
               title="Carry forward"
             >
               <PassOnIcon className="h-5 w-5" />
-              {passCount > 0 && <span>{passCount}</span>}
             </button>
             {carryMenuOpen && (
               <div className="absolute bottom-full right-0 z-20 mb-2 w-56 rounded-card border border-line bg-paper p-1 shadow-lg">
@@ -590,19 +631,6 @@ export function CommunityPostCard({
             <SendIcon className="h-5 w-5" />
           </button>
         </footer>
-
-        {totalReactions > 0 && (
-          <p className="mt-2 text-xs text-charcoal-soft">
-            {COMMUNITY_REACTIONS.filter(
-              (option) => reactionCounts[option.value] > 0
-            )
-              .map(
-                (option) =>
-                  `${option.label} ${reactionCounts[option.value]}`
-              )
-              .join(" · ")}
-          </p>
-        )}
 
         {reporting && (
           <ReportDialog
@@ -641,10 +669,9 @@ function PostAttachments({
           }`}
         >
           {images.map((attachment, index) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <PostImage
               key={attachment.id}
-              src={attachment.url}
+              url={attachment.url}
               alt={caption || `Image ${index + 1} attached to this post`}
               className={`w-full bg-soft object-cover ${
                 images.length === 1
@@ -677,5 +704,257 @@ function PostAttachments({
         </a>
       )}
     </div>
+  );
+}
+
+function ExpandablePostText({
+  children,
+  lines,
+  className = "",
+}: {
+  children: ReactNode;
+  lines: 2 | 3;
+  className?: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = textRef.current;
+    if (!element || expanded) return;
+    setOverflowing(element.scrollHeight > element.clientHeight + 1);
+  }, [children, expanded, lines]);
+
+  return (
+    <div className={className}>
+      <div
+        ref={textRef}
+        className={`whitespace-pre-wrap break-words leading-relaxed text-charcoal [overflow-wrap:anywhere] ${
+          expanded ? "" : lines === 2 ? "line-clamp-2" : "line-clamp-3"
+        }`}
+      >
+        {children}
+      </div>
+      {(overflowing || expanded) && (
+        <button
+          type="button"
+          className="mt-0.5 text-sm font-semibold text-charcoal-soft hover:text-charcoal hover:underline"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? "Show less" : "… more"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function downloadImageUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set("download", "phapano-image");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function PostImage({
+  url,
+  alt,
+  className,
+}: {
+  url: string;
+  alt: string;
+  className: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const cover = className.includes("object-cover");
+  return (
+    <>
+      <button
+        type="button"
+        className={`block cursor-zoom-in overflow-hidden ${className}`}
+        aria-label="View image"
+        onClick={() => setOpen(true)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt={alt}
+          className={cover ? "h-full w-full object-cover" : "h-auto w-full object-contain"}
+          style={{ maxHeight: "inherit" }}
+        />
+      </button>
+      {open && (
+        <ImageLightbox url={url} alt={alt} onClose={() => setOpen(false)} />
+      )}
+    </>
+  );
+}
+
+function ImageLightbox({
+  url,
+  alt,
+  onClose,
+}: {
+  url: string;
+  alt: string;
+  onClose: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Post image"
+      className="fixed inset-0 z-[100] flex flex-col bg-charcoal/95 p-3 sm:p-6"
+    >
+      <div className="flex items-center justify-end gap-2">
+        <a
+          href={downloadImageUrl(url)}
+          download
+          className="rounded-chip bg-white px-4 py-2 text-sm font-bold text-blue-deep"
+        >
+          Save image
+        </a>
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          className="grid h-10 w-10 place-items-center rounded-full bg-white text-xl font-bold text-charcoal"
+          aria-label="Close image"
+        >
+          ×
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1 items-center justify-center py-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt={alt} className="max-h-full max-w-full object-contain" />
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function DeletePostDialog({
+  pending,
+  onDelete,
+  onClose,
+}: {
+  pending: boolean;
+  onDelete: () => void;
+  onClose: () => void;
+}) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !pending) onClose();
+      if (event.key !== "Tab") return;
+      const buttons = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLButtonElement>(
+          "button:not([disabled])"
+        ) ?? []
+      );
+      if (!buttons.length) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose, pending]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-charcoal/35 p-4 backdrop-blur-[2px]">
+      <div
+        ref={dialogRef}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-post-title"
+        aria-describedby="delete-post-description"
+        className="w-full max-w-sm rounded-card border border-line bg-paper p-5 shadow-2xl"
+      >
+        <h2 id="delete-post-title" className="font-sora text-lg font-bold">
+          Delete this post?
+        </h2>
+        <p id="delete-post-description" className="mt-2 text-sm text-charcoal-soft">
+          This removes the post and its uploaded media. This cannot be undone.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            ref={cancelRef}
+            type="button"
+            className="btn-secondary"
+            onClick={onClose}
+            disabled={pending}
+          >
+            Keep post
+          </button>
+          <button
+            type="button"
+            className="btn-bronze"
+            onClick={onDelete}
+            disabled={pending}
+          >
+            {pending ? "Deleting…" : "Delete post"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ReactionSummary({
+  counts,
+  total,
+}: {
+  counts: Record<CommunityReactionType, number>;
+  total: number;
+}) {
+  if (!total) return <span />;
+  const active = COMMUNITY_REACTIONS.filter((reaction) => counts[reaction.value] > 0);
+  return (
+    <span
+      className="flex items-center"
+      aria-label={`${total} ${total === 1 ? "reaction" : "reactions"}`}
+      title={active.map((reaction) => `${reaction.label}: ${counts[reaction.value]}`).join(", ")}
+    >
+      <span className="flex -space-x-1">
+        {active.map((reaction) => (
+          <span
+            key={reaction.value}
+            className="grid h-5 w-5 place-items-center rounded-full border border-white bg-blue-tint text-blue-deep"
+          >
+            <ReactionIcon type={reaction.value} className="h-3.5 w-3.5" />
+          </span>
+        ))}
+      </span>
+      <span className="ml-1.5 tabular-nums">{total}</span>
+    </span>
   );
 }
