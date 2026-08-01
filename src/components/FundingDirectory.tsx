@@ -5,7 +5,7 @@ import type { FundingOpportunity } from "@/types/database";
 import { FundingCard } from "@/components/FundingCard";
 import { BookmarkIcon, SearchIcon } from "@/components/PhapanoIcons";
 import { toggleSaveFunding } from "@/app/(app)/app/funding/actions";
-import { countLabel, daysUntil } from "@/lib/utils";
+import { daysUntil } from "@/lib/utils";
 
 const CHIPS = [
   { value: "all", label: "All opportunities" },
@@ -68,23 +68,6 @@ export function FundingDirectory({
     }
   }
 
-  const openCount = useMemo(
-    () => funding.filter(availableNow).length,
-    [funding]
-  );
-  const verifiedCount = useMemo(
-    () => funding.filter((opportunity) => opportunity.status === "verified").length,
-    [funding]
-  );
-  const deadlineCount = useMemo(
-    () =>
-      funding.filter((opportunity) => {
-        const days = daysUntil(opportunity.closing_date);
-        return availableNow(opportunity) && days !== null && days <= 30;
-      }).length,
-    [funding]
-  );
-
   const filtered = useMemo(() => {
     return funding
       .filter((f) => {
@@ -111,12 +94,7 @@ export function FundingDirectory({
   return (
     <div className="mt-6">
       <section className="card overflow-hidden border-blue/25">
-        <div className="grid grid-cols-3 divide-x divide-line bg-gradient-to-br from-blue-tint/60 to-white">
-          <FundingMetric value={verifiedCount} label="Verified sources" />
-          <FundingMetric value={openCount} label="Available now" />
-          <FundingMetric value={deadlineCount} label="Closing soon" />
-        </div>
-        <div className="border-t border-line bg-white p-4 sm:p-5">
+        <div className="bg-white p-4 sm:p-5">
           <label className="relative block">
             <span className="sr-only">Search funding</span>
             <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-charcoal-soft" />
@@ -170,14 +148,11 @@ export function FundingDirectory({
 
       <div className="mt-7 flex items-end justify-between gap-3 px-1">
         <div>
-          <p className="eyebrow">Funding directory</p>
+          <p className="eyebrow">Funding opportunities</p>
           <h2 className="mt-1 font-sora text-xl font-bold tracking-tight">
             {chip === "saved" ? "Your saved opportunities" : "Opportunities for your pathway"}
           </h2>
         </div>
-        <p className="flex-none text-xs font-bold text-charcoal-soft">
-          {countLabel(filtered.length, "result")}
-        </p>
       </div>
 
       {filtered.length > 0 ? (
@@ -197,15 +172,6 @@ export function FundingDirectory({
           No funding matches these filters yet.
         </p>
       )}
-    </div>
-  );
-}
-
-function FundingMetric({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="min-w-0 px-2 py-4 text-center">
-      <span className="block font-sora text-xl font-bold tabular-nums text-charcoal">{value}</span>
-      <span className="mt-1 block text-[0.65rem] font-semibold leading-tight text-charcoal-soft sm:text-xs">{label}</span>
     </div>
   );
 }

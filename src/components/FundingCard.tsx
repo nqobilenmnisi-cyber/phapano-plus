@@ -26,7 +26,7 @@ export function FundingCard({
   saving: boolean;
   onToggle: (saved: boolean) => void;
 }) {
-  const officialUrl = funding.link ?? funding.source_url ?? null;
+  const officialUrl = funding.source_url ?? funding.link ?? null;
   const state = availability(funding);
 
   return (
@@ -117,7 +117,7 @@ export function FundingCard({
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="min-w-0 text-xs leading-relaxed text-charcoal-soft">
             {funding.last_verified_at
-              ? `Source checked ${formatDateShort(funding.last_verified_at)}`
+              ? `Verified ${formatDateShort(funding.last_verified_at)}`
               : "Confirm details on the official source before applying."}
           </p>
           {officialUrl && (

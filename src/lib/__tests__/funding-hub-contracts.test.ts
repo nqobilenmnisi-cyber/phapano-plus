@@ -28,6 +28,22 @@ describe("funding directory refinement", () => {
     expect(apply).toContain("<BookmarkIcon");
     expect(fundingCard).not.toMatch(/>\s*Bookmarked?\s*</i);
   });
+
+  it("does not display monitoring language or numerical funding summaries", () => {
+    const page = read("src/app/(app)/app/funding/page.tsx");
+    const directory = read("src/components/FundingDirectory.tsx");
+    expect(page).not.toContain("Live funding board");
+    expect(page).not.toContain("monitors official sources");
+    expect(directory).not.toContain("Verified sources");
+    expect(directory).not.toContain("Available now");
+    expect(directory).not.toContain("Closing soon");
+    expect(directory).not.toContain("countLabel");
+  });
+
+  it("opens the verified official information page before fallback links", () => {
+    const fundingCard = read("src/components/FundingCard.tsx");
+    expect(fundingCard).toContain("funding.source_url ?? funding.link");
+  });
 });
 
 describe("guarded official-source refresh", () => {
@@ -48,3 +64,20 @@ describe("guarded official-source refresh", () => {
   });
 });
 
+describe("strict public funding eligibility", () => {
+  it("fails closed and republishes only the audited Psychology-safe set", () => {
+    const migration = read("supabase/migrations/0029_funding_integrity_audit.sql");
+    expect(migration).toContain("where is_published = true");
+    expect(migration).toContain("Psychology explicitly eligible");
+    expect(migration).toContain("All fields, including Psychology");
+    for (const rejected of [
+      "canon-collins",
+      "rhodes-ruth-first-2027",
+      "ufs-postgraduate-support-2026",
+      "wits-postgraduate-merit-award-2026",
+      "ernst-ethel-eriksen-2027",
+    ]) {
+      expect(migration).not.toContain(`'${rejected}'`);
+    }
+  });
+});
