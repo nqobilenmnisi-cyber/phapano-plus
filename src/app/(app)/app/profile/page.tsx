@@ -42,12 +42,11 @@ export default async function ProfilePage({
       getSavedProgrammes(),
       getSavedFunding(),
     ]);
-  const [managedPages, verificationBadges] = await Promise.all([
+  const [managedPages, verificationBadges, communityProfile] = await Promise.all([
     getManagedOrganisationPages(),
     getMyProfileVerifications(),
+    getMyCommunityProfile(),
   ]);
-  const communityProfile =
-    section === "community" ? await getMyCommunityProfile() : null;
   const uid = section === "community" ? await getMyUserId() : null;
   const communityMember =
     section === "community" && uid && communityProfile
@@ -74,6 +73,7 @@ export default async function ProfilePage({
 
   return (
     <main className="mx-auto max-w-2xl px-4 sm:px-6">
+      {section === "passport" && (
       <section className="relative overflow-hidden pt-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -121,10 +121,11 @@ export default async function ProfilePage({
           </div>
         )}
       </section>
+      )}
 
       <nav
         aria-label="You sections"
-        className="mt-7 grid grid-cols-2 gap-1 rounded-card border border-line bg-soft p-1"
+        className={`${section === "passport" ? "mt-7" : "pt-7"} grid grid-cols-2 gap-1 rounded-card border border-line bg-soft p-1`}
       >
         <Link
           href="/app/profile"
@@ -146,7 +147,7 @@ export default async function ProfilePage({
               : "text-charcoal-soft hover:bg-white/70 hover:text-charcoal"
           }`}
         >
-          Community profile
+          Public profile
         </Link>
       </nav>
 
@@ -180,48 +181,45 @@ export default async function ProfilePage({
       </section>
       )}
 
-      {/* edit profile */}
       {section === "passport" ? (
-      <section className="mt-9">
-        <div className="mb-3 flex items-center gap-2">
-          <IconProfile className="h-6 w-6" />
+      <>
+        <section className="mt-9">
+          <div className="mb-3 flex items-center gap-2">
+            <IconProfile className="h-6 w-6" />
+            <h2 className="font-sora text-lg font-bold tracking-tight">
+              Your Passport details
+            </h2>
+          </div>
+          {profile ? (
+            <ProfileForm profile={profile} />
+          ) : (
+            <p className="rounded-card border border-line bg-soft px-5 py-4 text-sm text-charcoal-soft">
+              Connect Supabase to edit your profile.
+            </p>
+          )}
+        </section>
+
+        <section id="community-settings" className="mt-9 scroll-mt-24">
           <h2 className="font-sora text-lg font-bold tracking-tight">
-            Your details
+            Public profile &amp; privacy
           </h2>
-        </div>
-        {profile ? (
-          <ProfileForm profile={profile} />
-        ) : (
-          <p className="rounded-card border border-line bg-soft px-5 py-4 text-sm text-charcoal-soft">
-            Connect Supabase to edit your profile.
+          <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
+            Choose exactly which Passport details appear on your public profile.
           </p>
-        )}
-      </section>
+          <div className="card mt-4 p-5 sm:p-6">
+            <CommunityProfileForm existing={communityProfile} passport={profile} />
+          </div>
+        </section>
+      </>
       ) : (
         <>
-          <section id="community-settings" className="mt-9 scroll-mt-6">
-            <h2 className="font-sora text-lg font-bold tracking-tight">
-              Community profile &amp; privacy
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
-              Control your Community identity, profile visibility and which
-              Passport fields other members can see.
-            </p>
-            <div className="card mt-4 p-6">
-              <CommunityProfileForm
-                existing={communityProfile}
-                passport={profile}
-              />
-            </div>
-          </section>
-
           {communityMember?.profile && uid && (
             <section className="mt-9">
               <h2 className="font-sora text-lg font-bold tracking-tight">
-                Public profile preview
+                Your public profile
               </h2>
               <p className="mt-1 text-sm text-charcoal-soft">
-                This is how your Community profile and posts appear to members.
+                View your profile exactly as another Phapano+ member sees it.
               </p>
               <CommunityProfileView
                 profile={communityMember.profile}

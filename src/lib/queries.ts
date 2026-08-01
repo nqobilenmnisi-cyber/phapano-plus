@@ -160,6 +160,9 @@ export async function getNotifications(): Promise<Notification[]> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
+  // This caller-scoped RPC creates any due deadline or newly relevant funding
+  // alerts that the member enabled. Stable keys prevent duplicate reminders.
+  await supabase.rpc("refresh_pathway_notifications");
   const { data } = await supabase
     .from("notifications")
     .select("*")

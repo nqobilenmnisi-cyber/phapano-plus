@@ -34,16 +34,16 @@ describe("social-style Community profile", () => {
     expect(profileView).toContain("connectionState");
   });
 
-  it("keeps Community profile editing inside the canonical You tab", () => {
+  it("keeps editing in Passport and the public profile read-only", () => {
     expect(myProfilePage).toContain(
       'redirect("/app/profile?section=community")'
     );
     expect(profileView).toContain(
-      'href="/app/profile?section=community#community-settings"'
+      'href="/app/profile#community-settings"'
     );
-    expect(profileView).toContain("Edit profile");
+    expect(profileView).toContain("Edit Passport");
     expect(editProfilePage).toContain(
-      'redirect("/app/profile?section=community#community-settings")'
+      'redirect("/app/profile#community-settings")'
     );
   });
 

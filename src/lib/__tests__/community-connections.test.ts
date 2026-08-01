@@ -140,14 +140,16 @@ describe("connection user flows", () => {
     expect(route).toContain("CommunityConnections");
   });
 
-  it("exposes a real preference only for active Community alerts", () => {
+  it("exposes real preferences for Community, deadline, and funding alerts", () => {
     const settings = read("src/app/(app)/app/settings/page.tsx");
     const controls = read("src/components/SettingsControls.tsx");
     const actions = read("src/app/(app)/app/settings/actions.ts");
     expect(settings).toContain("CommunityNotificationSetting");
-    expect(settings).toContain("Deadline and funding alerts");
-    expect(settings).toContain("Coming soon");
+    expect(settings).toContain("NotificationSettings");
+    expect(settings).not.toContain("Coming soon");
     expect(controls).toContain("Community activity");
+    expect(controls).toContain("Deadline reminders");
+    expect(controls).toContain("New funding");
     expect(actions).toContain(
       "export async function updateCommunityNotificationPreference"
     );

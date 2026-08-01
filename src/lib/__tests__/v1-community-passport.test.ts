@@ -54,7 +54,7 @@ describe("V1 community and Passport release contracts", () => {
   });
 
   it("provides the instant profile drawer and managed-page shortcuts", () => {
-    expect(drawer).toContain("Your Phapano");
+    expect(drawer).toContain("Your profile");
     expect(drawer).toContain("View profile");
     expect(drawer).toContain("Edit Passport");
     expect(drawer).toContain("View as member");

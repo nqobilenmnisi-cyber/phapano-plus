@@ -560,6 +560,10 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      refresh_pathway_notifications: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
     };
     Enums: {
       career_stage: CareerStage;

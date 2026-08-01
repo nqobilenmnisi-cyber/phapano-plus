@@ -8,8 +8,14 @@ import {
 import {
   johannesburgDateLabel,
   johannesburgDateParts,
+  johannesburgTimeLabel,
   SOUTH_AFRICA_TIME_ZONE,
 } from "@/lib/time";
+import {
+  compactPostId,
+  expandPostId,
+  postPublicPath,
+} from "@/lib/community-post-url";
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), "utf8");
@@ -25,6 +31,9 @@ describe("Johannesburg time contracts", () => {
     });
     expect(johannesburgDateLabel(new Date("2026-08-01T22:30:00Z"))).toContain(
       "2 August"
+    );
+    expect(johannesburgTimeLabel(new Date("2026-08-01T22:30:00Z"))).toBe(
+      "00:30"
     );
   });
 
@@ -74,6 +83,14 @@ describe("Community feed refinement contracts", () => {
     expect(postCard).toContain("function ReactionSummary");
     expect(postCard).not.toContain("`${option.label} ${reactionCounts");
   });
+
+  it("uses a reversible, human-friendly public post path", () => {
+    const id = "0c1cd372-3648-4b15-9d64-10adf1b3a90f";
+    expect(expandPostId(compactPostId(id))).toBe(id);
+    expect(postPublicPath(id, "Nqobile Mnisi")).toMatch(
+      /^\/p\/nqobile-mnisi\/[0-9a-z]+$/
+    );
+  });
 });
 
 describe("Profile and discovery refinements", () => {
@@ -89,7 +106,8 @@ describe("Profile and discovery refinements", () => {
     const people = read("src/components/CommunityPeople.tsx");
     const activity = read("src/components/CommunityActivity.tsx");
     expect(people).toContain("<ConnectionButton");
-    for (const label of ["Posts", "Carried", "Comments", "Reactions", "Media"])
+    for (const label of ["Posts", "Carried forward", "Comments", "Reactions", "Media"])
       expect(activity).toContain(`label: "${label}"`);
+    expect(activity).not.toContain("item.count");
   });
 });

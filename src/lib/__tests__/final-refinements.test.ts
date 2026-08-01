@@ -51,11 +51,12 @@ describe("one canonical You profile", () => {
   const profile = read("src/app/(app)/app/profile/page.tsx");
   const community = read("src/app/(app)/app/community/page.tsx");
 
-  it("contains both Passport and Community profile controls in You", () => {
+  it("contains Passport visibility controls and a read-only public view", () => {
     expect(profile).toContain("Phapano Passport");
-    expect(profile).toContain("Community profile &amp; privacy");
+    expect(profile).toContain("Public profile &amp; privacy");
     expect(profile).toContain("CommunityProfileForm");
     expect(profile).toContain("CommunityProfileView");
+    expect(profile).toContain("View your profile exactly as another Phapano+ member sees it.");
   });
 
   it("keeps Community focused on posts and discovery", () => {

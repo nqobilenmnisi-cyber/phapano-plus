@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { signOut } from "@/app/(auth)/actions";
 import { MemberAvatar } from "@/components/CommunityShared";
 import { VerificationBadges } from "@/components/VerificationBadges";
@@ -32,8 +33,10 @@ export function ProfileDrawer({
   managedPages: DrawerIdentity[];
   verificationBadges: ProfileVerificationBadge[];
 }) {
+  const [mounted, setMounted] = useState(false);
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
@@ -65,7 +68,9 @@ export function ProfileDrawer({
     };
   }, [onClose, open]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       className={`fixed inset-0 z-[70] transition ${
         open ? "pointer-events-auto" : "pointer-events-none"
@@ -85,13 +90,13 @@ export function ProfileDrawer({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Your Phapano menu"
-        className={`absolute inset-y-0 left-0 flex w-[min(92vw,23rem)] min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-r border-line bg-paper pb-[env(safe-area-inset-bottom)] shadow-2xl transition-transform duration-200 ease-out ${
+        aria-label="Your profile menu"
+        className={`absolute inset-y-0 left-0 flex h-[100dvh] w-[min(92vw,23rem)] min-w-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-r border-line bg-paper pb-[env(safe-area-inset-bottom)] shadow-2xl transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <p className="font-sora text-base font-bold tracking-tight">Your Phapano</p>
+          <p className="font-sora text-base font-bold tracking-tight">Your profile</p>
           <button
             ref={closeRef}
             type="button"
@@ -223,7 +228,8 @@ export function ProfileDrawer({
           </form>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
 
