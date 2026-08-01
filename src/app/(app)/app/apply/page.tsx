@@ -1,15 +1,23 @@
 import { IconApplication } from "@/components/illustrations";
 import { ApplyDirectory } from "@/components/ApplyDirectory";
-import { getProgrammes, getSavedProgrammeIds } from "@/lib/queries";
+import { getProgrammes, getSavedProgrammes } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isApplicationStarted } from "@/lib/application-plan-status";
 
 export const metadata = { title: "Apply | Phapano+" };
 
-export default async function ApplyPage() {
-  const [programmes, savedIds] = await Promise.all([
+export default async function ApplyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; applications?: string }>;
+}) {
+  const query = await searchParams;
+  const [programmes, plans] = await Promise.all([
     getProgrammes(),
-    getSavedProgrammeIds(),
+    getSavedProgrammes(),
   ]);
+  const savedIds = plans.filter((plan) => plan.is_saved).map((plan) => plan.programme_id);
+  const applicationIds = plans.filter(isApplicationStarted).map((plan) => plan.programme_id);
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-12 sm:px-6">
@@ -50,6 +58,9 @@ export default async function ApplyPage() {
         <ApplyDirectory
           programmes={programmes}
           savedIds={savedIds}
+          applicationIds={applicationIds}
+          initialSavedOnly={query.saved === "true"}
+          initialApplicationsOnly={query.applications === "true"}
           demo={!isSupabaseConfigured}
         />
       )}

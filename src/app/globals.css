@@ -48,6 +48,10 @@
       hover:bg-bronze hover:text-white;
     @apply min-h-11 max-w-full whitespace-nowrap px-4 sm:px-5;
   }
+  .choice-pill {
+    @apply inline-flex min-h-10 max-w-full items-center justify-center whitespace-nowrap
+      rounded-full border px-3.5 py-1.5 text-sm font-semibold leading-tight transition;
+  }
   .card {
     @apply min-w-0 rounded-card border border-line bg-white shadow-card;
   }

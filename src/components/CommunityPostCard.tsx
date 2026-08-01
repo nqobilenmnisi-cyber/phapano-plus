@@ -576,7 +576,7 @@ export function CommunityPostCard({
           {detail ? (
             <span
               className="flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold text-charcoal-soft"
-              aria-label={`${post.comment_count} comments`}
+              aria-label={`${post.comment_count} ${post.comment_count === 1 ? "comment" : "comments"}`}
               title="Comment"
             >
               <CommentIcon className="h-5 w-5" />
@@ -586,7 +586,7 @@ export function CommunityPostCard({
             <Link
               href={interactionPath}
               className="flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
-              aria-label={`${post.comment_count} comments`}
+              aria-label={`${post.comment_count} ${post.comment_count === 1 ? "comment" : "comments"}`}
               title="Comment"
             >
               <CommentIcon className="h-5 w-5" />
@@ -765,14 +765,31 @@ function ExpandablePostText({
   );
 }
 
-function downloadImageUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    parsed.searchParams.set("download", "phapano-image");
-    return parsed.toString();
-  } catch {
-    return url;
-  }
+function imageExtension(contentType: string): string {
+  const extensions: Record<string, string> = {
+    "image/avif": "avif",
+    "image/gif": "gif",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  return extensions[contentType.split(";")[0].trim().toLowerCase()] ?? "jpg";
+}
+
+async function saveImageDirectly(url: string) {
+  const response = await fetch(url, { credentials: "omit" });
+  if (!response.ok) throw new Error("Image download failed");
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = `phapano-image-${new Date().toISOString().slice(0, 10)}.${imageExtension(
+    blob.type || response.headers.get("content-type") || ""
+  )}`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000);
 }
 
 function PostImage({
@@ -819,6 +836,21 @@ function ImageLightbox({
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  async function handleSave() {
+    setSaving(true);
+    setDownloadError(null);
+    try {
+      await saveImageDirectly(url);
+    } catch {
+      setDownloadError("The image could not be saved. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   useEffect(() => {
     closeRef.current?.focus();
     const previous = document.body.style.overflow;
@@ -841,23 +873,29 @@ function ImageLightbox({
       className="fixed inset-0 z-[100] flex flex-col bg-charcoal/95 p-3 sm:p-6"
     >
       <div className="flex items-center justify-end gap-2">
-        <a
-          href={downloadImageUrl(url)}
-          download
-          className="rounded-chip bg-white px-4 py-2 text-sm font-bold text-blue-deep"
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="inline-flex min-h-11 items-center rounded-chip bg-white px-4 py-2 text-sm font-bold text-blue-deep disabled:opacity-60"
         >
-          Save image
-        </a>
+          {saving ? "Saving…" : "Save image"}
+        </button>
         <button
           ref={closeRef}
           type="button"
           onClick={onClose}
-          className="grid h-10 w-10 place-items-center rounded-full bg-white text-xl font-bold text-charcoal"
+          className="grid h-11 w-11 place-items-center rounded-full bg-white text-xl font-bold text-charcoal"
           aria-label="Close image"
         >
           ×
         </button>
       </div>
+      {downloadError && (
+        <p role="alert" className="mt-2 text-right text-sm font-semibold text-white">
+          {downloadError}
+        </p>
+      )}
       <div className="flex min-h-0 flex-1 items-center justify-center py-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt={alt} className="max-h-full max-w-full object-contain" />

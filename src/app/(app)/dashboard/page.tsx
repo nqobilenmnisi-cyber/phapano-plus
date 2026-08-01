@@ -5,18 +5,16 @@ import { MyPathway, type PathwayItem } from "@/components/MyPathway";
 import { IconNotes } from "@/components/illustrations";
 import { redirect } from "next/navigation";
 import {
-  getAuthState,
   getProfile,
   getSavedFunding,
   getNotifications,
   getJournalEntries,
-  getDatedNotes,
   getSavedProgrammes,
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isApplicationStarted } from "@/lib/application-plan-status";
 import {
-  careerStageLabels,
+  countLabel,
   daysUntil,
   formatDateShort,
   greeting,
@@ -48,22 +46,46 @@ function priorityLabel(priority: string | null): string | null {
   return `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
 }
 
+function noteTone(dueDate: string | null, priority: string | null) {
+  const days = daysUntil(dueDate);
+  if (priority === "urgent" || (days !== null && days <= 0)) {
+    return {
+      card: "border-[#D68A78] bg-[#FFF8F6]",
+      pill: "border-[#D68A78]/50 bg-white text-[#8C3427]",
+      marker: "bg-[#B44B3B]",
+    };
+  }
+  if (priority === "medium" || (days !== null && days <= 7)) {
+    return {
+      card: "border-bronze/55 bg-[#FFFCF7]",
+      pill: "border-bronze/40 bg-white text-bronze-deep",
+      marker: "bg-bronze",
+    };
+  }
+  if (priority === "low") {
+    return {
+      card: "border-blue/35 bg-blue-tint/25",
+      pill: "border-blue/35 bg-white text-blue-deep",
+      marker: "bg-blue-action",
+    };
+  }
+  return {
+    card: "border-line bg-white",
+    pill: "border-line bg-soft text-charcoal-soft",
+    marker: "bg-divider",
+  };
+}
+
 export default async function DashboardPage() {
   // A signed-in user who hasn't finished onboarding belongs in onboarding,
   // not here. (Middleware already guarantees only authed users reach this
   // page; the onboarding page redirects completed users back to /dashboard,
   // so these two guards are mutually exclusive — no loop is possible.)
-  if (isSupabaseConfigured) {
-    const { authed, onboarded } = await getAuthState();
-    if (authed && !onboarded) redirect("/onboarding");
-  }
-
   const [
     profile,
     savedFunding,
     notifications,
     recentNotes,
-    datedNotes,
     savedProgrammes,
   ] =
     await Promise.all([
@@ -71,9 +93,16 @@ export default async function DashboardPage() {
       getSavedFunding(),
       getNotifications(),
       getJournalEntries(),
-      getDatedNotes(),
       getSavedProgrammes(),
     ]);
+
+  if (isSupabaseConfigured && profile && !profile.onboarding_complete) {
+    redirect("/onboarding");
+  }
+
+  const datedNotes = recentNotes
+    .filter((note) => note.due_date)
+    .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
 
   // Build My Pathway from the user's real saved data and application deadlines.
   let pathwayItems: PathwayItem[] = [];
@@ -141,12 +170,6 @@ export default async function DashboardPage() {
   const activePlan = savedProgrammes.find(
     (programme) => isApplicationStarted(programme) && programme.programme
   );
-  const stageLabel =
-    profile?.career_stage === "other"
-      ? profile.career_stage_other || "Other pathway stage"
-      : profile?.career_stage
-        ? careerStageLabels[profile.career_stage]
-        : "Pathway stage not set";
   const continueCard = activePlan?.programme
     ? {
         eyebrow: "Application in progress",
@@ -222,9 +245,6 @@ export default async function DashboardPage() {
               "Welcome back."
             )}
           </h1>
-          <p className="mt-2 text-sm font-semibold text-charcoal-soft">
-            {stageLabel}
-          </p>
         </section>
 
         {/* gentle prompt to complete profile (only when truly incomplete) */}
@@ -252,10 +272,22 @@ export default async function DashboardPage() {
         )}
 
         <section className="card mt-7 overflow-hidden border-blue/25">
-          <div className="grid grid-cols-3 divide-x divide-line border-b border-line bg-white py-4">
-            <DashboardMetric value={programmesSaved} label="Saved programmes" />
-            <DashboardMetric value={appsStarted} label="Applications active" />
-            <DashboardMetric value={savedFunding.length} label="Funding saved" />
+          <div className="grid grid-cols-3 divide-x divide-line border-b border-line bg-white">
+            <DashboardMetric
+              value={programmesSaved}
+              label={programmesSaved === 1 ? "Saved programme" : "Saved programmes"}
+              href="/app/apply?saved=true"
+            />
+            <DashboardMetric
+              value={appsStarted}
+              label={appsStarted === 1 ? "Active application" : "Active applications"}
+              href="/app/apply?applications=true"
+            />
+            <DashboardMetric
+              value={savedFunding.length}
+              label="Funding saved"
+              href="/app/funding?saved=true"
+            />
           </div>
           <div className="bg-gradient-to-br from-blue-tint/65 to-white p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -271,7 +303,7 @@ export default async function DashboardPage() {
                 </p>
                 {dueSoon > 0 && (
                   <p className="mt-3 text-xs font-bold text-bronze-deep">
-                    {dueSoon} {dueSoon === 1 ? "deadline needs" : "deadlines need"} attention this week.
+                    {countLabel(dueSoon, "deadline")} {dueSoon === 1 ? "needs" : "need"} attention this week.
                   </p>
                 )}
               </div>
@@ -317,23 +349,25 @@ export default async function DashboardPage() {
               {recentNotes.slice(0, 3).map((note) => {
                 const status = noteStatus(note.due_date);
                 const priority = priorityLabel(note.priority);
+                const tone = noteTone(note.due_date, note.priority);
                 return (
                   <li
                     key={note.id}
-                    className="rounded-card border border-line bg-white px-4 py-3"
+                    className={`relative overflow-hidden rounded-card border px-4 py-3 ${tone.card}`}
                   >
+                    <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 ${tone.marker}`} />
                     <p className="line-clamp-2 text-sm font-semibold leading-relaxed text-charcoal">
                       {note.content}
                     </p>
                     {(status || priority) && (
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">
                         {status && (
-                          <span className={status.startsWith("Overdue") ? "text-bronze-deep" : "text-blue-deep"}>
+                          <span className={`rounded-full border px-2.5 py-1 ${tone.pill}`}>
                             {status}
                           </span>
                         )}
                         {priority && (
-                          <span className="text-charcoal-soft">{priority}</span>
+                          <span className={`rounded-full border px-2.5 py-1 ${tone.pill}`}>{priority}</span>
                         )}
                       </div>
                     )}
@@ -359,15 +393,27 @@ export default async function DashboardPage() {
   );
 }
 
-function DashboardMetric({ value, label }: { value: number; label: string }) {
+function DashboardMetric({
+  value,
+  label,
+  href,
+}: {
+  value: number;
+  label: string;
+  href: string;
+}) {
   return (
-    <div className="min-w-0 px-2 text-center">
+    <Link
+      href={href}
+      className="group min-w-0 px-2 py-4 text-center outline-none transition hover:bg-blue-tint/40 focus-visible:bg-blue-tint/60"
+      aria-label={`${value} ${label}. Open details`}
+    >
       <span className="block font-sora text-xl font-bold tabular-nums text-charcoal">
         {value}
       </span>
-      <span className="mt-1 block text-[0.66rem] font-semibold leading-tight text-charcoal-soft sm:text-xs">
+      <span className="mt-1 block text-[0.66rem] font-semibold leading-tight text-charcoal-soft group-hover:text-blue-deep sm:text-xs">
         {label}
       </span>
-    </div>
+    </Link>
   );
 }

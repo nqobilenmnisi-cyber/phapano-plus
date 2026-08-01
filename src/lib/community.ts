@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { cache } from "react";
+import { getCurrentUser } from "@/lib/queries";
 import type {
   CommunityCommentView,
   CommunityActivityComment,
@@ -48,16 +50,13 @@ type RpcClient = {
   ) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
 };
 
-export async function getMyUserId(): Promise<string | null> {
+export const getMyUserId = cache(async (): Promise<string | null> => {
   if (!isSupabaseConfigured) return null;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   return user?.id ?? null;
-}
+});
 
-export async function getMyCommunityProfile(): Promise<CommunityProfile | null> {
+export const getMyCommunityProfile = cache(async (): Promise<CommunityProfile | null> => {
   if (!isSupabaseConfigured) return null;
   const uid = await getMyUserId();
   if (!uid) return null;
@@ -68,7 +67,7 @@ export async function getMyCommunityProfile(): Promise<CommunityProfile | null> 
     .eq("user_id", uid)
     .maybeSingle();
   return (data as CommunityProfile | null) ?? null;
-}
+});
 
 export async function getMyModerationState(): Promise<{
   posting_restricted: boolean;
@@ -1073,9 +1072,9 @@ export async function getOrganisationProfile(id: string): Promise<{
   };
 }
 
-export async function getManagedOrganisationPages(): Promise<
+export const getManagedOrganisationPages = cache(async (): Promise<
   OrganisationPage[]
-> {
+> => {
   if (!isSupabaseConfigured) return [];
   const uid = await getMyUserId();
   if (!uid) return [];
@@ -1093,11 +1092,11 @@ export async function getManagedOrganisationPages(): Promise<
     .eq("status", "active")
     .order("name");
   return (data ?? []) as OrganisationPage[];
-}
+});
 
-export async function getMyProfileVerifications(): Promise<
+export const getMyProfileVerifications = cache(async (): Promise<
   ProfileVerificationBadge[]
-> {
+> => {
   if (!isSupabaseConfigured) return [];
   const uid = await getMyUserId();
   if (!uid) return [];
@@ -1107,7 +1106,7 @@ export async function getMyProfileVerifications(): Promise<
     .select("badge")
     .eq("user_id", uid);
   return (data ?? []).map((row) => row.badge as ProfileVerificationBadge);
-}
+});
 
 export async function getBlockedAccounts(): Promise<CommunityMemberCard[]> {
   if (!isSupabaseConfigured) return [];

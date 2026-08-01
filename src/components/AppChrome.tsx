@@ -27,6 +27,8 @@ export function AppTopBar({
   avatarUrl?: string | null;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const [drawerLoaded, setDrawerLoaded] = useState(false);
   const identity =
     personalIdentity ??
     ({
@@ -38,6 +40,30 @@ export function AppTopBar({
       href: "/app/profile?section=community",
       manageHref: "/app/profile",
     } satisfies DrawerIdentity);
+  const [drawerIdentity, setDrawerIdentity] = useState(identity);
+  const [drawerPages, setDrawerPages] = useState(managedPages);
+  const [drawerBadges, setDrawerBadges] = useState(verificationBadges);
+
+  async function openDrawer() {
+    setDrawerOpen(true);
+    if (drawerLoaded || drawerLoading) return;
+    setDrawerLoading(true);
+    try {
+      const response = await fetch("/api/profile-drawer", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as {
+        personalIdentity: DrawerIdentity;
+        managedPages: DrawerIdentity[];
+        verificationBadges: ProfileVerificationBadge[];
+      };
+      setDrawerIdentity(data.personalIdentity);
+      setDrawerPages(data.managedPages);
+      setDrawerBadges(data.verificationBadges);
+      setDrawerLoaded(true);
+    } finally {
+      setDrawerLoading(false);
+    }
+  }
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/95 backdrop-blur-xl">
@@ -47,8 +73,8 @@ export function AppTopBar({
           aria-label="Open your profile menu"
           aria-expanded={drawerOpen}
           title="Your profile menu"
-          className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue focus-visible:outline-offset-2"
-          onClick={() => setDrawerOpen(true)}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue focus-visible:outline-offset-2"
+          onClick={openDrawer}
         >
             <MemberAvatar
               name={identity.name}
@@ -63,9 +89,10 @@ export function AppTopBar({
       <ProfileDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        personalIdentity={identity}
-        managedPages={managedPages}
-        verificationBadges={verificationBadges}
+        personalIdentity={drawerIdentity}
+        managedPages={drawerPages}
+        verificationBadges={drawerBadges}
+        loadingDetails={drawerLoading}
       />
     </>
   );
