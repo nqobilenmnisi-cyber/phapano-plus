@@ -126,6 +126,7 @@ end;
 $$;
 
 revoke all on function public.refresh_pathway_notifications() from public;
+revoke all on function public.refresh_pathway_notifications() from anon;
 grant execute on function public.refresh_pathway_notifications() to authenticated;
 
 notify pgrst, 'reload schema';

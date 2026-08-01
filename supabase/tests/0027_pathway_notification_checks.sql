@@ -16,4 +16,13 @@ select function_privs_are(
   'signed-in members can refresh only their own pathway notifications'
 );
 
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.refresh_pathway_notifications()',
+    'EXECUTE'
+  ),
+  'anonymous visitors cannot refresh pathway notifications'
+);
+
 rollback;
