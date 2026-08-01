@@ -80,4 +80,19 @@ describe("strict public funding eligibility", () => {
       expect(migration).not.toContain(`'${rejected}'`);
     }
   });
+
+  it("removes Rhodes and adds only independently verified 2027 opportunities", () => {
+    const migration = read(
+      "supabase/migrations/0030_funding_psychology_strictness.sql",
+    );
+    expect(migration).toContain(
+      "where slug = 'rhodes-postgraduate-scholarship-2027'",
+    );
+    expect(migration).toContain("is_published = false");
+    expect(migration).toContain("'firstrand-empowerment-foundation-2027'");
+    expect(migration).toContain("Psychology explicitly eligible");
+    expect(migration).toContain("'old-mutual-education-trust-2027'");
+    expect(migration).toContain("All fields, including Psychology");
+    expect(migration).not.toContain("zabursaries.co.za");
+  });
 });
