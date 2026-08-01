@@ -50,7 +50,10 @@ describe("national Psychology university catalogue", () => {
     const component = read("src/components/PsychologyUniversityCatalogue.tsx");
     expect(page).toContain("<PsychologyUniversityCatalogue");
     expect(page).toContain("<ApplyDirectory");
-    expect(component).toContain("No current Psychology qualification verified");
+    expect(component).toContain('row.levels[item.key].status === "offered"');
+    expect(component).toContain("Only institutions with a verified Psychology qualification are shown");
+    expect(component).not.toContain("No current Psychology qualification verified");
+    expect(component).not.toContain("Not offered in the current official catalogue");
     expect(component).toContain("Check the official catalogue");
   });
 });

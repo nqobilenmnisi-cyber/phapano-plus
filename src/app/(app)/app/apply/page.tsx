@@ -33,9 +33,9 @@ export default async function ApplyPage({
           <h1 className="font-sora text-3xl font-bold tracking-tight">Apply</h1>
         </div>
         <p className="mt-1.5 text-sm text-charcoal-soft">
-          Verified Psychology study routes across all 26 South African public
-          universities, from undergraduate study through doctoral research.
-          Open the university&apos;s own programme source before you apply.
+          Explore verified Psychology study routes from undergraduate study
+          through doctoral research. Open the university&apos;s own programme
+          source before you apply.
         </p>
       </section>
 
