@@ -196,6 +196,7 @@ export type Programme = {
 
 export type FundingOpportunity = {
   id: string;
+  slug?: string | null;
   title: string;
   provider: string | null;
   type: FundingType;
@@ -213,6 +214,12 @@ export type FundingOpportunity = {
   categories?: string[];
   is_open?: boolean;
   featured?: boolean;
+  source_hash?: string | null;
+  source_http_status?: number | null;
+  source_check_status?: "pending" | "ok" | "changed" | "error";
+  last_checked_at?: string | null;
+  last_changed_at?: string | null;
+  needs_review?: boolean;
   status: VerificationStatus;
   last_verified_at: string | null;
   next_review_due_at: string | null;
@@ -220,6 +227,22 @@ export type FundingOpportunity = {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type FundingUpdate = {
+  id: string;
+  funding_id: string;
+  checked_at: string;
+  source_url: string;
+  source_hash: string | null;
+  extracted: Record<string, unknown>;
+  confidence: number;
+  change_summary: string | null;
+  review_status: "pending" | "approved" | "dismissed";
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  applied: boolean;
+  created_at: string;
 };
 
 export type Article = {
@@ -330,6 +353,15 @@ export interface Database {
         Row: FundingOpportunity;
         Insert: Partial<FundingOpportunity> & { title: string };
         Update: Partial<FundingOpportunity>;
+        Relationships: [];
+      };
+      funding_updates: {
+        Row: FundingUpdate;
+        Insert: Partial<FundingUpdate> & {
+          funding_id: string;
+          source_url: string;
+        };
+        Update: Partial<FundingUpdate>;
         Relationships: [];
       };
       articles: {

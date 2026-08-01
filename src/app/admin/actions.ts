@@ -59,7 +59,7 @@ export async function deleteUniversity(id: string) {
 export async function saveFunding(formData: FormData) {
   const ctx = await requireAdmin();
   if (ctx.demo) return { ok: false, demo: true };
-  const { supabase } = ctx;
+  const { supabase, user } = ctx;
 
   const id = str(formData, "id");
   const streams = formData.getAll("relevant_streams").map(String) as PsychologyStream[];
@@ -81,14 +81,28 @@ export async function saveFunding(formData: FormData) {
     next_review_due_at: str(formData, "next_review_due_at"),
     owner: str(formData, "owner"),
     is_published: formData.get("is_published") === "on",
+    needs_review: false,
+    source_check_status: "ok" as const,
   };
 
   if (!payload.title) return { ok: false, error: "Title is required." };
 
   if (id) {
-    await supabase.from("funding_opportunities").update(payload).eq("id", id);
+    const { error } = await supabase.from("funding_opportunities").update(payload).eq("id", id);
+    if (error) return { ok: false, error: "We couldn't update this funding opportunity. Please try again." };
+    await supabase
+      .from("funding_updates")
+      .update({
+        review_status: "approved",
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        applied: true,
+      })
+      .eq("funding_id", id)
+      .eq("review_status", "pending");
   } else {
-    await supabase.from("funding_opportunities").insert(payload);
+    const { error } = await supabase.from("funding_opportunities").insert(payload);
+    if (error) return { ok: false, error: "We couldn't add this funding opportunity. Please try again." };
   }
   revalidatePath("/admin/funding");
   revalidatePath("/app/funding");

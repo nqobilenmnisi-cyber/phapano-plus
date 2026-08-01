@@ -125,12 +125,12 @@ export default async function ProfilePage({
 
       <nav
         aria-label="You sections"
-        className={`${section === "passport" ? "mt-7" : "pt-7"} grid grid-cols-2 gap-1 rounded-card border border-line bg-soft p-1`}
+        className={`${section === "passport" ? "mt-7" : "pt-7"} grid w-full min-w-0 grid-cols-2 gap-1 overflow-hidden rounded-card border border-line bg-soft p-1`}
       >
         <Link
           href="/app/profile"
           aria-current={section === "passport" ? "page" : undefined}
-          className={`rounded-chip px-3 py-2.5 text-center text-sm font-bold transition ${
+          className={`min-w-0 rounded-chip px-2 py-2.5 text-center text-sm font-bold leading-tight transition sm:px-3 ${
             section === "passport"
               ? "bg-white text-blue-deep shadow-sm"
               : "text-charcoal-soft hover:bg-white/70 hover:text-charcoal"
@@ -141,7 +141,7 @@ export default async function ProfilePage({
         <Link
           href="/app/profile?section=community"
           aria-current={section === "community" ? "page" : undefined}
-          className={`rounded-chip px-3 py-2.5 text-center text-sm font-bold transition ${
+          className={`min-w-0 rounded-chip px-2 py-2.5 text-center text-sm font-bold leading-tight transition sm:px-3 ${
             section === "community"
               ? "bg-white text-blue-deep shadow-sm"
               : "text-charcoal-soft hover:bg-white/70 hover:text-charcoal"
