@@ -13,6 +13,7 @@ import {
   getMyCommunityProfile,
   getMyUserId,
   getMyProfileVerifications,
+  getMyCommunityActivity,
 } from "@/lib/community";
 import {
   getProfile,
@@ -52,6 +53,8 @@ export default async function ProfilePage({
     section === "community" && uid && communityProfile
       ? await getMemberProfile(uid)
       : null;
+  const communityActivity =
+    section === "community" && uid ? await getMyCommunityActivity() : null;
 
   if (isSupabaseConfigured && !user) redirect("/login?redirect=/app/profile");
 
@@ -235,6 +238,7 @@ export default async function ProfilePage({
                 viewerId={uid}
                 isOwnProfile
                 verificationBadges={communityMember.verificationBadges}
+                activity={communityActivity}
               />
             </section>
           )}

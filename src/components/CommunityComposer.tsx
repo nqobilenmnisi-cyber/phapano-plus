@@ -139,7 +139,8 @@ export function CommunityComposer({
 
   useEffect(() => {
     const url = extractFirstHttpUrl(body);
-    if (!url || !includePreview) {
+    const textOnlyPost = media.length === 0;
+    if (!url || !includePreview || !textOnlyPost) {
       setLinkPreview(null);
       setPreviewLoading(false);
       return;
@@ -156,7 +157,7 @@ export function CommunityComposer({
       live = false;
       window.clearTimeout(timer);
     };
-  }, [body, includePreview]);
+  }, [body, includePreview, media.length]);
 
   async function removeMedia(id: string) {
     const item = media.find((candidate) => candidate.id === id);
@@ -272,7 +273,10 @@ export function CommunityComposer({
       const formData = new FormData();
       formData.set("body", body);
       formData.set("author_id", authorId);
-      formData.set("include_link_preview", String(includePreview));
+      formData.set(
+        "include_link_preview",
+        String(includePreview && media.length === 0)
+      );
       formData.set("mentions", JSON.stringify(mentions));
       formData.set(
         "attachments",
@@ -432,7 +436,9 @@ export function CommunityComposer({
           </p>
         )}
 
-        {(previewLoading || linkPreview) && includePreview && (
+        {(previewLoading || linkPreview) &&
+          includePreview &&
+          media.length === 0 && (
           <div className="mt-3 rounded-card border border-line bg-paper p-3">
             {previewLoading ? (
               <p className="text-sm text-charcoal-soft">Checking link preview…</p>
@@ -472,6 +478,13 @@ export function CommunityComposer({
               </div>
             ) : null}
           </div>
+        )}
+
+        {media.length > 0 && extractFirstHttpUrl(body) && (
+          <p className="mt-2 text-xs text-charcoal-soft">
+            Your link will stay clickable in the caption. Link previews are
+            only shown on posts without images or PDFs.
+          </p>
         )}
 
         {!accepted && (

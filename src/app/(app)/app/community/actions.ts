@@ -401,7 +401,12 @@ export async function createPost(formData: FormData): Promise<ActionResult> {
   const includePreview = formData.get("include_link_preview") === "true";
   const linkInBody = extractFirstHttpUrl(body);
   const preview =
-    includePreview && linkInBody ? await fetchSafeLinkPreview(linkInBody) : null;
+    includePreview &&
+    linkInBody &&
+    attachments.length === 0 &&
+    !imagePath
+      ? await fetchSafeLinkPreview(linkInBody)
+      : null;
 
   const { data: createdPost, error } = await supabase
     .from("community_posts")
@@ -484,7 +489,22 @@ export async function updatePost(
   const supabase = await createClient();
   const now = new Date().toISOString();
   const link = extractFirstHttpUrl(trimmed);
-  const preview = link ? await fetchSafeLinkPreview(link) : null;
+  const [{ data: existing }, { count: attachmentCount }] = await Promise.all([
+    supabase
+      .from("community_posts")
+      .select("image_path")
+      .eq("id", id)
+      .eq("created_by", auth.uid)
+      .maybeSingle(),
+    supabase
+      .from("community_post_attachments")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", id),
+  ]);
+  const preview =
+    link && !existing?.image_path && !attachmentCount
+      ? await fetchSafeLinkPreview(link)
+      : null;
   const { error } = await supabase
     .from("community_posts")
     .update({

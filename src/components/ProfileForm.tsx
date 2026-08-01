@@ -43,16 +43,6 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const [lastSection, setLastSection] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  // Research links/sections appear for more senior stages so junior users
-  // (undergraduate, Honours applicants) aren't overwhelmed.
-  const SENIOR_STAGES = [
-    "masters_student",
-    "intern",
-    "community_service",
-    "professional",
-  ];
-  const senior = stage !== "" && SENIOR_STAGES.includes(stage as string);
-
   function toggle(s: PsychologyStream) {
     setSavedSection(null);
     setDirty(true);
@@ -347,8 +337,8 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         </div>
       </div>
 
-      {/* Links & professional profiles — links always; research links for
-          more senior stages so juniors aren't overwhelmed. */}
+      {/* Links and professional profiles are optional and available to every
+          member, regardless of career stage. */}
       <div className="rounded-card border border-line bg-soft/50 p-5">
         <p className="font-sora text-sm font-bold tracking-tight">
           Links &amp; profiles
@@ -362,34 +352,19 @@ export function ProfileForm({ profile }: { profile: Profile }) {
             <label className="label" htmlFor="website_url">Personal website</label>
             <input id="website_url" name="website_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.website_url ?? ""} className="input" placeholder="yoursite.com" />
           </div>
-          {senior && (
-            <>
-              <div>
-                <label className="label" htmlFor="scholar_url">Google Scholar</label>
-                <input id="scholar_url" name="scholar_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.scholar_url ?? ""} className="input" placeholder="scholar.google.com/…" />
-              </div>
-              <div>
-                <label className="label" htmlFor="researchgate_url">ResearchGate</label>
-                <input id="researchgate_url" name="researchgate_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.researchgate_url ?? ""} className="input" placeholder="researchgate.net/profile/…" />
-              </div>
-              <div>
-                <label className="label" htmlFor="orcid">ORCID</label>
-                <input id="orcid" name="orcid" defaultValue={profile.orcid ?? ""} className="input" placeholder="0000-0000-0000-0000" />
-              </div>
-            </>
-          )}
+          <div>
+            <label className="label" htmlFor="scholar_url">Google Scholar</label>
+            <input id="scholar_url" name="scholar_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.scholar_url ?? ""} className="input" placeholder="scholar.google.com/…" />
+          </div>
+          <div>
+            <label className="label" htmlFor="researchgate_url">ResearchGate</label>
+            <input id="researchgate_url" name="researchgate_url" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={profile.researchgate_url ?? ""} className="input" placeholder="researchgate.net/profile/…" />
+          </div>
+          <div>
+            <label className="label" htmlFor="orcid">ORCID</label>
+            <input id="orcid" name="orcid" defaultValue={profile.orcid ?? ""} className="input" placeholder="0000-0000-0000-0000" />
+          </div>
         </div>
-        {!senior && (
-          <>
-            <input type="hidden" name="scholar_url" value={profile.scholar_url ?? ""} />
-            <input type="hidden" name="researchgate_url" value={profile.researchgate_url ?? ""} />
-            <input type="hidden" name="orcid" value={profile.orcid ?? ""} />
-            <p className="mt-3 text-xs text-charcoal-soft">
-              Research profiles (Google Scholar, ResearchGate, ORCID) appear here
-              as you progress into Master&apos;s study and beyond.
-            </p>
-          </>
-        )}
         <SectionSave
           section="links"
           pending={pending}
