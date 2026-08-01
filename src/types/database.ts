@@ -349,6 +349,19 @@ export interface Database {
         Update: Partial<ApplyProgramme>;
         Relationships: [];
       };
+      psychology_university_catalogue: {
+        Row: PsychologyUniversityCatalogue;
+        Insert: Partial<PsychologyUniversityCatalogue> & {
+          slug: string;
+          institution: string;
+          province: string;
+          institution_url: string;
+          levels: PsychologyUniversityLevels;
+          audit_source_url: string;
+        };
+        Update: Partial<PsychologyUniversityCatalogue>;
+        Relationships: [];
+      };
       funding_opportunities: {
         Row: FundingOpportunity;
         Insert: Partial<FundingOpportunity> & { title: string };
@@ -649,6 +662,43 @@ export type ApplyProgramme = {
   last_checked: string | null;
   needs_review: boolean | null;
   primary_source_url: string | null;
+  programme_title: string | null;
+  verification_status: "verified" | "unverified" | "needs_review";
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PsychologyUniversityLevelStatus =
+  | "offered"
+  | "not_offered"
+  | "not_verified";
+
+export type PsychologyUniversityLevel = {
+  status: PsychologyUniversityLevelStatus;
+  title?: string;
+  url?: string;
+};
+
+export type PsychologyUniversityLevels = {
+  undergraduate: PsychologyUniversityLevel;
+  honours: PsychologyUniversityLevel;
+  masters: PsychologyUniversityLevel;
+  doctoral: PsychologyUniversityLevel;
+};
+
+export type PsychologyUniversityCatalogue = {
+  id: string;
+  slug: string;
+  institution: string;
+  province: string;
+  institution_url: string;
+  levels: PsychologyUniversityLevels;
+  audit_source_url: string;
+  audit_note: string | null;
+  last_verified: string;
+  next_review_due: string;
+  is_published: boolean;
   created_at: string;
   updated_at: string;
 };
