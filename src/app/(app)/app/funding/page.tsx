@@ -7,7 +7,12 @@ import { DEMO_NOTICE } from "@/lib/demo";
 
 export const metadata = { title: "Funding | Phapano+" };
 
-export default async function FundingPage() {
+export default async function FundingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
+  const query = await searchParams;
   const [funding, sets] = await Promise.all([getFunding(), getSavedIdSets()]);
   const list = isSupabaseConfigured ? funding : DEMO_FUNDING;
   const savedIds = Array.from(sets.fundingIds);
@@ -36,7 +41,12 @@ export default async function FundingPage() {
       )}
 
       {list.length > 0 ? (
-        <FundingDirectory funding={list} savedIds={savedIds} demo={!isSupabaseConfigured} />
+        <FundingDirectory
+          funding={list}
+          savedIds={savedIds}
+          initialSavedOnly={query.saved === "true"}
+          demo={!isSupabaseConfigured}
+        />
       ) : (
         <div className="mt-6 rounded-card border border-dashed border-divider bg-soft px-6 py-12 text-center">
           <IconFunding className="mx-auto h-9 w-9" />

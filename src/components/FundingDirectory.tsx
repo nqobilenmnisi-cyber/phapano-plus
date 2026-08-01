@@ -20,15 +20,17 @@ const CHIPS: { value: string; label: string }[] = [
 export function FundingDirectory({
   funding,
   savedIds,
+  initialSavedOnly = false,
   demo,
 }: {
   funding: FundingOpportunity[];
   savedIds: string[];
+  initialSavedOnly?: boolean;
   demo: boolean;
 }) {
   const [saved, setSaved] = useState<Set<string>>(new Set(savedIds));
   const [, start] = useTransition();
-  const [chip, setChip] = useState("all");
+  const [chip, setChip] = useState(initialSavedOnly ? "bookmarked" : "all");
   const [q, setQ] = useState("");
 
   function onToggle(f: FundingOpportunity, isSaved: boolean) {
@@ -73,7 +75,7 @@ export function FundingDirectory({
           <button
             key={c.value}
             onClick={() => setChip(c.value)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+            className={`choice-pill ${
               chip === c.value
                 ? "border-charcoal bg-charcoal text-white"
                 : "border-line bg-white text-charcoal-soft hover:border-blue"

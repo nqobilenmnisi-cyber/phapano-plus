@@ -21,7 +21,7 @@ export function NotificationBell({ unread }: { unread: number }) {
     <Link
       href="/app/notifications"
       aria-label="Notifications"
-      className="relative grid h-10 w-10 place-items-center rounded-chip border border-line bg-white text-charcoal-soft transition hover:border-blue hover:text-charcoal"
+      className="relative grid h-11 w-11 place-items-center rounded-chip border border-line bg-white text-charcoal-soft transition hover:border-blue hover:text-charcoal"
     >
       {hasUnread && (
         <span className="absolute right-2.5 top-2.5 h-[7px] w-[7px] rounded-full border-[1.5px] border-white bg-bronze" />

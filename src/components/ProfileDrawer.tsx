@@ -26,12 +26,14 @@ export function ProfileDrawer({
   personalIdentity,
   managedPages,
   verificationBadges,
+  loadingDetails = false,
 }: {
   open: boolean;
   onClose: () => void;
   personalIdentity: DrawerIdentity;
   managedPages: DrawerIdentity[];
   verificationBadges: ProfileVerificationBadge[];
+  loadingDetails?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const dialogRef = useRef<HTMLElement>(null);
@@ -101,7 +103,7 @@ export function ProfileDrawer({
             ref={closeRef}
             type="button"
             aria-label="Close menu"
-            className="grid h-10 w-10 place-items-center rounded-full text-xl text-charcoal-soft transition hover:bg-soft hover:text-charcoal"
+            className="grid h-11 w-11 place-items-center rounded-full text-xl text-charcoal-soft transition hover:bg-soft hover:text-charcoal"
             onClick={onClose}
           >
             ×
@@ -190,14 +192,14 @@ export function ProfileDrawer({
                       <Link
                         href={page.href}
                         onClick={onClose}
-                        className="whitespace-nowrap rounded-chip border border-line px-1.5 py-2 text-blue-deep"
+                        className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-chip border border-line px-2.5 py-2 text-blue-deep"
                       >
                         View as member
                       </Link>
                       <Link
                         href={page.manageHref ?? page.href}
                         onClick={onClose}
-                        className="whitespace-nowrap rounded-chip bg-blue-action px-1.5 py-2 text-white"
+                        className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-chip bg-blue-action px-2.5 py-2 text-white"
                       >
                         Manage page
                       </Link>
@@ -206,6 +208,11 @@ export function ProfileDrawer({
                 ))}
               </div>
             </section>
+          )}
+          {loadingDetails && managedPages.length === 0 && (
+            <p className="mt-6 border-t border-line pt-5 text-xs font-semibold text-charcoal-soft" role="status">
+              Loading your page details…
+            </p>
           )}
         </div>
 

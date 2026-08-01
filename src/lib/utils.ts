@@ -165,6 +165,15 @@ export function firstName(fullName: string | null | undefined): string {
   return fullName.trim().split(/\s+/)[0];
 }
 
+/** Human-readable count with correct singular/plural agreement. */
+export function countLabel(
+  count: number,
+  singular: string,
+  plural = `${singular}s`
+): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /** Whole days since an ISO timestamp (e.g. profile creation). Min 0. */
 export function daysSince(iso: string | null | undefined): number {
   if (!iso) return 0;

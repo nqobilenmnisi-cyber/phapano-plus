@@ -93,10 +93,16 @@ function ProgrammeCard({
 export function ApplyDirectory({
   programmes,
   savedIds,
+  applicationIds,
+  initialSavedOnly = false,
+  initialApplicationsOnly = false,
   demo,
 }: {
   programmes: ApplyProgramme[];
   savedIds: string[];
+  applicationIds: string[];
+  initialSavedOnly?: boolean;
+  initialApplicationsOnly?: boolean;
   demo: boolean;
 }) {
   const [saved, setSaved] = useState<Set<string>>(new Set(savedIds));
@@ -106,7 +112,9 @@ export function ApplyDirectory({
   const [qual, setQual] = useState<"all" | "honours" | "masters">("all");
   const [province, setProvince] = useState("all");
   const [stream, setStream] = useState("all");
-  const [savedOnly, setSavedOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(initialSavedOnly);
+  const [applicationsOnly, setApplicationsOnly] = useState(initialApplicationsOnly);
+  const applicationSet = useMemo(() => new Set(applicationIds), [applicationIds]);
   const [q, setQ] = useState("");
 
   async function onToggleSave(p: ApplyProgramme, isSaved: boolean) {
@@ -143,6 +151,7 @@ export function ApplyDirectory({
     return programmes.filter((p) => {
       if (province !== "all" && p.province !== province) return false;
       if (savedOnly && !saved.has(p.id)) return false;
+      if (applicationsOnly && !applicationSet.has(p.id)) return false;
       if (q.trim()) {
         const s = q.toLowerCase();
         if (
@@ -153,7 +162,7 @@ export function ApplyDirectory({
       }
       return true;
     });
-  }, [programmes, province, savedOnly, saved, q]);
+  }, [programmes, province, savedOnly, saved, applicationsOnly, applicationSet, q]);
 
   const honours = base.filter((p) => p.qualification === "honours");
   const masters = base.filter(
@@ -201,7 +210,7 @@ export function ApplyDirectory({
             <button
               key={v}
               onClick={() => setQual(v)}
-              className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+              className={`choice-pill ${
                 qual === v
                   ? "border-charcoal bg-charcoal text-white"
                   : "border-line bg-white text-charcoal-soft hover:border-blue"
@@ -211,14 +220,30 @@ export function ApplyDirectory({
             </button>
           ))}
           <button
-            onClick={() => setSavedOnly((v) => !v)}
-            className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
+            onClick={() => {
+              setSavedOnly((value) => !value);
+              setApplicationsOnly(false);
+            }}
+            className={`choice-pill ${
               savedOnly
                 ? "border-bronze bg-bronze text-white"
                 : "border-line bg-white text-charcoal-soft hover:border-blue"
             }`}
           >
             Saved only
+          </button>
+          <button
+            onClick={() => {
+              setApplicationsOnly((value) => !value);
+              setSavedOnly(false);
+            }}
+            className={`choice-pill ${
+              applicationsOnly
+                ? "border-blue-action bg-blue-action text-white"
+                : "border-line bg-white text-charcoal-soft hover:border-blue"
+            }`}
+          >
+            Active applications
           </button>
         </div>
 

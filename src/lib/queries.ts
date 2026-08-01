@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type {
   Profile,
@@ -16,28 +17,26 @@ import type {
  * placeholder mode (returns null/empty) so the UI can render demo states.
  */
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   if (!isSupabaseConfigured) return null;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});
 
 /**
  * Lightweight auth snapshot for public/marketing pages and the site header,
  * so they can show "Open Phapano+" to signed-in users instead of "Join".
  */
-export async function getAuthState(): Promise<{
+export const getAuthState = cache(async (): Promise<{
   authed: boolean;
   onboarded: boolean;
-}> {
+}> => {
   if (!isSupabaseConfigured) return { authed: false, onboarded: false };
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return { authed: false, onboarded: false };
   const { data } = await supabase
     .from("profiles")
@@ -45,14 +44,12 @@ export async function getAuthState(): Promise<{
     .eq("id", user.id)
     .maybeSingle();
   return { authed: true, onboarded: !!data?.onboarding_complete };
-}
+});
 
-export async function getProfile(): Promise<Profile | null> {
+export const getProfile = cache(async (): Promise<Profile | null> => {
   if (!isSupabaseConfigured) return null;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return null;
 
   // maybeSingle() returns null (not an error) when no row exists yet.
@@ -81,14 +78,12 @@ export async function getProfile(): Promise<Profile | null> {
     .maybeSingle();
 
   return created ?? null;
-}
+});
 
 export async function getSavedFunding(): Promise<FundingOpportunity[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
   const { data } = await supabase
     .from("saved_funding")
@@ -124,9 +119,7 @@ export async function getFundingOne(
 export async function getJournalEntries(): Promise<JournalEntry[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
   const { data } = await supabase
     .from("journal_entries")
@@ -140,9 +133,7 @@ export async function getJournalEntries(): Promise<JournalEntry[]> {
 export async function getDatedNotes(): Promise<JournalEntry[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
   const { data } = await supabase
     .from("journal_entries")
@@ -153,12 +144,10 @@ export async function getDatedNotes(): Promise<JournalEntry[]> {
   return data ?? [];
 }
 
-export async function getNotifications(): Promise<Notification[]> {
+export const getNotifications = cache(async (): Promise<Notification[]> => {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
   // This caller-scoped RPC creates any due deadline or newly relevant funding
   // alerts that the member enabled. Stable keys prevent duplicate reminders.
@@ -170,15 +159,13 @@ export async function getNotifications(): Promise<Notification[]> {
     .order("created_at", { ascending: false })
     .limit(20);
   return data ?? [];
-}
+});
 
 /** Saved ID sets, for quick "is this saved?" checks in lists. */
 export async function getSavedIdSets() {
   if (!isSupabaseConfigured) return { fundingIds: new Set<string>() };
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return { fundingIds: new Set<string>() };
 
   const { data: f } = await supabase
@@ -219,9 +206,7 @@ export async function getProgramme(id: string): Promise<ApplyProgramme | null> {
 export async function getSavedProgrammeIds(): Promise<string[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
   const { data } = await supabase
     .from("saved_programmes")
@@ -235,9 +220,7 @@ export async function getSavedProgrammeIds(): Promise<string[]> {
 export async function getSavedProgrammes(): Promise<SavedProgrammeWithPlan[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
   const { data } = await supabase
     .from("saved_programmes")
@@ -256,9 +239,7 @@ export async function getSavedProgramme(
 ): Promise<ApplicationPlan | null> {
   if (!isSupabaseConfigured) return null;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return null;
   const { data } = await supabase
     .from("saved_programmes")
