@@ -20,6 +20,11 @@ const PROVINCES = [
   "Western Cape",
 ];
 
+const MASTER_GROUPS = [
+  ...APPLY_STREAMS,
+  { value: "other", label: "Official programme overview" },
+];
+
 function fmtDate(d: string | null): string | null {
   if (!d) return null;
   const dt = new Date(d + "T00:00:00");
@@ -49,9 +54,11 @@ function ProgrammeCard({
             {p.institution}
           </h3>
           <p className="mt-1 text-sm text-charcoal-soft">
-            {p.qualification === "masters"
-              ? `Psychology Master's · ${applyStreamLabel(p.stream)}`
-              : "Psychology Honours"}
+            {p.programme_title ?? (
+              p.qualification === "masters"
+                ? `Psychology Master's · ${applyStreamLabel(p.stream)}`
+                : "Psychology Honours"
+            )}
           </p>
         </div>
       </div>
@@ -84,6 +91,16 @@ function ProgrammeCard({
         >
           View Programme →
         </Link>
+        {p.programme_url && (
+          <a
+            href={p.programme_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full text-sm font-semibold text-blue-action hover:underline"
+          >
+            Official source ↗
+          </a>
+        )}
       </div>
     </div>
   );
@@ -315,7 +332,7 @@ export function ApplyDirectory({
             <EmptyRow />
           ) : (
             <div className="space-y-8">
-              {APPLY_STREAMS.filter((s) => mastersByStream.has(s.value)).map((s) => (
+              {MASTER_GROUPS.filter((s) => mastersByStream.has(s.value)).map((s) => (
                 <div key={s.value}>
                   <h3 className="mb-2.5 text-[0.72rem] font-extrabold uppercase tracking-wider text-blue-action">
                     {s.label} Psychology

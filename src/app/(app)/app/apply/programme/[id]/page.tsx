@@ -62,9 +62,11 @@ export default async function ProgrammeDetailPage({
             {p.institution}
           </h1>
           <p className="mt-1 text-sm text-charcoal-soft">
-            {p.qualification === "masters"
-              ? `Psychology Master's · ${applyStreamLabel(p.stream)}`
-              : "Psychology Honours"}
+            {p.programme_title ?? (
+              p.qualification === "masters"
+                ? `Psychology Master's · ${applyStreamLabel(p.stream)}`
+                : "Psychology Honours"
+            )}
             {p.province ? ` · ${p.province}` : ""}
           </p>
         </div>

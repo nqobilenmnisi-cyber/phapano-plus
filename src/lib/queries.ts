@@ -10,6 +10,7 @@ import type {
   ApplicationPlan,
   JournalEntry,
   Notification,
+  PsychologyUniversityCatalogue,
 } from "@/types/database";
 
 /**
@@ -186,8 +187,27 @@ export async function getProgrammes(): Promise<ApplyProgramme[]> {
   const { data } = await supabase
     .from("programmes")
     .select("*")
+    .eq("is_published", true)
+    .eq("verification_status", "verified")
     .order("institution", { ascending: true });
   return (data as ApplyProgramme[] | null) ?? [];
+}
+
+/**
+ * National Psychology pathway audit: exactly one row per SA public university.
+ * The migration and UI distinguish a verified offering from an unverified one.
+ */
+export async function getPsychologyUniversityCatalogue(): Promise<
+  PsychologyUniversityCatalogue[]
+> {
+  if (!isSupabaseConfigured) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("psychology_university_catalogue")
+    .select("*")
+    .eq("is_published", true)
+    .order("institution", { ascending: true });
+  return (data as PsychologyUniversityCatalogue[] | null) ?? [];
 }
 
 /** A single programme by id. */
