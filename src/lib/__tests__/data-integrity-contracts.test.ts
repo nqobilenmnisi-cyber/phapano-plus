@@ -48,11 +48,11 @@ describe("reliable Notes mutations", () => {
   });
 });
 
-describe("honest unfinished settings", () => {
-  it("does not present inactive notification controls as working", () => {
+describe("notification preferences", () => {
+  it("exposes working deadline and funding controls", () => {
     const settings = read("src/app/(app)/app/settings/page.tsx");
-    expect(settings).toContain("Coming soon");
-    expect(settings).not.toContain("<NotificationSettings");
+    expect(settings).not.toContain("Coming soon");
+    expect(settings).toContain("<NotificationSettings");
   });
 });
 

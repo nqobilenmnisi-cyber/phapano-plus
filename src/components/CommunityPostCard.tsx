@@ -28,6 +28,7 @@ import {
 import { ReportDialog } from "@/components/ReportDialog";
 import { VerificationBadges } from "@/components/VerificationBadges";
 import { POST_MAX_LENGTH } from "@/lib/community-constants";
+import { postPublicPath } from "@/lib/community-post-url";
 import {
   COMMUNITY_REACTIONS,
 } from "@/lib/community-posts";
@@ -162,6 +163,10 @@ export function CommunityPostCard({
   const interactionPostId = plainCarry
     ? post.reshared_post_id ?? post.id
     : post.id;
+  const interactionAuthorName = plainCarry
+    ? post.reshared_post?.author?.display_name ?? name
+    : name;
+  const interactionPath = postPublicPath(interactionPostId, interactionAuthorName);
   const hasImages =
     Boolean(post.image_url) ||
     post.attachments.some((attachment) => attachment.kind === "image");
@@ -222,7 +227,7 @@ export function CommunityPostCard({
   }
 
   async function sharePost() {
-    const url = `${window.location.origin}/app/community/post/${post.id}`;
+    const url = `${window.location.origin}${postPublicPath(post.id, name)}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: `${name} on Phapano+`, url });
@@ -502,12 +507,19 @@ export function CommunityPostCard({
             <ReactionSummary counts={reactionCounts} total={totalReactions} />
             <div className="flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-1">
               {post.comment_count > 0 && (
-                <Link href={`/app/community/post/${interactionPostId}`} className="hover:underline">
+                <Link href={interactionPath} className="hover:underline">
                   {post.comment_count} {post.comment_count === 1 ? "comment" : "comments"}
                 </Link>
               )}
               {passCount > 0 && (
-                <span>{passCount} carried forward</span>
+                <span
+                  className="inline-flex items-center gap-1"
+                  aria-label={`${passCount} carried forward`}
+                  title="Carried forward"
+                >
+                  <PassOnIcon className="h-4 w-4" />
+                  <span className="tabular-nums">{passCount}</span>
+                </span>
               )}
             </div>
           </div>
@@ -546,12 +558,15 @@ export function CommunityPostCard({
                     title={option.label}
                     aria-label={option.label}
                     aria-pressed={reaction === option.value}
-                    className={`grid h-11 w-11 place-items-center rounded-full hover:bg-soft ${
+                    className={`group relative grid h-11 w-11 place-items-center rounded-full hover:bg-soft ${
                       reaction === option.value ? "bg-blue-tint" : ""
                     }`}
                     onClick={() => onReact(option.value)}
                   >
                     <ReactionIcon type={option.value} className="h-6 w-6" />
+                    <span className="pointer-events-none absolute bottom-[calc(100%+0.35rem)] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-charcoal px-2 py-1 text-[0.68rem] font-bold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      {option.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -569,7 +584,7 @@ export function CommunityPostCard({
             </span>
           ) : (
             <Link
-              href={`/app/community/post/${interactionPostId}`}
+              href={interactionPath}
               className="flex min-h-11 items-center justify-center gap-1 rounded-chip px-1 py-2 font-semibold text-charcoal-soft transition hover:text-charcoal"
               aria-label={`${post.comment_count} comments`}
               title="Comment"

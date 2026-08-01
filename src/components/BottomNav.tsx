@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { PostIcon } from "@/components/PhapanoIcons";
 
 const items = [
@@ -72,10 +74,14 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 backdrop-blur-md"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-t border-line bg-paper/95 shadow-[0_-8px_28px_rgba(29,45,64,0.08)] backdrop-blur-md [transform:translateZ(0)]"
     >
       <div className="mx-auto grid max-w-3xl grid-cols-5 px-1 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
         {items.map((it) => {
@@ -114,6 +120,7 @@ export function BottomNav() {
           );
         })}
       </div>
-    </nav>
+    </nav>,
+    document.body
   );
 }

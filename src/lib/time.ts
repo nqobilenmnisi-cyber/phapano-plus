@@ -51,3 +51,12 @@ export function johannesburgDateLabel(now = new Date()): string {
     month: "long",
   }).format(now);
 }
+
+export function johannesburgTimeLabel(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-ZA", {
+    timeZone: SOUTH_AFRICA_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(now);
+}

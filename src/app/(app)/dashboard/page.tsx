@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AppTopBar, SupportLine } from "@/components/AppChrome";
 import { BottomNav } from "@/components/BottomNav";
 import { MyPathway, type PathwayItem } from "@/components/MyPathway";
-import { IconApplication, IconNotes } from "@/components/illustrations";
+import { IconNotes } from "@/components/illustrations";
 import { redirect } from "next/navigation";
 import {
   getAuthState,
@@ -15,36 +15,20 @@ import {
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isApplicationStarted } from "@/lib/application-plan-status";
-import { daysUntil, formatDateShort, greeting, firstName } from "@/lib/utils";
+import {
+  careerStageLabels,
+  daysUntil,
+  formatDateShort,
+  greeting,
+  firstName,
+} from "@/lib/utils";
 import {
   johannesburgDateLabel,
-  johannesburgDateParts,
+  johannesburgTimeLabel,
 } from "@/lib/time";
 import { demoPathway, DEMO_NOTICE } from "@/lib/demo";
-import type { CareerStage } from "@/types/database";
 
 export const metadata = { title: "Today | Phapano+" };
-
-// Curated, pathway-focused daily encouragement. Easy to edit. Rotates by date.
-const AFFIRMATIONS = [
-  "One clear next step is still progress.",
-  "You do not need to have the whole path figured out today.",
-  "Check one requirement, save one opportunity, or ask one question. Small steps count.",
-  "Your psychology pathway is built one decision at a time.",
-  "Progress can be one saved institution, one checked deadline, or one note you don't forget.",
-  "Pick the next useful thing, and let the rest wait.",
-  "Tracking a deadline today saves a scramble later.",
-];
-
-function affirmationForToday(): string {
-  const today = johannesburgDateParts();
-  const dayOfYear = Math.floor(
-    (Date.UTC(today.year, today.month - 1, today.day) -
-      Date.UTC(today.year, 0, 0)) /
-      86_400_000
-  );
-  return AFFIRMATIONS[dayOfYear % AFFIRMATIONS.length];
-}
 
 function noteStatus(dueDate: string | null): string | null {
   const days = daysUntil(dueDate);
@@ -154,13 +138,48 @@ export default async function DashboardPage() {
   // An application is "in progress" once the user moves it beyond Interested
   // (or marks it submitted) in their planner.
   const appsStarted = savedProgrammes.filter(isApplicationStarted).length;
-  const stage = profile?.career_stage ?? null;
-  const hasData =
-    programmesSaved > 0 ||
-    appsStarted > 0 ||
-    savedFunding.length > 0 ||
-    datedNotes.length > 0 ||
-    Boolean(profile?.goals);
+  const activePlan = savedProgrammes.find(
+    (programme) => isApplicationStarted(programme) && programme.programme
+  );
+  const stageLabel =
+    profile?.career_stage === "other"
+      ? profile.career_stage_other || "Other pathway stage"
+      : profile?.career_stage
+        ? careerStageLabels[profile.career_stage]
+        : "Pathway stage not set";
+  const continueCard = activePlan?.programme
+    ? {
+        eyebrow: "Application in progress",
+        title: `Continue ${activePlan.programme.institution}`,
+        body:
+          activePlan.next_action ||
+          "Return to your application plan and continue from your latest stage.",
+        href: `/app/apply/programme/${activePlan.programme.id}`,
+        action: "Continue application",
+      }
+    : programmesSaved > 0
+      ? {
+          eyebrow: "Saved programmes",
+          title: "Review the programmes you saved",
+          body: "Compare your saved options and start an application plan when you are ready.",
+          href: "/app/apply",
+          action: "Open Apply",
+        }
+      : savedFunding.length > 0
+        ? {
+            eyebrow: "Saved funding",
+            title: "Return to your funding shortlist",
+            body: "Review deadlines and eligibility for the opportunities you saved.",
+            href: "/app/funding",
+            action: "Open Funding",
+          }
+        : {
+            eyebrow: "Start your pathway",
+            title: "Build your first shortlist",
+            body: "Use Apply to save a programme and begin tracking your progress.",
+            href: "/app/apply",
+            action: "Go to Apply",
+          };
 
   // Only nudge when the profile is genuinely missing required fields.
   const profileIncomplete =
@@ -186,10 +205,15 @@ export default async function DashboardPage() {
         )}
 
         <section className="pt-7">
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-action">
-            {johannesburgDateLabel()} · Johannesburg time
+          <p className="inline-flex items-center gap-2 rounded-full border border-blue/35 bg-white px-3.5 py-2 text-xs font-bold text-blue-deep shadow-sm">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+              <path d="M6 3v3M18 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>{johannesburgDateLabel()}</span>
+            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-bronze" />
+            <time>{johannesburgTimeLabel()}</time>
           </p>
-          <h1 className="mt-2 max-w-2xl font-sora text-[2rem] font-bold leading-tight tracking-tight sm:text-[2.35rem]">
+          <h1 className="mt-4 max-w-2xl font-sora text-[2rem] font-bold leading-tight tracking-tight sm:text-[2.35rem]">
             {name ? (
               <>
                 {greeting()}, <span className="text-blue-action">{name}</span>.
@@ -198,10 +222,8 @@ export default async function DashboardPage() {
               "Welcome back."
             )}
           </h1>
-          <p className="mt-2 text-base text-charcoal-soft">
-            {dueSoon > 0
-              ? `${dueSoon} ${dueSoon === 1 ? "item needs" : "items need"} your attention this week.`
-              : "Nothing urgent is due this week. Continue when you are ready."}
+          <p className="mt-2 text-sm font-semibold text-charcoal-soft">
+            {stageLabel}
           </p>
         </section>
 
@@ -229,35 +251,39 @@ export default async function DashboardPage() {
           </Link>
         )}
 
-        <div className="mt-5 rounded-card border border-line bg-gradient-to-r from-blue-tint/55 to-white px-5 py-4 text-sm font-medium leading-relaxed text-charcoal shadow-card">
-          {affirmationForToday()}
-        </div>
-
-        {/* your next steps */}
-        <div className="mt-10 flex items-center gap-3 px-1">
-          <IconApplication className="h-[26px] w-[26px] flex-none" />
-          <h2 className="font-sora text-[1.34rem] font-bold tracking-tight">
-            Continue your pathway
-          </h2>
-          <span className="ml-auto text-sm font-semibold text-charcoal-soft">
-            {appsStarted > 0 ? "Pick up where you left off" : "Where to start"}
-          </span>
-        </div>
-        <p className="ml-[40px] mt-0.5 text-sm text-charcoal-soft">
-          {hasData
-            ? "Based on your stage and what you've saved."
-            : "Add your goals, saved institutions or deadlines to personalise your next steps."}
-        </p>
-
-        <TodayFocusGrid
-          stage={stage}
-          appsStarted={appsStarted}
-          savedCount={programmesSaved}
-          goals={profile?.goals ?? null}
-        />
+        <section className="card mt-7 overflow-hidden border-blue/25">
+          <div className="grid grid-cols-3 divide-x divide-line border-b border-line bg-white py-4">
+            <DashboardMetric value={programmesSaved} label="Saved programmes" />
+            <DashboardMetric value={appsStarted} label="Applications active" />
+            <DashboardMetric value={savedFunding.length} label="Funding saved" />
+          </div>
+          <div className="bg-gradient-to-br from-blue-tint/65 to-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[0.7rem] font-extrabold uppercase tracking-[0.15em] text-blue-action">
+                  {continueCard.eyebrow}
+                </p>
+                <h2 className="mt-1 font-sora text-xl font-bold tracking-tight">
+                  {continueCard.title}
+                </h2>
+                <p className="mt-1 max-w-xl text-sm leading-relaxed text-charcoal-soft">
+                  {continueCard.body}
+                </p>
+                {dueSoon > 0 && (
+                  <p className="mt-3 text-xs font-bold text-bronze-deep">
+                    {dueSoon} {dueSoon === 1 ? "deadline needs" : "deadlines need"} attention this week.
+                  </p>
+                )}
+              </div>
+              <Link href={continueCard.href} className="btn-primary flex-none">
+                {continueCard.action}
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* My Pathway */}
-        <div className="mt-5">
+        <div id="pathway" className="mt-6 scroll-mt-24">
           <MyPathway items={pathwayItems} />
         </div>
 
@@ -333,217 +359,15 @@ export default async function DashboardPage() {
   );
 }
 
-interface FocusStep {
-  pill: string;
-  tone: "blue" | "bronze";
-  title: string;
-  body: string;
-  href: string;
-  done?: boolean;
-}
-
-/** Stage-aware next steps. Does not assume the user is a Master's applicant. */
-function focusStepsFor(
-  stage: CareerStage | null,
-  appsStarted: number,
-  savedCount: number,
-  goals: string | null
-): FocusStep[] {
-  const steps: FocusStep[] = [];
-
-  // If the user set a current focus/goal, surface it first because it is theirs.
-  if (goals && goals.trim()) {
-    steps.push({
-      pill: "Your focus",
-      tone: "bronze",
-      title: goals.trim(),
-      body: "Your current focus, from your profile. Edit it any time.",
-      href: "/app/profile",
-    });
-  }
-
-  // Primary step, by stage.
-  switch (stage) {
-    case "undergraduate":
-      steps.push({
-        pill: "Explore",
-        tone: "blue",
-        title: "Explore psychology pathways",
-        body: "See where an undergraduate degree can lead, and what to plan for.",
-        href: "/app/apply",
-      });
-      break;
-    case "honours_applicant":
-      steps.push({
-        pill: "Apply",
-        tone: "blue",
-        title:
-          appsStarted > 0
-            ? "Continue your Honours applications"
-            : "Start tracking your Honours applications",
-        body: "Explore universities and track each Honours application in one place.",
-        href: "/app/apply",
-      });
-      break;
-    case "honours":
-      steps.push({
-        pill: "Plan ahead",
-        tone: "blue",
-        title: "Plan for your Master's applications",
-        body: "Explore programmes and start saving the universities you're considering.",
-        href: "/app/apply",
-      });
-      break;
-    case "masters_applicant":
-      steps.push({
-        pill: "Apply",
-        tone: "blue",
-        title:
-          appsStarted > 0
-            ? "Continue your Master's applications"
-            : "Start tracking your Master's applications",
-        body: "Explore programmes and track each application stage by stage.",
-        href: "/app/apply",
-      });
-      break;
-    case "masters_student":
-      steps.push({
-        pill: "Funding",
-        tone: "blue",
-        title: "Find funding for your studies",
-        body: "Browse bursaries and grants that fit your stage and stream.",
-        href: "/app/funding",
-      });
-      break;
-    case "intern":
-      steps.push({
-        pill: "Prepare",
-        tone: "blue",
-        title: "Prepare for your internship milestones",
-        body: "Keep board exam dates and internship requirements in My Pathway.",
-        href: "/app/funding",
-      });
-      break;
-    case "community_service":
-      steps.push({
-        pill: "Next steps",
-        tone: "blue",
-        title: "Plan your next professional steps",
-        body: "Track opportunities, funding and milestones beyond community service.",
-        href: "/app/funding",
-      });
-      break;
-    case "professional":
-      steps.push({
-        pill: "Opportunities",
-        tone: "blue",
-        title: "Discover opportunities and funding",
-        body: "Browse opportunities, grants and resources relevant to your practice.",
-        href: "/app/funding",
-      });
-      break;
-    default:
-      steps.push({
-        pill: "Explore",
-        tone: "blue",
-        title: "Explore psychology programmes",
-        body: "Browse universities and start saving the ones you're interested in.",
-        href: "/app/apply",
-      });
-  }
-
-  // Learning step, tailored to the stage (selection week is Master's-specific).
-  if (stage === "masters_applicant") {
-    steps.push({
-      pill: "Learn",
-      tone: "blue",
-      title: "Read: how selection week works",
-      body: "A short, practical guide for Master's applicants.",
-      href: "/learn",
-    });
-  } else if (stage === "honours_applicant") {
-    steps.push({
-      pill: "Learn",
-      tone: "blue",
-      title: "Read: what Honours selection looks for",
-      body: "A short guide to strengthening your Honours application.",
-      href: "/learn",
-    });
-  } else if (stage === "undergraduate") {
-    steps.push({
-      pill: "Learn",
-      tone: "blue",
-      title: "Read: planning your psychology pathway",
-      body: "What to do in each undergraduate year to stay on track.",
-      href: "/learn",
-    });
-  } else {
-    steps.push({
-      pill: "Learn",
-      tone: "blue",
-      title: "Explore guidance and resources",
-      body: "Practical guides for the South African psychology pathway.",
-      href: "/learn",
-    });
-  }
-
-  // A neutral, non-gamified "first step" prompt.
-  steps.push({
-    pill: "Next step",
-    tone: "bronze",
-    title: savedCount > 0 ? "You've saved a programme" : "Save a programme to begin",
-    body:
-      savedCount > 0
-        ? "It now appears in My Pathway with its deadline."
-        : "Saving a programme adds its deadline to My Pathway.",
-    href: "/app/apply",
-    done: savedCount > 0,
-  });
-
-  return steps;
-}
-
-function TodayFocusGrid({
-  stage,
-  appsStarted,
-  savedCount,
-  goals,
-}: {
-  stage: CareerStage | null;
-  appsStarted: number;
-  savedCount: number;
-  goals: string | null;
-}) {
-  const steps = focusStepsFor(stage, appsStarted, savedCount, goals);
-
+function DashboardMetric({ value, label }: { value: number; label: string }) {
   return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-3">
-      {steps.slice(0, 3).map((s) => (
-        <div key={`${s.pill}-${s.title}`} className="min-w-0">
-          <Link
-            href={s.href}
-            className={`flex h-full min-w-0 flex-col rounded-card border p-4 shadow-card transition hover:-translate-y-0.5 hover:border-[#D2E4F7] hover:shadow-lift ${
-              s.done
-                ? "border-bronze-soft bg-gradient-to-b from-[#FFFDFB] to-[#FBF7F3]"
-                : "border-line bg-white"
-            }`}
-          >
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.72rem] font-bold ${
-                s.tone === "bronze"
-                  ? "bg-bronze-soft text-bronze-deep"
-                  : "bg-blue-tint text-blue-deep"
-              }`}
-            >
-              {s.pill}
-            </span>
-            <h3 className="mt-2 break-words font-sora text-base font-semibold tracking-tight">
-              {s.title}
-            </h3>
-            <p className="text-sm text-charcoal-soft">{s.body}</p>
-          </Link>
-        </div>
-      ))}
+    <div className="min-w-0 px-2 text-center">
+      <span className="block font-sora text-xl font-bold tabular-nums text-charcoal">
+        {value}
+      </span>
+      <span className="mt-1 block text-[0.66rem] font-semibold leading-tight text-charcoal-soft sm:text-xs">
+        {label}
+      </span>
     </div>
   );
 }

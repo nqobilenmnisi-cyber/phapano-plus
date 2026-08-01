@@ -137,6 +137,7 @@ export function NotificationSettings({
               <div className="text-sm text-charcoal-soft">{row.body}</div>
             </div>
             <button
+              type="button"
               role="switch"
               aria-checked={state[row.key]}
               aria-label={row.title}

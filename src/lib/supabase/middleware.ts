@@ -7,6 +7,7 @@ import {
   isSupabaseConfigured,
 } from "./config";
 import type { Database } from "@/types/database";
+import { expandPostId } from "@/lib/community-post-url";
 
 /**
  * Refreshes the auth session and enforces route protection.
@@ -60,7 +61,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const protectedPrefixes = ["/dashboard", "/app", "/onboarding", "/admin"];
+  const protectedPrefixes = ["/dashboard", "/app", "/onboarding", "/admin", "/p/"];
   const isProtected = protectedPrefixes.some((p) => path.startsWith(p));
 
   if (isProtected && !user) {
@@ -75,6 +76,20 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  const publicPostMatch = path.match(/^\/p\/[^/]+\/([0-9a-z]+)$/i);
+  if (publicPostMatch) {
+    const postId = expandPostId(publicPostMatch[1]);
+    if (postId) {
+      const destination = request.nextUrl.clone();
+      destination.pathname = `/app/community/post/${postId}`;
+      const rewrite = NextResponse.rewrite(destination, { request });
+      for (const cookie of supabaseResponse.cookies.getAll()) {
+        rewrite.cookies.set(cookie.name, cookie.value, cookie);
+      }
+      return rewrite;
+    }
   }
 
   return supabaseResponse;

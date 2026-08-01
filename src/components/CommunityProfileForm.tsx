@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { saveCommunityProfile } from "@/app/(app)/app/community/actions";
 import {
@@ -163,10 +162,10 @@ export function CommunityProfileForm({
     >
       <section>
         <h2 className="font-sora text-base font-bold tracking-tight">
-          Community identity
+          Public profile identity
         </h2>
         <p className="mt-1 text-sm text-charcoal-soft">
-          These social details belong to Community and stay under your control.
+          Set the name and headline members see when you post or appear in Community.
         </p>
         <div className="mt-4 space-y-4">
           <div>
@@ -199,7 +198,7 @@ export function CommunityProfileForm({
               disabled={pending}
             />
             <p className="mt-1 text-xs text-charcoal-soft">
-              A short Community introduction, separate from your Passport career stage.
+              A short introduction shown at the top of your public profile.
             </p>
           </div>
         </div>
@@ -207,27 +206,28 @@ export function CommunityProfileForm({
 
       <fieldset className="border-t border-line pt-6">
         <legend className="font-sora text-base font-bold tracking-tight">
-          Share from your Phapano Passport
+          Public profile visibility
         </legend>
         <p className="mt-1 text-sm leading-relaxed text-charcoal-soft">
-          Every field is opt-in. Changes to shared Passport details and your
-          avatar stay synchronized automatically.
+          Every Passport field starts private. Turn on only what you want shown
+          publicly; updates to enabled details stay synchronized automatically.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {sharingControls.map((control) => (
             <label
               key={control.key}
-              className="flex cursor-pointer items-start gap-3 rounded-card border border-line bg-paper px-4 py-3.5 transition hover:border-blue/50"
+              className="flex cursor-pointer items-start gap-3 rounded-card border border-blue/30 bg-paper px-4 py-3.5 transition hover:border-blue-action"
             >
               <input
                 type="checkbox"
                 name="shared_fields"
                 value={control.key}
                 defaultChecked={Boolean(passport?.[control.key])}
-                className="mt-1 h-4 w-4 accent-blue-action"
+                className="peer sr-only"
+                aria-label={`Show ${control.label} on your public profile`}
                 disabled={pending}
               />
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="block text-sm font-bold text-charcoal">
                   {control.label}
                 </span>
@@ -235,16 +235,18 @@ export function CommunityProfileForm({
                   {control.value || "Add this field in your Passport"}
                 </span>
               </span>
+              <span
+                aria-hidden="true"
+                className="relative mt-0.5 h-6 w-11 flex-none rounded-full bg-line transition peer-checked:bg-blue-action peer-checked:[&>span]:translate-x-5 peer-disabled:opacity-60"
+              >
+                <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform" />
+              </span>
             </label>
           ))}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-charcoal-soft">
           Turning a field off removes its value from your public Community
-          profile immediately.{" "}
-          <Link href="/app/profile" className="font-bold text-blue-action hover:underline">
-            Edit source fields in your Passport
-          </Link>
-          .
+          profile immediately. Edit each source value in the Passport sections above.
         </p>
       </fieldset>
 
@@ -299,7 +301,7 @@ export function CommunityProfileForm({
       )}
       {saved && (
         <p role="status" className="text-sm font-semibold text-ok">
-          Community profile and privacy choices saved.
+          Public profile and privacy choices saved.
         </p>
       )}
 

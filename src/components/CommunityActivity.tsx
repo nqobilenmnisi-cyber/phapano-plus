@@ -28,12 +28,12 @@ export function CommunityActivity({
   const media = originalPosts.filter(
     (post) => Boolean(post.image_url) || post.attachments.length > 0
   );
-  const tabs: { id: ActivityTab; label: string; count: number }[] = [
-    { id: "posts", label: "Posts", count: originalPosts.length },
-    { id: "carried", label: "Carried", count: carried.length },
-    { id: "comments", label: "Comments", count: comments.length },
-    { id: "reactions", label: "Reactions", count: reactions.length },
-    { id: "media", label: "Media", count: media.length },
+  const tabs: { id: ActivityTab; label: string }[] = [
+    { id: "posts", label: "Posts" },
+    { id: "carried", label: "Carried forward" },
+    { id: "comments", label: "Comments" },
+    { id: "reactions", label: "Reactions" },
+    { id: "media", label: "Media" },
   ];
   const visiblePosts =
     tab === "posts"
@@ -48,6 +48,9 @@ export function CommunityActivity({
 
   return (
     <div>
+      <h2 className="mb-2 font-sora text-lg font-bold tracking-tight text-charcoal">
+        Activity
+      </h2>
       <div className="-mx-1 overflow-x-auto pb-1">
         <div role="tablist" aria-label="Your Community activity" className="flex min-w-max border-b border-line px-1">
           {tabs.map((item) => (
@@ -64,7 +67,6 @@ export function CommunityActivity({
               }`}
             >
               {item.label}
-              {item.count > 0 && <span className="ml-1 tabular-nums">{item.count}</span>}
             </button>
           ))}
         </div>

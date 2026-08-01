@@ -103,7 +103,7 @@ export function MyPathway({ items }: { items: PathwayItem[] }) {
             and upcoming dates will appear here.
           </p>
           <Link href="/app/apply" className="btn-secondary mt-5 inline-flex">
-            Explore universities
+            Go to Apply
           </Link>
         </div>
       ) : (

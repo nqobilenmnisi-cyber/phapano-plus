@@ -3,6 +3,7 @@ import { signOut } from "@/app/(auth)/actions";
 import {
   CommunityNotificationSetting,
   DangerZone,
+  NotificationSettings,
 } from "@/components/SettingsControls";
 import { getProfile, getCurrentUser } from "@/lib/queries";
 import { getBlockedAccounts } from "@/lib/community";
@@ -45,18 +46,17 @@ export default async function SettingsPage() {
             disabled={!isSupabaseConfigured}
           />
           <div className="mt-5 border-t border-line pt-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-bold text-charcoal">
-                Deadline and funding alerts
-              </h3>
-              <span className="rounded-full bg-blue-tint px-2.5 py-1 text-xs font-bold text-blue-deep">
-                Coming soon
-              </span>
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
-              Deadline and funding delivery controls will appear here when
-              those alerts are active.
-            </p>
+            <NotificationSettings
+              prefs={
+                profile?.notification_prefs ?? {
+                  deadlines: true,
+                  funding: true,
+                  community: true,
+                  product: true,
+                }
+              }
+              disabled={!isSupabaseConfigured}
+            />
           </div>
         </div>
       </section>
@@ -124,10 +124,10 @@ export default async function SettingsPage() {
             .
           </p>
           <Link
-            href="/app/profile?section=community#community-settings"
+            href="/app/profile#community-settings"
             className="inline-flex font-semibold text-blue-action hover:underline"
           >
-            Edit community profile &amp; visibility →
+            Edit public profile visibility in your Passport →
           </Link>
           <div>
             <h3 className="mb-2 text-sm font-bold text-charcoal">

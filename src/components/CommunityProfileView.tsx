@@ -131,10 +131,10 @@ export function CommunityProfileView({
             </div>
             {isOwnProfile && (
               <Link
-                href="/app/profile?section=community#community-settings"
+                href="/app/profile#community-settings"
                 className="btn-secondary mb-1 inline-flex !px-4 !py-2 text-sm"
               >
-                Edit profile
+                Edit Passport
               </Link>
             )}
           </div>
@@ -173,7 +173,7 @@ export function CommunityProfileView({
             )}
           </div>
 
-          <div className="mt-5 grid grid-cols-3 divide-x divide-line rounded-card border border-line bg-soft/70 py-3">
+          <div className="mt-5 flex items-start gap-9 border-t border-line pt-4 sm:gap-12">
             <ProfileStat
               value={followers}
               label={followers === 1 ? "Follower" : "Followers"}
@@ -184,12 +184,21 @@ export function CommunityProfileView({
               label="Following"
               href={isOwnProfile ? "/app/community/people" : undefined}
             />
-            <ProfileStat
-              value={connections}
-              label={connections === 1 ? "Connection" : "Connections"}
-              href={isOwnProfile ? "/app/community/connections" : undefined}
-            />
           </div>
+          {isOwnProfile ? (
+            <Link
+              href="/app/community/connections"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-deep transition hover:text-blue-action hover:underline"
+            >
+              <ConnectionMark />
+              {connections} {connections === 1 ? "connection" : "connections"}
+            </Link>
+          ) : (
+            <p className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-charcoal-soft">
+              <ConnectionMark />
+              {connections} {connections === 1 ? "connection" : "connections"}
+            </p>
+          )}
 
           {!isOwnProfile && (
             <div className="mt-4">
@@ -430,12 +439,31 @@ function historyDateRange(
 
 function ProfileDetail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-card bg-soft px-4 py-3">
+    <div className="rounded-card border border-blue/30 bg-white px-4 py-3">
       <dt className="text-xs font-semibold text-charcoal-soft">{label}</dt>
       <dd className="mt-1 whitespace-pre-wrap text-sm font-semibold leading-relaxed text-charcoal">
         {value}
       </dd>
     </div>
+  );
+}
+
+function ConnectionMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+      <path
+        d="M9.5 14.5 7.8 16.2a3.2 3.2 0 0 1-4.5-4.5l3-3a3.2 3.2 0 0 1 4.5 0"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="m14.5 9.5 1.7-1.7a3.2 3.2 0 0 1 4.5 4.5l-3 3a3.2 3.2 0 0 1-4.5 0M8.7 15.3l6.6-6.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
