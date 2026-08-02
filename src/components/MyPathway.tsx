@@ -69,7 +69,8 @@ export function MyPathway({ items }: { items: PathwayItem[] }) {
   const now = bandOf(items, "now");
   const soon = bandOf(items, "soon");
   const ahead = bandOf(items, "ahead");
-  const hasAny = now.length + soon.length + ahead.length > 0;
+  const past = bandOf(items, "past");
+  const hasAny = past.length + now.length + soon.length + ahead.length > 0;
 
   return (
     <section
@@ -108,6 +109,13 @@ export function MyPathway({ items }: { items: PathwayItem[] }) {
         </div>
       ) : (
         <>
+          {past.length > 0 && (
+            <Band label="Overdue" tick="#B44B3B">
+              {past.map((x) => (
+                <Row key={x.it.id} {...x} />
+              ))}
+            </Band>
+          )}
           {now.length > 0 && (
             <Band label="This week" tick="#C2693F">
               {now.map((x) => (

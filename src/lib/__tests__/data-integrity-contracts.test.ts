@@ -17,8 +17,17 @@ describe("application plan integrity", () => {
     const queries = read("src/lib/queries.ts");
     const dashboard = read("src/app/(app)/dashboard/page.tsx");
     expect(queries).toContain('.eq("is_saved", true)');
-    expect(dashboard).toContain("isApplicationStarted");
+    expect(queries).toContain('programme:programmes!inner(*)');
+    expect(queries).toContain('.eq("programme.is_published", true)');
+    expect(dashboard).toContain("isApplicationActive");
+    expect(dashboard).toContain('export const dynamic = "force-dynamic"');
     expect(dashboard).not.toContain('status !== "Interested"');
+  });
+
+  it("keeps overdue pathway items visible instead of silently dropping them", () => {
+    const pathway = read("src/components/MyPathway.tsx");
+    expect(pathway).toContain('bandOf(items, "past")');
+    expect(pathway).toContain('label="Overdue"');
   });
 
   it("reverts optimistic bookmark changes when saving fails", () => {

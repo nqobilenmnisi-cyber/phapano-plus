@@ -6,8 +6,16 @@ import { applyStreamLabel } from "@/lib/utils";
 import { SaveProgrammeButton } from "@/components/ApplyDirectory";
 import { ApplicationPlanTracker } from "@/components/ApplicationPlan";
 import { UniversityBadge } from "@/components/UniversityBadge";
+import type { ProgrammeQualification } from "@/types/database";
 
 export const metadata = { title: "Programme | Phapano+" };
+
+function qualificationLabel(qualification: ProgrammeQualification) {
+  if (qualification === "undergraduate") return "Undergraduate Psychology";
+  if (qualification === "doctoral") return "Psychology doctorate";
+  if (qualification === "masters") return "Psychology Master's";
+  return "Psychology Honours";
+}
 
 // Official quick links in priority order. Only links that exist are shown;
 // the general homepage is the last resort.
@@ -65,7 +73,7 @@ export default async function ProgrammeDetailPage({
             {p.programme_title ?? (
               p.qualification === "masters"
                 ? `Psychology Master's · ${applyStreamLabel(p.stream)}`
-                : "Psychology Honours"
+                : qualificationLabel(p.qualification)
             )}
             {p.province ? ` · ${p.province}` : ""}
           </p>
