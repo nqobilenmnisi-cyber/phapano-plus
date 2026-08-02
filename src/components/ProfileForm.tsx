@@ -129,6 +129,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <SectionSave
         section="identity"
         pending={pending}
+        active={lastSection === "identity"}
         saved={savedSection === "identity"}
         error={lastSection === "identity" ? error : null}
       />
@@ -271,6 +272,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <SectionSave
         section="professional"
         pending={pending}
+        active={lastSection === "professional"}
         saved={savedSection === "professional"}
         error={lastSection === "professional" ? error : null}
       />
@@ -331,6 +333,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           <SectionSave
             section="experience"
             pending={pending}
+            active={lastSection === "experience"}
             saved={savedSection === "experience"}
             error={lastSection === "experience" ? error : null}
           />
@@ -368,6 +371,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <SectionSave
           section="links"
           pending={pending}
+          active={lastSection === "links"}
           saved={savedSection === "links"}
           error={lastSection === "links" ? error : null}
         />
@@ -385,11 +389,13 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 function SectionSave({
   section,
   pending,
+  active,
   saved,
   error,
 }: {
   section: "identity" | "professional" | "experience" | "links";
   pending: boolean;
+  active: boolean;
   saved: boolean;
   error: string | null;
 }) {
@@ -402,7 +408,7 @@ function SectionSave({
         disabled={pending}
         className="btn-primary whitespace-nowrap"
       >
-        {pending ? "Saving…" : "Save section"}
+        {pending && active ? "Saving…" : "Save section"}
       </button>
       {saved && (
         <span className="text-sm font-semibold text-ok" role="status">

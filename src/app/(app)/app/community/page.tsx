@@ -38,7 +38,7 @@ export default async function CommunityPage({
 
   // First visit: set up the community profile before anything else.
   if (uid && !communityProfile) {
-    redirect("/app/profile?section=community");
+    redirect("/app/profile#community-settings");
   }
 
   const [{ posts, hasMore }, moderation, managedPages] = await Promise.all([

@@ -42,28 +42,43 @@ export function MentionTextarea({
   const [results, setResults] = useState<Candidate[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [searching, setSearching] = useState(false);
+  const [searchedQuery, setSearchedQuery] = useState("");
 
   useEffect(() => {
     if (!query) {
       setResults([]);
+      setSearching(false);
+      setSearchedQuery("");
       return;
     }
     let live = true;
+    setSearching(true);
     const timer = window.setTimeout(async () => {
-      const members = await searchMembersAction({ q: query });
-      if (!live) return;
-      setResults(
-        members
-          .filter((member) => member.identity_type !== "organisation")
-          .slice(0, 6)
-          .map((member) => ({
-          userId: member.user_id,
-          label: member.display_name,
-          avatarUrl: member.avatar_url,
-          headline: member.headline,
-          }))
-      );
-      setActive(0);
+      try {
+        const members = await searchMembersAction({ q: query });
+        if (!live) return;
+        setResults(
+          members
+            .filter((member) => member.identity_type !== "organisation")
+            .slice(0, 6)
+            .map((member) => ({
+              userId: member.user_id,
+              label: member.display_name,
+              avatarUrl: member.avatar_url,
+              headline: member.headline,
+            }))
+        );
+        setActive(0);
+        setSearchedQuery(query);
+      } catch {
+        if (live) {
+          setResults([]);
+          setSearchedQuery(query);
+        }
+      } finally {
+        if (live) setSearching(false);
+      }
     }, 250);
     return () => {
       live = false;
@@ -149,17 +164,21 @@ export function MentionTextarea({
         role="combobox"
         aria-haspopup="listbox"
         aria-autocomplete="list"
-        aria-expanded={open && results.length > 0}
+        aria-expanded={open}
         aria-controls={`${id}-mention-results`}
       />
-      {open && results.length > 0 && (
+      {open && (
         <ul
           id={`${id}-mention-results`}
           className="absolute left-0 right-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-card border border-line bg-paper p-1 shadow-lift"
           role="listbox"
           aria-label="Mention a member"
         >
-          {results.map((candidate, index) => (
+          {searching ? (
+            <li className="px-3 py-3 text-sm text-charcoal-soft" role="status">
+              Finding members…
+            </li>
+          ) : results.length > 0 ? results.map((candidate, index) => (
             <li key={candidate.userId} role="option" aria-selected={index === active}>
               <button
                 type="button"
@@ -189,7 +208,11 @@ export function MentionTextarea({
                 </span>
               </button>
             </li>
-          ))}
+          )) : searchedQuery === query ? (
+            <li className="px-3 py-3 text-sm text-charcoal-soft" role="status">
+              No other member matches “{query}”.
+            </li>
+          ) : null}
         </ul>
       )}
     </div>

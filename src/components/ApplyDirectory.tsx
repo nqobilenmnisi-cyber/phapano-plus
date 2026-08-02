@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import type { ApplyProgramme, ProgrammeQualification } from "@/types/database";
 import {
@@ -17,6 +17,8 @@ const LEVELS: { value: "all" | ProgrammeQualification; label: string }[] = [
   { value: "masters", label: "Master’s" },
   { value: "doctoral", label: "PhD / doctorate" },
 ];
+
+const PAGE_SIZE = 12;
 
 function levelLabel(level: ProgrammeQualification) {
   return LEVELS.find((item) => item.value === level)?.label ?? level;
@@ -238,6 +240,7 @@ export function ApplyDirectory({
   const [applicationsOnly, setApplicationsOnly] = useState(initialApplicationsOnly);
   const applicationSet = useMemo(() => new Set(applicationIds), [applicationIds]);
   const [q, setQ] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const provinces = useMemo(
     () => Array.from(new Set(programmes.map((programme) => programme.province).filter(Boolean))).sort() as string[],
@@ -295,6 +298,12 @@ export function ApplyDirectory({
       return true;
     });
   }, [programmes, province, level, savedOnly, saved, applicationsOnly, applicationSet, q]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [province, level, savedOnly, applicationsOnly, q]);
+
+  const visible = base.slice(0, visibleCount);
 
   return (
     <div className="mt-6">
@@ -382,7 +391,7 @@ export function ApplyDirectory({
           <EmptyRow />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {base.map((p) => (
+            {visible.map((p) => (
               <ProgrammeCard
                 key={p.id}
                 p={p}
@@ -394,6 +403,21 @@ export function ApplyDirectory({
                 demo={demo}
               />
             ))}
+          </div>
+        )}
+        {visible.length < base.length && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            >
+              Show {Math.min(PAGE_SIZE, base.length - visible.length)} more
+            </button>
+            <p className="mt-2 text-xs text-charcoal-soft" aria-live="polite">
+              Showing {visible.length} of {base.length}{" "}
+              {base.length === 1 ? "programme" : "programmes"}
+            </p>
           </div>
         )}
       </section>

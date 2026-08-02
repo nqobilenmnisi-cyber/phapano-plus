@@ -62,7 +62,7 @@ describe("one canonical You profile", () => {
   it("keeps Community focused on posts and discovery", () => {
     expect(community).not.toContain("My profile");
     expect(community).not.toContain("CommunityProfileForm");
-    expect(community).toContain('redirect("/app/profile?section=community")');
+    expect(community).toContain('redirect("/app/profile#community-settings")');
   });
 });
 

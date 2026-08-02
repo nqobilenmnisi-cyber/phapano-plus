@@ -164,6 +164,23 @@ export const getNotifications = cache(async (): Promise<Notification[]> => {
   return data ?? [];
 });
 
+/**
+ * App chrome only needs the unread badge. Keep this deliberately read-only and
+ * cheap so ordinary navigation never waits for notification generation.
+ */
+export const getUnreadNotificationCount = cache(async (): Promise<number> => {
+  if (!isSupabaseConfigured) return 0;
+  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user) return 0;
+  const { count } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("read", false);
+  return count ?? 0;
+});
+
 /** Saved ID sets, for quick "is this saved?" checks in lists. */
 export async function getSavedIdSets() {
   if (!isSupabaseConfigured) return { fundingIds: new Set<string>() };

@@ -93,17 +93,24 @@ export default async function ProfilePage({
 
         {/* profile artwork */}
         {isSupabaseConfigured && user && (
-          <div className="mt-5 space-y-5">
-            <ProfileMediaUploader
-              userId={user.id}
-              kind="banner"
-              initialUrl={profile?.banner_url ?? null}
-            />
-            <ProfileMediaUploader
-              userId={user.id}
-              kind="avatar"
-              initialUrl={profile?.avatar_url ?? null}
-            />
+          <div className="card mt-5 p-4 sm:p-5">
+            <h2 className="font-sora text-sm font-bold tracking-tight">
+              Profile photo &amp; banner
+            </h2>
+            <div className="mt-3 space-y-4">
+              <ProfileMediaUploader
+                userId={user.id}
+                kind="banner"
+                initialUrl={profile?.banner_url ?? null}
+              />
+              <div className="border-t border-line pt-4">
+                <ProfileMediaUploader
+                  userId={user.id}
+                  kind="avatar"
+                  initialUrl={profile?.avatar_url ?? null}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -176,8 +183,16 @@ export default async function ProfilePage({
       {/* saved content summary */}
       {section === "passport" && (
       <section className="mt-8 grid grid-cols-2 gap-3">
-        <SummaryTile label="Programmes saved" value={counts.programmes} href="/app/apply" />
-        <SummaryTile label="Funding saved" value={counts.funding} href="/app/funding" />
+        <SummaryTile
+          label={counts.programmes === 1 ? "Programme saved" : "Programmes saved"}
+          value={counts.programmes}
+          href="/app/apply"
+        />
+        <SummaryTile
+          label={counts.funding === 1 ? "Funding item saved" : "Funding items saved"}
+          value={counts.funding}
+          href="/app/funding"
+        />
       </section>
       )}
 
@@ -238,6 +253,25 @@ export default async function ProfilePage({
                 verificationBadges={communityMember.verificationBadges}
                 activity={communityActivity}
               />
+            </section>
+          )}
+          {!communityProfile && (
+            <section className="card mt-9 border-blue/30 bg-gradient-to-br from-blue-tint/60 via-white to-bronze-soft/25 p-5 sm:p-6">
+              <p className="eyebrow">Public profile setup</p>
+              <h2 className="mt-2 font-sora text-xl font-bold tracking-tight">
+                Choose what other members can see
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-charcoal-soft">
+                Your professional fields stay private until you switch them on.
+                Set up your public profile from the privacy section of your
+                Phapano Passport.
+              </p>
+              <Link
+                href="/app/profile#community-settings"
+                className="btn-primary mt-5"
+              >
+                Set up public profile
+              </Link>
             </section>
           )}
         </>

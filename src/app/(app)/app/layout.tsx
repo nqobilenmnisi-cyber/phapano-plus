@@ -1,6 +1,7 @@
 import { AppTopBar } from "@/components/AppChrome";
 import { BottomNav } from "@/components/BottomNav";
-import { getNotifications, getProfile } from "@/lib/queries";
+import { RouteScrollManager } from "@/components/RouteScrollManager";
+import { getProfile, getUnreadNotificationCount } from "@/lib/queries";
 
 /**
  * Layout for authenticated app pages. Onboarding has its own minimal layout,
@@ -12,11 +13,10 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [notifications, profile] = await Promise.all([
-    getNotifications(),
+  const [unread, profile] = await Promise.all([
+    getUnreadNotificationCount(),
     getProfile(),
   ]);
-  const unread = notifications.filter((n) => !n.read).length;
   const fullName = [profile?.full_name, profile?.surname]
     .filter(Boolean)
     .join(" ")
@@ -24,6 +24,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen pb-24">
+      <RouteScrollManager />
       <AppTopBar
         unread={unread}
         personalIdentity={{
