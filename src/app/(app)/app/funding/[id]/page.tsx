@@ -3,9 +3,8 @@ import { notFound } from "next/navigation";
 import { getFundingOne, getSavedIdSets } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { DEMO_FUNDING } from "@/lib/demo-content";
-import { SaveButton } from "@/components/SaveButton";
+import { FundingSaveButton } from "@/components/FundingSaveButton";
 import { VerifiedBadge, CountdownRing } from "@/components/Trust";
-import { toggleSaveFunding } from "@/app/(app)/app/funding/actions";
 import {
   streamLabels,
   careerStageLabels,
@@ -74,9 +73,9 @@ export default async function FundingDetail({
           {funding.closing_date && (
             <CountdownRing days={days} urgency={urgencyOf(days)} />
           )}
-          <SaveButton
+          <FundingSaveButton
+            fundingId={funding.id}
             saved={saved}
-            onToggle={async (s) => toggleSaveFunding(funding!.id, s)}
           />
         </div>
       </section>

@@ -131,7 +131,9 @@ export function ProfileMediaUploader({
     <div>
       <div
         className={`overflow-hidden border border-line bg-gradient-to-br from-blue-tint via-white to-bronze-soft/50 ${
-          avatar ? "h-28 w-28 rounded-full" : "aspect-[4/1] w-full rounded-card"
+          avatar
+            ? "h-24 w-24 rounded-full sm:h-28 sm:w-28"
+            : "h-24 w-full rounded-card sm:h-auto sm:aspect-[4/1]"
         }`}
       >
         {shownUrl ? (
@@ -184,7 +186,9 @@ export function ProfileMediaUploader({
           onClick={() => fileRef.current?.click()}
           disabled={busy}
         >
-          {url ? `Change ${kind}` : `Add ${kind}`}
+          {url
+            ? avatar ? "Change photo" : "Change banner"
+            : avatar ? "Add photo" : "Add banner"}
         </button>
         {source && (
           <button
@@ -199,9 +203,9 @@ export function ProfileMediaUploader({
       </div>
       <p className="mt-1.5 text-xs text-charcoal-soft">
         {avatar
-          ? "Square, at least 400 × 400. Stored at 512 × 512."
-          : "4:1 banner. Stored at 1600 × 400."}{" "}
-        JPEG, PNG or WebP · maximum 20 MB.
+          ? "Square image, at least 400 × 400."
+          : "Wide 4:1 image."}{" "}
+        JPEG, PNG or WebP · up to 20 MB.
       </p>
       {error && <p className="mt-1.5 text-xs font-semibold text-bronze-deep">{error}</p>}
     </div>

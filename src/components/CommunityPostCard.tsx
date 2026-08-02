@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useRef,
@@ -148,6 +149,7 @@ export function CommunityPostCard({
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [quote, setQuote] = useState("");
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   if (deleted) return null;
 
@@ -185,7 +187,18 @@ export function CommunityPostCard({
     setReactionOpen(false);
     startTransition(async () => {
       const result = await toggleReaction(interactionPostId, next, actorId);
-      if ("error" in result) setMessage(result.error);
+      if ("error" in result) {
+        setReaction(previous);
+        setReactionCounts((counts) => {
+          const reverted = { ...counts };
+          if (next) reverted[next] = Math.max(0, reverted[next] - 1);
+          if (previous) reverted[previous] += 1;
+          return reverted;
+        });
+        setMessage(result.error);
+      } else {
+        setMessage(null);
+      }
     });
   }
 
@@ -201,6 +214,7 @@ export function CommunityPostCard({
     startTransition(async () => {
       const result = await deletePost(post.id);
       if ("error" in result) setMessage(result.error);
+      else if (detail) router.replace("/app/community");
       else setDeleted(true);
     });
   }
@@ -231,6 +245,7 @@ export function CommunityPostCard({
     try {
       if (navigator.share) {
         await navigator.share({ title: `${name} on Phapano+`, url });
+        setMessage("Post shared.");
       } else {
         await navigator.clipboard.writeText(url);
         setMessage("Post link copied.");

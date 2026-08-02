@@ -150,7 +150,12 @@ export function FundingDirectory({
         <div>
           <p className="eyebrow">Funding opportunities</p>
           <h2 className="mt-1 font-sora text-xl font-bold tracking-tight">
-            {chip === "saved" ? "Your saved opportunities" : "Opportunities for your pathway"}
+            {chip === "saved"
+              ? "Your saved opportunities"
+              : chip === "all"
+                ? "All verified opportunities"
+                : CHIPS.find((filter) => filter.value === chip)?.label ??
+                  "Funding opportunities"}
           </h2>
         </div>
       </div>
