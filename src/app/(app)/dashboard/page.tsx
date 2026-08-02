@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import {
   getProfile,
   getSavedFunding,
-  getNotifications,
+  getUnreadNotificationCount,
   getJournalEntries,
   getSavedProgrammes,
 } from "@/lib/queries";
@@ -92,14 +92,14 @@ export default async function DashboardPage() {
   const [
     profile,
     savedFunding,
-    notifications,
+    unread,
     recentNotes,
     savedProgrammes,
   ] =
     await Promise.all([
       getProfile(),
       getSavedFunding(),
-      getNotifications(),
+      getUnreadNotificationCount(),
       getJournalEntries(),
       getSavedProgrammes(),
     ]);
@@ -167,7 +167,6 @@ export default async function DashboardPage() {
   }
 
   const name = firstName(profile?.full_name);
-  const unread = notifications.filter((n) => !n.read).length;
   const programmesSaved = savedProgrammes.filter((sp) => sp.is_saved).length;
   // Active means the member has recorded real plan work and the application
   // has not reached an outcome or terminal status.

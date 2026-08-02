@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type {
   Profile,
@@ -21,10 +23,18 @@ import type {
 export const getCurrentUser = cache(async () => {
   if (!isSupabaseConfigured) return null;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims as Record<string, unknown> | undefined;
+  if (error || typeof claims?.sub !== "string") return null;
+
+  return {
+    id: claims.sub,
+    email: typeof claims.email === "string" ? claims.email : null,
+    user_metadata:
+      claims.user_metadata && typeof claims.user_metadata === "object"
+        ? (claims.user_metadata as Record<string, unknown>)
+        : {},
+  };
 });
 
 /**
@@ -95,28 +105,38 @@ export async function getSavedFunding(): Promise<FundingOpportunity[]> {
   return (data ?? []).map((r: { funding: FundingOpportunity }) => r.funding).filter(Boolean);
 }
 
-export async function getFunding(): Promise<FundingOpportunity[]> {
+export const getFunding = unstable_cache(async (): Promise<FundingOpportunity[]> => {
   if (!isSupabaseConfigured) return [];
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("funding_opportunities")
     .select("*")
     .eq("is_published", true)
     .order("closing_date", { ascending: true });
   return data ?? [];
-}
+}, ["published-funding-directory-v1"], {
+  revalidate: 15 * 60,
+  tags: ["funding-directory"],
+});
 
-export async function getFundingOne(
+const getFundingOneCached = unstable_cache(async (
   id: string
-): Promise<FundingOpportunity | null> {
+): Promise<FundingOpportunity | null> => {
   if (!isSupabaseConfigured) return null;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("funding_opportunities")
     .select("*")
     .eq("id", id)
     .single();
   return data;
+}, ["published-funding-detail-v1"], {
+  revalidate: 15 * 60,
+  tags: ["funding-directory"],
+});
+
+export async function getFundingOne(id: string) {
+  return getFundingOneCached(id);
 }
 
 export async function getJournalEntries(): Promise<JournalEntry[]> {
@@ -200,9 +220,9 @@ export async function getSavedIdSets() {
 // ---- Apply directory: programmes + saved_programmes ---------------------
 
 /** All programmes in the directory (public read). Ordered for stable display. */
-export async function getProgrammes(): Promise<ApplyProgramme[]> {
+export const getProgrammes = unstable_cache(async (): Promise<ApplyProgramme[]> => {
   if (!isSupabaseConfigured) return [];
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("programmes")
     .select("*")
@@ -212,7 +232,10 @@ export async function getProgrammes(): Promise<ApplyProgramme[]> {
     .order("qualification", { ascending: true });
   if (error) throw new Error(`Unable to load Apply programmes: ${error.message}`);
   return (data as ApplyProgramme[] | null) ?? [];
-}
+}, ["published-programme-directory-v1"], {
+  revalidate: 15 * 60,
+  tags: ["programme-directory"],
+});
 
 /**
  * National Psychology pathway audit: exactly one row per SA public university.
@@ -232,15 +255,22 @@ export async function getPsychologyUniversityCatalogue(): Promise<
 }
 
 /** A single programme by id. */
-export async function getProgramme(id: string): Promise<ApplyProgramme | null> {
+const getProgrammeCached = unstable_cache(async (id: string): Promise<ApplyProgramme | null> => {
   if (!isSupabaseConfigured) return null;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("programmes")
     .select("*")
     .eq("id", id)
     .maybeSingle();
   return (data as ApplyProgramme | null) ?? null;
+}, ["published-programme-detail-v1"], {
+  revalidate: 15 * 60,
+  tags: ["programme-directory"],
+});
+
+export async function getProgramme(id: string) {
+  return getProgrammeCached(id);
 }
 
 /** IDs of programmes the current user has saved (for save-state on cards). */

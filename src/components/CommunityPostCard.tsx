@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -420,6 +421,8 @@ export function CommunityPostCard({
             className="mt-3 flex min-w-0 flex-col overflow-hidden rounded-card border border-line bg-soft/50 transition hover:border-blue/30 sm:flex-row"
           >
             {post.link_image_url && (
+              // Link-preview hosts are user supplied, so keep this browser-loaded
+              // instead of widening Next's image allowlist to the whole internet.
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={post.link_image_url}
@@ -826,12 +829,15 @@ function PostImage({
         aria-label="View image"
         onClick={() => setOpen(true)}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={url}
           alt={alt}
+          width={1200}
+          height={900}
+          sizes="(max-width: 672px) 100vw, 672px"
+          quality={78}
           className={cover ? "h-full w-full object-cover" : "h-auto w-full object-contain"}
-          style={{ maxHeight: "inherit" }}
+          style={{ maxHeight: "inherit", height: cover ? "100%" : "auto" }}
         />
       </button>
       {open && (
