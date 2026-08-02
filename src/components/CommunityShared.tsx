@@ -3,6 +3,7 @@
 /* Shared presentational pieces for Community Lite. */
 
 import { timeAgo } from "@/lib/time";
+import Image from "next/image";
 export { timeAgo };
 
 
@@ -36,12 +37,13 @@ export function MemberAvatar({
     ];
   if (avatarUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={avatarUrl}
         alt=""
         width={size}
         height={size}
+        sizes={`${size}px`}
+        quality={72}
         className="shrink-0 rounded-full object-cover"
         style={{ width: size, height: size }}
       />

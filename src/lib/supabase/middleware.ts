@@ -56,15 +56,18 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // The project uses an asymmetric ECC signing key, so getClaims verifies the
+  // session locally against Supabase's cached public JWKS. This preserves
+  // cryptographic route protection without putting the Ireland Auth service
+  // in the hot path of every navigation.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const authenticated = Boolean(claimsData?.claims?.sub);
 
   const path = request.nextUrl.pathname;
   const protectedPrefixes = ["/dashboard", "/app", "/onboarding", "/admin", "/p/"];
   const isProtected = protectedPrefixes.some((p) => path.startsWith(p));
 
-  if (isProtected && !user) {
+  if (isProtected && !authenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", path);
@@ -72,7 +75,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Signed-in users shouldn't see auth pages.
-  if (user && (path === "/login" || path === "/signup")) {
+  if (authenticated && (path === "/login" || path === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

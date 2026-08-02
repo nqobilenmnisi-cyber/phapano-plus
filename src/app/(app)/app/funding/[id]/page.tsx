@@ -29,14 +29,18 @@ export default async function FundingDetail({
 }) {
   const { id } = await params;
 
-  let funding = await getFundingOne(id);
-  let saved = false;
+  const [liveFunding, sets] = await Promise.all([
+    getFundingOne(id),
+    isSupabaseConfigured
+      ? getSavedIdSets()
+      : Promise.resolve({ fundingIds: new Set<string>() }),
+  ]);
+  let funding = liveFunding;
+  let saved = sets.fundingIds.has(id);
 
   if (!isSupabaseConfigured) {
     funding = DEMO_FUNDING.find((f) => f.id === id) ?? null;
-  } else {
-    const sets = await getSavedIdSets();
-    saved = sets.fundingIds.has(id);
+    saved = false;
   }
 
   if (!funding) notFound();

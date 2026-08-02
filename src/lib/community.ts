@@ -11,6 +11,7 @@ import type {
   CommunityEmbeddedPost,
   CommunityMemberCard,
   CommunityMention,
+  CommunityPostAttachment,
   CommunityPostAttachmentView,
   CommunityPostView,
   CommunityProfile,
@@ -157,6 +158,8 @@ async function attachViewerState(
   const authorIds = Array.from(
     new Set(rows.map((row) => row.author_id as string).filter(Boolean))
   );
+  let originals: RawPost[] = [];
+  let attachmentRows: CommunityPostAttachment[] = [];
   if (ids.length) {
     const [
       { data: reactions },
@@ -164,6 +167,9 @@ async function attachViewerState(
       { data: admins },
       { data: mentions },
       { data: verifications },
+      { data: feedImageUrls },
+      { data: originalRows },
+      { data: attachments },
     ] =
       await Promise.all([
         supabase
@@ -187,6 +193,23 @@ async function attachViewerState(
           .from("profile_verifications")
           .select("user_id, badge")
           .in("user_id", authorIds),
+        imagePaths.length
+          ? supabase.storage
+              .from(COMMUNITY_IMAGE_BUCKET)
+              .createSignedUrls(imagePaths, 60 * 60)
+          : Promise.resolve({ data: [] }),
+        resharedIds.length
+          ? supabase
+              .from("community_posts")
+              .select(POST_SELECT)
+              .in("id", resharedIds)
+              .eq("status", "published")
+          : Promise.resolve({ data: [] }),
+        supabase
+          .from("community_post_attachments")
+          .select("*")
+          .in("post_id", interactionIds)
+          .order("position", { ascending: true }),
       ]);
     for (const row of reactions ?? []) {
       const postId = row.post_id as string;
@@ -218,52 +241,59 @@ async function attachViewerState(
       current.push(row.badge as ProfileVerificationBadge);
       verificationByAuthor.set(authorId, current);
     }
-  }
-
-  if (imagePaths.length) {
-    const { data } = await supabase.storage
-      .from(COMMUNITY_IMAGE_BUCKET)
-      .createSignedUrls(imagePaths, 60 * 60);
-    for (const row of data ?? []) {
+    for (const row of feedImageUrls ?? []) {
       if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
     }
+    originals = (originalRows ?? []) as unknown as RawPost[];
+    attachmentRows = (attachments ?? []) as unknown as CommunityPostAttachment[];
   }
 
   const embedded = new Map<string, CommunityEmbeddedPost>();
-  if (resharedIds.length) {
-    const { data } = await supabase
-      .from("community_posts")
-      .select(POST_SELECT)
-      .in("id", resharedIds)
-      .eq("status", "published");
-    const originals = (data ?? []) as unknown as RawPost[];
+  if (originals.length) {
     const originalAuthorIds = Array.from(
       new Set(
         originals.map((row) => row.author_id as string).filter(Boolean)
       )
     );
-    if (originalAuthorIds.length) {
-      const { data: originalVerifications } = await supabase
-        .from("profile_verifications")
-        .select("user_id, badge")
-        .in("user_id", originalAuthorIds);
-      for (const row of originalVerifications ?? []) {
+    const originalPaths = originals
+      .filter((row) => row.media_status === "approved" && row.image_path)
+      .map((row) => row.image_path as string);
+    const attachmentPaths = attachmentRows.map(
+      (attachment) => attachment.storage_path
+    );
+    const [
+      { data: originalVerifications },
+      { data: originalUrls },
+      { data: attachmentUrls },
+    ] = await Promise.all([
+      originalAuthorIds.length
+        ? supabase
+            .from("profile_verifications")
+            .select("user_id, badge")
+            .in("user_id", originalAuthorIds)
+        : Promise.resolve({ data: [] }),
+      originalPaths.length
+        ? supabase.storage
+            .from(COMMUNITY_IMAGE_BUCKET)
+            .createSignedUrls(originalPaths, 60 * 60)
+        : Promise.resolve({ data: [] }),
+      attachmentPaths.length
+        ? supabase.storage
+            .from(COMMUNITY_IMAGE_BUCKET)
+            .createSignedUrls(attachmentPaths, 60 * 60)
+        : Promise.resolve({ data: [] }),
+    ]);
+    for (const row of originalVerifications ?? []) {
         const authorId = row.user_id as string;
         const current = verificationByAuthor.get(authorId) ?? [];
         current.push(row.badge as ProfileVerificationBadge);
         verificationByAuthor.set(authorId, current);
-      }
     }
-    const originalPaths = originals
-      .filter((row) => row.media_status === "approved" && row.image_path)
-      .map((row) => row.image_path as string);
-    if (originalPaths.length) {
-      const { data: originalUrls } = await supabase.storage
-        .from(COMMUNITY_IMAGE_BUCKET)
-        .createSignedUrls(originalPaths, 60 * 60);
-      for (const row of originalUrls ?? []) {
+    for (const row of originalUrls ?? []) {
         if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
-      }
+    }
+    for (const row of attachmentUrls ?? []) {
+      if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
     }
     for (const row of originals) {
       const post = row as unknown as CommunityEmbeddedPost;
@@ -290,31 +320,27 @@ async function attachViewerState(
     }
   }
 
-  const allPostIds = [...ids, ...resharedIds];
-  if (allPostIds.length) {
-    const { data: attachments } = await supabase
-      .from("community_post_attachments")
-      .select("*")
-      .in("post_id", allPostIds)
-      .order("position", { ascending: true });
-    const paths = (attachments ?? []).map(
-      (attachment) => attachment.storage_path as string
-    );
-    if (paths.length) {
-      const { data: attachmentUrls } = await supabase.storage
-        .from(COMMUNITY_IMAGE_BUCKET)
-        .createSignedUrls(paths, 60 * 60);
-      for (const row of attachmentUrls ?? []) {
-        if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
-      }
+  // Posts without a carried-forward original still need their attachment URLs.
+  if (!originals.length && attachmentRows.length) {
+    const { data: attachmentUrls } = await supabase.storage
+      .from(COMMUNITY_IMAGE_BUCKET)
+      .createSignedUrls(
+        attachmentRows.map((attachment) => attachment.storage_path),
+        60 * 60
+      );
+    for (const row of attachmentUrls ?? []) {
+      if (row.path && row.signedUrl) signedUrls.set(row.path, row.signedUrl);
     }
-    for (const attachment of attachments ?? []) {
-      const url = signedUrls.get(attachment.storage_path as string);
+  }
+
+  if (attachmentRows.length) {
+    for (const attachment of attachmentRows) {
+      const url = signedUrls.get(attachment.storage_path);
       if (!url) continue;
-      const postId = attachment.post_id as string;
+      const postId = attachment.post_id;
       const current = attachmentsByPost.get(postId) ?? [];
       current.push({
-        ...(attachment as unknown as Omit<CommunityPostAttachmentView, "url">),
+        ...attachment,
         url,
       });
       attachmentsByPost.set(postId, current);

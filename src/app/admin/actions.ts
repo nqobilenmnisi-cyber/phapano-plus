@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin";
 import type {
   VerificationStatus,
@@ -106,6 +106,7 @@ export async function saveFunding(formData: FormData) {
   }
   revalidatePath("/admin/funding");
   revalidatePath("/app/funding");
+  revalidateTag("funding-directory");
   return { ok: true };
 }
 
@@ -114,6 +115,7 @@ export async function deleteFunding(id: string) {
   if (ctx.demo) return { ok: false };
   await ctx.supabase.from("funding_opportunities").delete().eq("id", id);
   revalidatePath("/admin/funding");
+  revalidateTag("funding-directory");
   return { ok: true };
 }
 

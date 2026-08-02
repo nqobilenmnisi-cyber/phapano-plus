@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CommunityMemberActions } from "@/components/CommunityMemberActions";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { MemberAvatar } from "@/components/CommunityShared";
@@ -36,10 +37,13 @@ export function OrganisationProfileView({
     <>
       <section className="card mt-4 overflow-hidden">
         {page.banner_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={page.banner_url}
             alt=""
+            width={1200}
+            height={300}
+            sizes="(max-width: 672px) 100vw, 672px"
+            quality={75}
             className="aspect-[4/1] w-full bg-soft object-cover"
           />
         ) : (
