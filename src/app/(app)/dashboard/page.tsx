@@ -12,7 +12,7 @@ import {
   getSavedProgrammes,
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { isApplicationStarted } from "@/lib/application-plan-status";
+import { isApplicationActive } from "@/lib/application-plan-status";
 import {
   countLabel,
   daysUntil,
@@ -27,6 +27,14 @@ import {
 import { demoPathway, DEMO_NOTICE } from "@/lib/demo";
 
 export const metadata = { title: "Today | Phapano+" };
+export const dynamic = "force-dynamic";
+
+function dashboardProgrammeLabel(qualification: string) {
+  if (qualification === "undergraduate") return "Undergraduate";
+  if (qualification === "doctoral") return "Doctorate";
+  if (qualification === "masters") return "Master's";
+  return "Honours";
+}
 
 function noteStatus(dueDate: string | null): string | null {
   const days = daysUntil(dueDate);
@@ -127,17 +135,14 @@ export default async function DashboardPage() {
   // toward progress. Only SAVED programmes surface here — never the whole list.
   if (isSupabaseConfigured) {
     for (const sp of savedProgrammes) {
-      const applicationStarted = isApplicationStarted(sp);
-      if (!sp.is_saved && !applicationStarted) continue;
+      const applicationActive = isApplicationActive(sp);
+      if (!sp.is_saved && !applicationActive) continue;
       const prog = sp.programme;
       if (!prog) continue;
-      const label =
-        prog.qualification === "masters"
-          ? `${prog.institution} · Master's`
-          : `${prog.institution} · Honours`;
+      const label = `${prog.institution} · ${dashboardProgrammeLabel(prog.qualification)}`;
       pathwayItems.push({
         id: `saved-prog-${prog.id}`,
-        kind: sp.is_saved ? "Programme deadline" : "Application plan",
+        kind: applicationActive ? "Application plan" : "Programme deadline",
         title: label,
         date: sp.my_deadline ?? prog.closing_date,
         verifiedAt: null,
@@ -164,11 +169,12 @@ export default async function DashboardPage() {
   const name = firstName(profile?.full_name);
   const unread = notifications.filter((n) => !n.read).length;
   const programmesSaved = savedProgrammes.filter((sp) => sp.is_saved).length;
-  // An application is "in progress" once the user moves it beyond Interested
-  // (or marks it submitted) in their planner.
-  const appsStarted = savedProgrammes.filter(isApplicationStarted).length;
+  // Active means the member has recorded real plan work and the application
+  // has not reached an outcome or terminal status.
+  const activeApplications = savedProgrammes.filter(isApplicationActive);
+  const appsStarted = activeApplications.length;
   const activePlan = savedProgrammes.find(
-    (programme) => isApplicationStarted(programme) && programme.programme
+    (programme) => isApplicationActive(programme) && programme.programme
   );
   const continueCard = activePlan?.programme
     ? {
@@ -207,9 +213,9 @@ export default async function DashboardPage() {
   // Only nudge when the profile is genuinely missing required fields.
   const profileIncomplete =
     isSupabaseConfigured && (!profile?.full_name || !profile?.career_stage);
-  const dueSoon = pathwayItems.filter((item) => {
+  const needsAttention = pathwayItems.filter((item) => {
     const days = daysUntil(item.date);
-    return days !== null && days >= 0 && days <= 7;
+    return days !== null && days <= 7;
   }).length;
 
   return (
@@ -301,9 +307,9 @@ export default async function DashboardPage() {
                 <p className="mt-1 max-w-xl text-sm leading-relaxed text-charcoal-soft">
                   {continueCard.body}
                 </p>
-                {dueSoon > 0 && (
+                {needsAttention > 0 && (
                   <p className="mt-3 text-xs font-bold text-bronze-deep">
-                    {countLabel(dueSoon, "deadline")} {dueSoon === 1 ? "needs" : "need"} attention this week.
+                    {countLabel(needsAttention, "item")} {needsAttention === 1 ? "needs" : "need"} attention.
                   </p>
                 )}
               </div>

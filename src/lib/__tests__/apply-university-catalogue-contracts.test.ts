@@ -5,6 +5,7 @@ const read = (path: string) => readFileSync(path, "utf8");
 
 describe("national Psychology university catalogue", () => {
   const migration = read("supabase/migrations/0031_psychology_university_catalogue.sql");
+  const integratedMigration = read("supabase/migrations/0032_integrated_apply_directory.sql");
 
   it("contains exactly the 26 DHET public universities", () => {
     const slugs = Array.from(migration.matchAll(/^\('([^']+)'/gm), (match) => match[1]);
@@ -45,15 +46,16 @@ describe("national Psychology university catalogue", () => {
     }
   });
 
-  it("keeps the national audit separate from personal application plans", () => {
+  it("materialises all verified levels in one actionable planner", () => {
     const page = read("src/app/(app)/app/apply/page.tsx");
-    const component = read("src/components/PsychologyUniversityCatalogue.tsx");
-    expect(page).toContain("<PsychologyUniversityCatalogue");
+    const directory = read("src/components/ApplyDirectory.tsx");
+    expect(page).not.toContain("<PsychologyUniversityCatalogue");
     expect(page).toContain("<ApplyDirectory");
-    expect(component).toContain('row.levels[item.key].status === "offered"');
-    expect(component).toContain("Only institutions with a verified Psychology qualification are shown");
-    expect(component).not.toContain("No current Psychology qualification verified");
-    expect(component).not.toContain("Not offered in the current official catalogue");
-    expect(component).toContain("Check the official catalogue");
+    expect(integratedMigration).toContain("values ('undergraduate'), ('honours'), ('masters'), ('doctoral')");
+    expect(integratedMigration).toContain("exactly 72 verified programme levels");
+    expect(directory).toContain("notesByProgramme");
+    expect(directory).toContain("updateProgrammeNote");
+    expect(directory).toContain("All provinces");
+    expect(directory).not.toContain("No current Psychology qualification verified");
   });
 });

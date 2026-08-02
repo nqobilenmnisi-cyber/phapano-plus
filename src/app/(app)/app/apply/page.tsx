@@ -1,15 +1,14 @@
 import { IconApplication } from "@/components/illustrations";
 import { ApplyDirectory } from "@/components/ApplyDirectory";
-import { PsychologyUniversityCatalogue } from "@/components/PsychologyUniversityCatalogue";
 import {
   getProgrammes,
-  getPsychologyUniversityCatalogue,
   getSavedProgrammes,
 } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { isApplicationStarted } from "@/lib/application-plan-status";
+import { isApplicationActive } from "@/lib/application-plan-status";
 
 export const metadata = { title: "Apply | Phapano+" };
+export const dynamic = "force-dynamic";
 
 export default async function ApplyPage({
   searchParams,
@@ -17,13 +16,15 @@ export default async function ApplyPage({
   searchParams: Promise<{ saved?: string; applications?: string }>;
 }) {
   const query = await searchParams;
-  const [programmes, plans, universities] = await Promise.all([
+  const [programmes, plans] = await Promise.all([
     getProgrammes(),
     getSavedProgrammes(),
-    getPsychologyUniversityCatalogue(),
   ]);
   const savedIds = plans.filter((plan) => plan.is_saved).map((plan) => plan.programme_id);
-  const applicationIds = plans.filter(isApplicationStarted).map((plan) => plan.programme_id);
+  const applicationIds = plans.filter(isApplicationActive).map((plan) => plan.programme_id);
+  const notesByProgramme = Object.fromEntries(
+    plans.map((plan) => [plan.programme_id, plan.notes])
+  );
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-12 sm:px-6">
@@ -47,10 +48,10 @@ export default async function ApplyPage({
           </h3>
           <p className="mx-auto mt-1.5 max-w-md text-sm text-charcoal-soft">
             The Apply directory reads from your programmes database. Once
-            connected, Honours and Master&apos;s programmes appear here.
+            connected, verified Psychology programmes appear here.
           </p>
         </div>
-      ) : universities.length === 0 ? (
+      ) : programmes.length === 0 ? (
         <div className="mt-6 rounded-card border border-dashed border-divider bg-soft px-6 py-12 text-center">
           <IconApplication className="mx-auto h-10 w-10" />
           <h3 className="mt-4 font-sora text-base font-semibold tracking-tight">
@@ -61,27 +62,15 @@ export default async function ApplyPage({
           </p>
         </div>
       ) : (
-        <>
-          <PsychologyUniversityCatalogue rows={universities} />
-          {programmes.length > 0 && (
-            <section className="mt-14 border-t border-line pt-9">
-              <h2 className="font-sora text-2xl font-bold tracking-tight">
-                Save and plan postgraduate applications
-              </h2>
-              <p className="mt-1.5 text-sm text-charcoal-soft">
-                Use the detailed Honours and Master&apos;s cards below for your private application planner.
-              </p>
-              <ApplyDirectory
-                programmes={programmes}
-                savedIds={savedIds}
-                applicationIds={applicationIds}
-                initialSavedOnly={query.saved === "true"}
-                initialApplicationsOnly={query.applications === "true"}
-                demo={!isSupabaseConfigured}
-              />
-            </section>
-          )}
-        </>
+        <ApplyDirectory
+          programmes={programmes}
+          savedIds={savedIds}
+          applicationIds={applicationIds}
+          notesByProgramme={notesByProgramme}
+          initialSavedOnly={query.saved === "true"}
+          initialApplicationsOnly={query.applications === "true"}
+          demo={!isSupabaseConfigured}
+        />
       )}
     </main>
   );

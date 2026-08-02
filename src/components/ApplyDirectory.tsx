@@ -1,29 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import type { ApplyProgramme } from "@/types/database";
-import { applyStreamLabel, APPLY_STREAMS } from "@/lib/utils";
-import { toggleSaveProgramme } from "@/app/(app)/app/apply/actions";
+import type { ApplyProgramme, ProgrammeQualification } from "@/types/database";
+import {
+  toggleSaveProgramme,
+  updateProgrammeNote,
+} from "@/app/(app)/app/apply/actions";
 import { UniversityBadge } from "@/components/UniversityBadge";
 import { BookmarkIcon } from "@/components/PhapanoIcons";
 
-const PROVINCES = [
-  "Eastern Cape",
-  "Free State",
-  "Gauteng",
-  "KwaZulu-Natal",
-  "Limpopo",
-  "Mpumalanga",
-  "North West",
-  "Northern Cape",
-  "Western Cape",
+const LEVELS: { value: "all" | ProgrammeQualification; label: string }[] = [
+  { value: "all", label: "All levels" },
+  { value: "undergraduate", label: "Undergraduate" },
+  { value: "honours", label: "Honours" },
+  { value: "masters", label: "Master’s" },
+  { value: "doctoral", label: "PhD / doctorate" },
 ];
 
-const MASTER_GROUPS = [
-  ...APPLY_STREAMS,
-  { value: "other", label: "Official programme overview" },
-];
+function levelLabel(level: ProgrammeQualification) {
+  return LEVELS.find((item) => item.value === level)?.label ?? level;
+}
 
 function fmtDate(d: string | null): string | null {
   if (!d) return null;
@@ -37,11 +34,17 @@ function ProgrammeCard({
   saved,
   saving,
   onToggleSave,
+  initialNote,
+  onNoteSaved,
+  demo,
 }: {
   p: ApplyProgramme;
   saved: boolean;
   saving: boolean;
   onToggleSave: (p: ApplyProgramme, saved: boolean) => Promise<void>;
+  initialNote: string | null;
+  onNoteSaved: (programmeId: string) => void;
+  demo: boolean;
 }) {
   const deadline = fmtDate(p.closing_date);
 
@@ -54,12 +57,11 @@ function ProgrammeCard({
             {p.institution}
           </h3>
           <p className="mt-1 text-sm text-charcoal-soft">
-            {p.programme_title ?? (
-              p.qualification === "masters"
-                ? `Psychology Master's · ${applyStreamLabel(p.stream)}`
-                : "Psychology Honours"
-            )}
+            {p.programme_title ?? `${levelLabel(p.qualification)} Psychology`}
           </p>
+          <span className="mt-2 inline-flex rounded-full border border-blue/30 bg-blue-tint/35 px-2.5 py-1 text-[0.68rem] font-bold text-blue-deep">
+            {levelLabel(p.qualification)}
+          </span>
         </div>
       </div>
 
@@ -85,23 +87,126 @@ function ProgrammeCard({
           {saving ? "Saving…" : saved ? "Saved" : "Save"}
         </button>
 
-        <Link
-          href={`/app/apply/programme/${p.id}`}
-          className="ml-auto text-sm font-semibold text-blue-action hover:underline"
-        >
-          View Programme →
-        </Link>
         {p.programme_url && (
           <a
             href={p.programme_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full text-sm font-semibold text-blue-action hover:underline"
+            className="ml-auto text-sm font-semibold text-blue-action hover:underline"
           >
             Official source ↗
           </a>
         )}
+        <Link
+          href={`/app/apply/programme/${p.id}`}
+          className="w-full text-sm font-semibold text-blue-action hover:underline"
+        >
+          Open full application planner →
+        </Link>
       </div>
+
+      <ProgrammeNote
+        programmeId={p.id}
+        initialNote={initialNote}
+        onSaved={() => onNoteSaved(p.id)}
+        demo={demo}
+      />
+    </div>
+  );
+}
+
+function ProgrammeNote({
+  programmeId,
+  initialNote,
+  onSaved,
+  demo,
+}: {
+  programmeId: string;
+  initialNote: string | null;
+  onSaved: () => void;
+  demo: boolean;
+}) {
+  const [note, setNote] = useState(initialNote ?? "");
+  const [draft, setDraft] = useState(initialNote ?? "");
+  const [editing, setEditing] = useState(false);
+  const [savedMessage, setSavedMessage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function saveNote() {
+    if (demo || draft === note) return;
+    setError(null);
+    setSavedMessage(false);
+    startTransition(async () => {
+      const result = await updateProgrammeNote(programmeId, draft || null);
+      if (!result.ok) {
+        setError(
+          "error" in result && result.error
+            ? result.error
+            : "We couldn't save this note. Please try again."
+        );
+        return;
+      }
+      setNote(draft);
+      setEditing(false);
+      setSavedMessage(true);
+      onSaved();
+    });
+  }
+
+  return (
+    <div className="mt-4 border-t border-line-soft pt-4">
+      {!editing ? (
+        <div>
+          {note && (
+            <p className="line-clamp-2 rounded-card bg-soft px-3 py-2.5 text-sm leading-relaxed text-charcoal">
+              {note}
+            </p>
+          )}
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => { setDraft(note); setEditing(true); setSavedMessage(false); }}
+              className="text-sm font-semibold text-blue-action hover:underline"
+            >
+              {note ? "Edit private note" : "Add private note"}
+            </button>
+            {savedMessage && <span className="text-xs font-semibold text-charcoal-soft">Note saved</span>}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <label className="label" htmlFor={`note-${programmeId}`}>Private note</label>
+          <textarea
+            id={`note-${programmeId}`}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            rows={3}
+            className="input resize-none"
+            placeholder="Questions, reminders or application notes…"
+          />
+          <p className="mt-1 text-xs text-charcoal-soft">Adding a note also saves this programme.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={saveNote}
+              disabled={pending || draft === note}
+              className="btn-primary !px-3 !py-2 text-sm disabled:opacity-50"
+            >
+              {pending ? "Saving…" : "Save note"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setDraft(note); setEditing(false); setError(null); }}
+              disabled={pending}
+              className="btn-secondary !px-3 !py-2 text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+          {error && <p role="alert" className="mt-2 text-sm text-bronze-deep">{error}</p>}
+        </div>
+      )}
     </div>
   );
 }
@@ -110,6 +215,7 @@ export function ApplyDirectory({
   programmes,
   savedIds,
   applicationIds,
+  notesByProgramme,
   initialSavedOnly = false,
   initialApplicationsOnly = false,
   demo,
@@ -117,6 +223,7 @@ export function ApplyDirectory({
   programmes: ApplyProgramme[];
   savedIds: string[];
   applicationIds: string[];
+  notesByProgramme: Record<string, string | null>;
   initialSavedOnly?: boolean;
   initialApplicationsOnly?: boolean;
   demo: boolean;
@@ -125,13 +232,17 @@ export function ApplyDirectory({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [qual, setQual] = useState<"all" | "honours" | "masters">("all");
+  const [level, setLevel] = useState<"all" | ProgrammeQualification>("all");
   const [province, setProvince] = useState("all");
-  const [stream, setStream] = useState("all");
   const [savedOnly, setSavedOnly] = useState(initialSavedOnly);
   const [applicationsOnly, setApplicationsOnly] = useState(initialApplicationsOnly);
   const applicationSet = useMemo(() => new Set(applicationIds), [applicationIds]);
   const [q, setQ] = useState("");
+
+  const provinces = useMemo(
+    () => Array.from(new Set(programmes.map((programme) => programme.province).filter(Boolean))).sort() as string[],
+    [programmes]
+  );
 
   async function onToggleSave(p: ApplyProgramme, isSaved: boolean) {
     if (demo) return;
@@ -163,47 +274,33 @@ export function ApplyDirectory({
     }
   }
 
+  function onNoteSaved(programmeId: string) {
+    setSaved((previous) => new Set(previous).add(programmeId));
+  }
+
   const base = useMemo(() => {
     return programmes.filter((p) => {
       if (province !== "all" && p.province !== province) return false;
+      if (level !== "all" && p.qualification !== level) return false;
       if (savedOnly && !saved.has(p.id)) return false;
       if (applicationsOnly && !applicationSet.has(p.id)) return false;
       if (q.trim()) {
         const s = q.toLowerCase();
         if (
           !p.institution.toLowerCase().includes(s) &&
-          !applyStreamLabel(p.stream).toLowerCase().includes(s)
+          !(p.programme_title ?? "").toLowerCase().includes(s)
         )
           return false;
       }
       return true;
     });
-  }, [programmes, province, savedOnly, saved, applicationsOnly, applicationSet, q]);
-
-  const honours = base.filter((p) => p.qualification === "honours");
-  const masters = base.filter(
-    (p) => p.qualification === "masters" && (stream === "all" || p.stream === stream)
-  );
-
-  const mastersByStream = useMemo(() => {
-    const map = new Map<string, ApplyProgramme[]>();
-    for (const p of masters) {
-      const key = p.stream ?? "other";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(p);
-    }
-    return map;
-  }, [masters]);
-
-  const showHonours = qual === "all" || qual === "honours";
-  const showMasters = qual === "all" || qual === "masters";
+  }, [programmes, province, level, savedOnly, saved, applicationsOnly, applicationSet, q]);
 
   return (
     <div className="mt-6">
       <div className="rounded-card border border-line bg-soft px-4 py-3 text-xs leading-relaxed text-charcoal-soft">
-        Discover psychology programmes, save the ones you&apos;re interested in,
-        and jump straight to each university&apos;s official psychology pages.
-        Universities remain the source of truth for dates, fees and requirements.
+        One verified list for discovery and planning. Filter by province or level,
+        save a route, add a private note, or open its complete application tracker.
       </div>
 
       {saveError && (
@@ -218,21 +315,17 @@ export function ApplyDirectory({
       {/* filters */}
       <div className="mt-5 space-y-3">
         <div className="flex flex-wrap gap-2">
-          {([
-            ["all", "All"],
-            ["honours", "Honours"],
-            ["masters", "Master's"],
-          ] as const).map(([v, label]) => (
+          {LEVELS.map((item) => (
             <button
-              key={v}
-              onClick={() => setQual(v)}
+              key={item.value}
+              onClick={() => setLevel(item.value)}
               className={`choice-pill ${
-                qual === v
+                level === item.value
                   ? "border-charcoal bg-charcoal text-white"
                   : "border-line bg-white text-charcoal-soft hover:border-blue"
               }`}
             >
-              {label}
+              {item.label}
             </button>
           ))}
           <button
@@ -263,23 +356,11 @@ export function ApplyDirectory({
           </button>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div>
           <select value={province} onChange={(e) => setProvince(e.target.value)} className="input">
             <option value="all">All provinces</option>
-            {PROVINCES.map((p) => (
+            {provinces.map((p) => (
               <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          <select
-            value={stream}
-            onChange={(e) => setStream(e.target.value)}
-            className="input"
-            disabled={qual === "honours"}
-            title={qual === "honours" ? "Streams apply to Master's programmes" : undefined}
-          >
-            <option value="all">All streams (Master&apos;s)</option>
-            {APPLY_STREAMS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
         </div>
@@ -292,68 +373,30 @@ export function ApplyDirectory({
         />
       </div>
 
-      {/* HONOURS */}
-      {showHonours && (
-        <section className="mt-9">
-          <div className="mb-3 flex items-baseline gap-3">
-            <h2 className="font-sora text-xl font-bold tracking-tight">
-              Psychology Honours programmes
-            </h2>
-            <span className="text-sm font-semibold text-charcoal-soft">{honours.length}</span>
+      <section className="mt-8">
+        <div className="mb-3 flex items-baseline gap-3">
+          <h2 className="font-sora text-xl font-bold tracking-tight">Verified Psychology programmes</h2>
+          <span className="text-sm font-semibold text-charcoal-soft">{base.length}</span>
+        </div>
+        {base.length === 0 ? (
+          <EmptyRow />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {base.map((p) => (
+              <ProgrammeCard
+                key={p.id}
+                p={p}
+                saved={saved.has(p.id)}
+                saving={savingId === p.id}
+                onToggleSave={onToggleSave}
+                initialNote={notesByProgramme[p.id] ?? null}
+                onNoteSaved={onNoteSaved}
+                demo={demo}
+              />
+            ))}
           </div>
-          {honours.length === 0 ? (
-            <EmptyRow />
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {honours.map((p) => (
-                <ProgrammeCard
-                  key={p.id}
-                  p={p}
-                  saved={saved.has(p.id)}
-                  saving={savingId === p.id}
-                  onToggleSave={onToggleSave}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* MASTER'S */}
-      {showMasters && (
-        <section className="mt-12">
-          <div className="mb-3 flex items-baseline gap-3">
-            <h2 className="font-sora text-xl font-bold tracking-tight">
-              Psychology Master&apos;s programmes
-            </h2>
-            <span className="text-sm font-semibold text-charcoal-soft">{masters.length}</span>
-          </div>
-          {masters.length === 0 ? (
-            <EmptyRow />
-          ) : (
-            <div className="space-y-8">
-              {MASTER_GROUPS.filter((s) => mastersByStream.has(s.value)).map((s) => (
-                <div key={s.value}>
-                  <h3 className="mb-2.5 text-[0.72rem] font-extrabold uppercase tracking-wider text-blue-action">
-                    {s.label} Psychology
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {mastersByStream.get(s.value)!.map((p) => (
-                      <ProgrammeCard
-                        key={p.id}
-                        p={p}
-                        saved={saved.has(p.id)}
-                        saving={savingId === p.id}
-                        onToggleSave={onToggleSave}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }

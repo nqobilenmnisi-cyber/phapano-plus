@@ -86,10 +86,12 @@ export async function getSavedFunding(): Promise<FundingOpportunity[]> {
   const supabase = await createClient();
   const user = await getCurrentUser();
   if (!user) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("saved_funding")
-    .select("funding:funding_opportunities(*)")
-    .eq("user_id", user.id);
+    .select("funding:funding_opportunities!inner(*)")
+    .eq("user_id", user.id)
+    .eq("funding.is_published", true);
+  if (error) throw new Error(`Unable to load saved funding: ${error.message}`);
   return (data ?? []).map((r: { funding: FundingOpportunity }) => r.funding).filter(Boolean);
 }
 
@@ -184,12 +186,14 @@ export async function getSavedIdSets() {
 export async function getProgrammes(): Promise<ApplyProgramme[]> {
   if (!isSupabaseConfigured) return [];
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("programmes")
     .select("*")
     .eq("is_published", true)
     .eq("verification_status", "verified")
-    .order("institution", { ascending: true });
+    .order("institution", { ascending: true })
+    .order("qualification", { ascending: true });
+  if (error) throw new Error(`Unable to load Apply programmes: ${error.message}`);
   return (data as ApplyProgramme[] | null) ?? [];
 }
 
@@ -242,10 +246,14 @@ export async function getSavedProgrammes(): Promise<SavedProgrammeWithPlan[]> {
   const supabase = await createClient();
   const user = await getCurrentUser();
   if (!user) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("saved_programmes")
-    .select("*, programme:programmes(*)")
-    .eq("user_id", user.id);
+    .select("*, programme:programmes!inner(*)")
+    .eq("user_id", user.id)
+    .eq("programme.is_published", true)
+    .eq("programme.verification_status", "verified")
+    .order("updated_at", { ascending: false });
+  if (error) throw new Error(`Unable to load saved programmes: ${error.message}`);
   return (
     (data ?? []).filter(
       (r: { programme: ApplyProgramme | null }) => r.programme

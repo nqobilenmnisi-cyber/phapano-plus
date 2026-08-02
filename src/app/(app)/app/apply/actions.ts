@@ -61,6 +61,36 @@ export async function toggleSaveProgramme(programmeId: string, saved: boolean) {
   return { ok: true };
 }
 
+/** Save a private programme note directly from the unified Apply list. */
+export async function updateProgrammeNote(programmeId: string, notes: string | null) {
+  if (!isSupabaseConfigured) return { ok: false, demo: true };
+  const { supabase, user } = await requireUser();
+
+  const { error } = await supabase.from("saved_programmes").upsert(
+    {
+      user_id: user.id,
+      programme_id: programmeId,
+      is_saved: true,
+      notes: notes?.trim() || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,programme_id" }
+  );
+
+  if (error) {
+    console.error("Unable to update programme note", error);
+    return {
+      ok: false,
+      error: "We couldn't save this note. Please try again.",
+    };
+  }
+
+  revalidatePath("/app/apply");
+  revalidatePath(`/app/apply/programme/${programmeId}`);
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 /**
  * Save or update the user's personal application tracker for a programme.
  * Upserts the saved_programmes row. A new plan starts saved, while editing an

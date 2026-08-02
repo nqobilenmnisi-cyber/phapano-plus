@@ -623,7 +623,11 @@ export interface Database {
 }
 
 // ---- Apply directory (programmes + saved_programmes) --------------------
-export type ProgrammeQualification = "honours" | "masters";
+export type ProgrammeQualification =
+  | "undergraduate"
+  | "honours"
+  | "masters"
+  | "doctoral";
 export type ProgrammeStatus =
   | "open"
   | "closed"
@@ -716,9 +720,15 @@ export type SavedProgrammeWithPlan = {
   submitted: boolean;
   referees_requested: boolean;
   documents_uploaded: boolean;
+  personal_statement_done: boolean;
+  cv_done: boolean;
+  transcript_uploaded: boolean;
+  fee_paid: boolean;
   interview_received: boolean;
   selection_completed: boolean;
   outcome_received: boolean;
+  custom_steps: CustomStep[];
+  notes: string | null;
   created_at: string;
   updated_at: string;
   programme: ApplyProgramme;
